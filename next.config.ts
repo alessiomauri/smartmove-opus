@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   // Image optimization
@@ -15,6 +18,22 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.supabase.in',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.workers.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media-webapi.resales-online.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.resales-online.com',
       },
     ],
     // Optimize image formats for better performance
@@ -127,4 +146,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

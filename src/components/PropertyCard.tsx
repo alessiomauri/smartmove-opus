@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Property, STATUS_LABELS } from '@/types/property';
 import { formatPrice, formatNumber, cn } from '@/lib/utils';
 import FavouriteButton from './FavouriteButton';
@@ -29,7 +29,7 @@ export default function PropertyCard({ property, index = 0, priority = false }: 
 
   return (
     <Link
-      href={`/property/${property.slug}`}
+      href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}
       onMouseEnter={preloadHero}
       onTouchStart={preloadHero}
       className={cn(

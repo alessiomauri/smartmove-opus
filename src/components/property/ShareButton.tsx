@@ -43,7 +43,7 @@ export default function ShareButton({ propertyName, propertySlug, isScrolled }: 
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://marbella.live';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://smartmove.live';
   const propertyUrl = `${baseUrl}/property/${propertySlug}`;
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function ShareButton({ propertyName, propertySlug, isScrolled }: 
       try {
         await navigator.share({
           title: propertyName,
-          text: `Check out ${propertyName} on Marbella Live`,
+          text: `Check out ${propertyName} on Smartmove Marbella`,
           url: propertyUrl,
         });
       } catch { /* user cancelled */ }

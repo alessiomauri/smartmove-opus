@@ -151,7 +151,7 @@ export default function SocialContentGenerator({ property }: SocialContentGenera
   const [captionStyle, setCaptionStyle] = useState<'elegant' | 'bold' | 'minimal'>('elegant');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://marbella.live';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
   const whatsappText = generateWhatsAppText(property, baseUrl);
   const instagramCaption = generateInstagramCaption(property, baseUrl, captionStyle);

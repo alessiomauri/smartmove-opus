@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -272,7 +272,7 @@ function AreaPopup({ area, category }: { area: Area; category: PinCategory }) {
       )}
       {!isAirport && (
         <Link
-          href={`/areas/${area.slug}`}
+          href={{ pathname: '/areas/[slug]', params: { slug: area.slug } }}
           className="inline-block text-[12px] font-semibold text-[#3c9ba7] hover:text-[#2d8a95] transition-colors"
         >
           View area →

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Heart, ArrowUpRight, MapPin } from 'lucide-react';
 import { Property, STATUS_LABELS } from '@/types/property';
 import { useFavourites } from '@/hooks/useFavourites';
@@ -65,7 +65,7 @@ export default function FavouritePropertyCard({
       <div className="flex flex-col lg:flex-row">
         {/* Image Section */}
         <Link
-          href={`/property/${property.slug}`}
+          href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}
           className="relative w-full lg:w-[320px] h-[220px] lg:h-auto lg:aspect-[4/3] flex-shrink-0 overflow-hidden"
         >
           <Image
@@ -126,7 +126,7 @@ export default function FavouritePropertyCard({
             </div>
 
             {/* Property Name */}
-            <Link href={`/property/${property.slug}`}>
+            <Link href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}>
               <h3 className="font-gloock text-[24px] lg:text-[34px] text-[#3c9ba7] leading-tight mb-3 hover:text-[#2d8a95] transition-colors duration-300">
                 {property.name}
               </h3>
@@ -189,7 +189,7 @@ export default function FavouritePropertyCard({
 
           {/* View Button */}
           <Link
-            href={`/property/${property.slug}`}
+            href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}
             className={cn(
               "group/view flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300",
               isHovered
@@ -213,7 +213,7 @@ export default function FavouritePropertyCard({
           <span className="text-[11px] tracking-[0.1em] uppercase">Remove</span>
         </button>
         <Link
-          href={`/property/${property.slug}`}
+          href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#3c9ba7] text-white rounded-full text-[11px] tracking-[0.1em] uppercase font-medium"
         >
           View Property

@@ -1,0 +1,128 @@
+/**
+ * Smartmove Marbella — design tokens.
+ *
+ * THIS FILE IS OWNED BY CLAUDE DESIGN. The dev side imports it from
+ * `src/app/globals.css` and uses these variables exclusively for color, type,
+ * spacing, radius, shadow, and motion. To change anything visual: regenerate
+ * this file with Claude Design and replace it. The application code does not
+ * change.
+ *
+ * Naming convention: every token is `--sm-<category>-<name>` so they cannot
+ * collide with shadcn / tailwind defaults.
+ *
+ * Status: PLACEHOLDER. These are sensible defaults derived from the brand
+ * starting points in CLAUDE_DESIGN_BRIEF §9 (white background + near-black
+ * + warm gold accent from the Luxury Lifestyle Awards badge). Will be
+ * replaced when the brand foundation conversation lands.
+ */
+
+:root {
+  /* ─── Color ─── */
+
+  /* Brand */
+  --sm-color-bg:        #ffffff;
+  --sm-color-fg:        #1a1a1a;
+  --sm-color-accent:    #b08d4a;        /* warm gold from award badge */
+  --sm-color-accent-fg: #ffffff;
+
+  /* Neutral scale */
+  --sm-color-neutral-50:  #fafafa;
+  --sm-color-neutral-100: #f4f4f4;
+  --sm-color-neutral-200: #e5e5e5;
+  --sm-color-neutral-300: #d4d4d4;
+  --sm-color-neutral-400: #a3a3a3;
+  --sm-color-neutral-500: #737373;
+  --sm-color-neutral-600: #525252;
+  --sm-color-neutral-700: #404040;
+  --sm-color-neutral-800: #262626;
+  --sm-color-neutral-900: #171717;
+
+  /* Semantic */
+  --sm-color-text:           var(--sm-color-fg);
+  --sm-color-text-muted:     var(--sm-color-neutral-500);
+  --sm-color-border:         var(--sm-color-neutral-200);
+  --sm-color-surface:        var(--sm-color-bg);
+  --sm-color-surface-muted:  var(--sm-color-neutral-50);
+
+  /* Status */
+  --sm-color-status-available:   #2f6f4f;
+  --sm-color-status-sold:        #8a8a8a;
+  --sm-color-status-reserved:    #b08d4a;
+  --sm-color-status-under-offer: #c87d2c;
+  --sm-color-status-coming-soon: #4a6da3;
+
+  /* ─── Typography ─── */
+
+  /* Family — placeholder. Claude Design will pick the final pairing
+     (likely a display serif for headings + a humanist sans for body). */
+  --sm-font-display: 'Gloock', Georgia, serif;
+  --sm-font-body:    'Jost', system-ui, sans-serif;
+  --sm-font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale */
+  --sm-text-xs:   0.75rem;   /* 12px */
+  --sm-text-sm:   0.875rem;  /* 14px */
+  --sm-text-base: 1rem;      /* 16px */
+  --sm-text-lg:   1.125rem;  /* 18px */
+  --sm-text-xl:   1.25rem;   /* 20px */
+  --sm-text-2xl:  1.5rem;    /* 24px */
+  --sm-text-3xl:  2rem;      /* 32px */
+  --sm-text-4xl:  2.5rem;    /* 40px */
+  --sm-text-5xl:  3.25rem;   /* 52px */
+  --sm-text-6xl:  4rem;      /* 64px */
+
+  --sm-leading-tight:  1.15;
+  --sm-leading-normal: 1.5;
+  --sm-leading-loose:  1.75;
+
+  --sm-tracking-tight:  -0.015em;
+  --sm-tracking-normal: 0;
+  --sm-tracking-wide:   0.05em;
+
+  /* ─── Spacing ─── */
+
+  --sm-space-1:  0.25rem;   /*  4px */
+  --sm-space-2:  0.5rem;    /*  8px */
+  --sm-space-3:  0.75rem;   /* 12px */
+  --sm-space-4:  1rem;      /* 16px */
+  --sm-space-5:  1.5rem;    /* 24px */
+  --sm-space-6:  2rem;      /* 32px */
+  --sm-space-7:  3rem;      /* 48px */
+  --sm-space-8:  4rem;      /* 64px */
+  --sm-space-9:  6rem;      /* 96px */
+  --sm-space-10: 8rem;      /* 128px */
+
+  /* ─── Radius ─── */
+
+  --sm-radius-none: 0;
+  --sm-radius-sm:   4px;
+  --sm-radius-md:   8px;
+  --sm-radius-lg:   12px;
+  --sm-radius-xl:   16px;
+  --sm-radius-full: 999px;
+
+  /* ─── Shadow ─── */
+
+  --sm-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --sm-shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --sm-shadow-lg: 0 10px 24px -4px rgb(0 0 0 / 0.08), 0 4px 8px -2px rgb(0 0 0 / 0.04);
+  --sm-shadow-xl: 0 24px 48px -8px rgb(0 0 0 / 0.10), 0 8px 16px -4px rgb(0 0 0 / 0.06);
+
+  /* ─── Motion ─── */
+
+  --sm-duration-fast: 150ms;
+  --sm-duration-base: 220ms;
+  --sm-duration-slow: 360ms;
+
+  --sm-easing-out:  cubic-bezier(0.22, 1, 0.36, 1);
+  --sm-easing-in:   cubic-bezier(0.55, 0, 1, 0.45);
+  --sm-easing-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Layout ─── */
+
+  --sm-max-width-prose:    65ch;
+  --sm-max-width-content:  72rem;   /* 1152px */
+  --sm-max-width-wide:     90rem;   /* 1440px */
+
+  --sm-header-height:      72px;
+}

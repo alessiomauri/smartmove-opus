@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
@@ -157,7 +157,7 @@ export default function PropertyHeader({ propertyName, propertyId, propertySlug 
                   : 'text-white group-hover:text-white/95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]'
               )}
             >
-              Marbella Live
+              Smartmove Marbella
             </span>
             {/* Elegant underline effect */}
             <span className={cn(

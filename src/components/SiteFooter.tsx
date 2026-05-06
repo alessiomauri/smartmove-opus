@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 
 /**
  * Site-wide footer. Beyond brand chrome, it ships **internal links** to the
@@ -28,7 +28,7 @@ export default function SiteFooter() {
           <div>
             <Link href="/" className="group relative inline-block">
               <span className="font-gloock text-[28px] text-[#3c9ba7] leading-none tracking-tight transition-colors group-hover:text-[#2d8a95]">
-                Marbella Live
+                Smartmove Marbella
               </span>
               <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
@@ -47,7 +47,7 @@ export default function SiteFooter() {
               {TOP_AREAS.map((a) => (
                 <li key={a.slug}>
                   <Link
-                    href={`/areas/${a.slug}`}
+                    href={{ pathname: '/areas/[slug]', params: { slug: a.slug } }}
                     className="text-[#2e2e2e]/70 hover:text-[#3c9ba7] transition-colors"
                   >
                     {a.name}
@@ -89,7 +89,7 @@ export default function SiteFooter() {
 
         <div className="border-t border-[#2e2e2e]/[0.06] pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <p className="text-[11px] text-[#2e2e2e]/40 tracking-[0.1em] uppercase">
-            © {year} Marbella Live · All rights reserved
+            © {year} Smartmove Marbella · All rights reserved
           </p>
           <p className="text-[11px] text-[#2e2e2e]/40 tracking-[0.05em]">
             Marbella · Costa del Sol · Andalucía · Spain

@@ -6,6 +6,10 @@
 
 @import "shadcn/tailwind.css";
 
+/* Smartmove design tokens — owned by Claude Design.
+   See docs/design/tokens.css for the source of truth. */
+@import "../../docs/design/tokens.css";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

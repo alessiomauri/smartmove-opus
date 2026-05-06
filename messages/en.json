@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "home": "Home",
+    "properties": "Properties",
+    "newDevelopments": "New Developments",
+    "areas": "Areas",
+    "blog": "Insights",
+    "favourites": "Favourites",
+    "contact": "Contact"
+  },
+  "common": {
+    "loading": "Loading",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "share": "Share",
+    "favourite": "Add to favourites",
+    "unfavourite": "Remove from favourites",
+    "viewAll": "View all",
+    "viewMore": "View more",
+    "from": "From",
+    "priceOnRequest": "Price on request",
+    "soldBadge": "Sold",
+    "underOfferBadge": "Under offer",
+    "reservedBadge": "Reserved",
+    "comingSoonBadge": "Coming soon",
+    "featuredBadge": "Featured",
+    "language": "Language"
+  },
+  "property": {
+    "bedrooms": "{count, plural, =0 {Studio} one {# bedroom} other {# bedrooms}}",
+    "bathrooms": "{count, plural, one {# bathroom} other {# bathrooms}}",
+    "interior": "{size} m² interior",
+    "plot": "{size} m² plot",
+    "terrace": "{size} m² terrace",
+    "viewProperty": "View property",
+    "requestDetails": "Request details",
+    "requestBrochure": "Request brochure",
+    "scheduleViewing": "Schedule viewing",
+    "moreInArea": "More in {area}"
+  },
+  "filter": {
+    "title": "Filter",
+    "minPrice": "Min price",
+    "maxPrice": "Max price",
+    "minBeds": "Min bedrooms",
+    "anyBeds": "Any",
+    "type": "Property type",
+    "area": "Area",
+    "sort": "Sort",
+    "sortNewest": "Most recent",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "clear": "Clear filters",
+    "results": "{count, plural, =0 {No results} one {# property} other {# properties}}"
+  },
+  "footer": {
+    "tagline": "Award-winning luxury real estate on the Costa del Sol",
+    "rights": "All rights reserved",
+    "privacy": "Privacy policy",
+    "cookies": "Cookie policy",
+    "terms": "Terms of use"
+  },
+  "site": {
+    "name": "Smartmove Marbella",
+    "shortName": "Smartmove"
+  }
+}

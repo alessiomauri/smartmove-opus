@@ -1,7 +1,56 @@
 import { MetadataRoute } from 'next';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
-import { AREAS } from '@/types/property';
 import { COSTA_DEL_SOL_AREAS } from '@/lib/areas-data';
+import { routing } from '@/i18n/routing';
+
+/**
+ * Per-route localized URL builder. Resolves the localized path word for each
+ * locale (e.g. EN `/property/villa-x` ↔ ES `/propiedad/villa-x`) using the
+ * routing.pathnames mapping.
+ */
+function localizedPaths(template: string, params?: Record<string, string>): Array<{ locale: string; href: string }> {
+  const entry = (routing.pathnames as Record<string, unknown>)[template];
+  return routing.locales.map((locale) => {
+    let path: string;
+    if (typeof entry === 'string') {
+      path = entry;
+    } else if (entry && typeof entry === 'object' && (entry as Record<string, string>)[locale]) {
+      path = (entry as Record<string, string>)[locale];
+    } else {
+      path = template;
+    }
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        path = path.replace(`[${k}]`, v);
+      }
+    }
+    const prefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+    return { locale, href: `${prefix}${path === '/' ? '' : path}` || '/' };
+  });
+}
+
+function withAlternates(
+  template: string,
+  params: Record<string, string> | undefined,
+  baseUrl: string,
+  lastModified: Date,
+  changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'],
+  priority: number,
+  images?: string[]
+): MetadataRoute.Sitemap {
+  const variants = localizedPaths(template, params);
+  const alternates = Object.fromEntries(
+    variants.map((v) => [v.locale, `${baseUrl}${v.href}`])
+  );
+  return variants.map((v) => ({
+    url: `${baseUrl}${v.href}`,
+    lastModified,
+    changeFrequency,
+    priority,
+    alternates: { languages: alternates },
+    ...(images && images.length ? { images } : {}),
+  }));
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
@@ -9,117 +58,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createStaticSupabaseClient();
   const { data: properties } = await supabase
     .from('properties')
-    .select('slug, updated_at, hero_image, gallery_images, location, status')
+    .select('slug, updated_at, hero_image, gallery_images, status')
     .eq('published', true)
     .order('updated_at', { ascending: false });
 
-  const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/areas`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/new-developments`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/favourites`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.3,
-    },
-  ];
+  const now = new Date();
+  const result: MetadataRoute.Sitemap = [];
 
-  // Dynamic property pages - high priority with images
-  const propertyPages: MetadataRoute.Sitemap = (properties || []).map((property) => {
-    const allImages = [
-      property.hero_image,
-      ...(property.gallery_images || []),
-    ].filter(Boolean);
+  // Static top-level pages
+  result.push(...withAlternates('/', undefined, baseUrl, now, 'daily', 1.0));
+  result.push(...withAlternates('/areas', undefined, baseUrl, now, 'weekly', 0.9));
+  result.push(...withAlternates('/blog', undefined, baseUrl, now, 'daily', 0.9));
+  result.push(...withAlternates('/new-developments', undefined, baseUrl, now, 'daily', 0.9));
+  result.push(...withAlternates('/favourites', undefined, baseUrl, now, 'monthly', 0.3));
 
-    return {
-      url: `${baseUrl}/property/${property.slug}`,
-      lastModified: new Date(property.updated_at),
-      changeFrequency: 'weekly' as const,
-      priority: property.status === 'available' ? 0.9 : 0.7,
-      images: allImages.length > 0 ? allImages : undefined,
-    };
-  });
+  // Property detail pages
+  for (const p of properties ?? []) {
+    const images = [p.hero_image, ...(p.gallery_images || [])].filter(Boolean);
+    result.push(
+      ...withAlternates(
+        '/property/[slug]',
+        { slug: p.slug },
+        baseUrl,
+        new Date(p.updated_at),
+        'weekly',
+        p.status === 'available' ? 0.9 : 0.7,
+        images
+      )
+    );
+  }
 
-  // Dedicated area pages - very high priority for local SEO
-  const areaPages: MetadataRoute.Sitemap = COSTA_DEL_SOL_AREAS.map((area) => ({
-    url: `${baseUrl}/areas/${area.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: area.isMicroLocation ? 0.7 : 0.85,
-  }));
+  // Area detail pages
+  for (const a of COSTA_DEL_SOL_AREAS) {
+    result.push(
+      ...withAlternates(
+        '/areas/[slug]',
+        { slug: a.slug },
+        baseUrl,
+        now,
+        'weekly',
+        a.isMicroLocation ? 0.7 : 0.85
+      )
+    );
+  }
 
-  // Area filter pages on homepage (supplementary to dedicated pages)
-  const areaFilterPages: MetadataRoute.Sitemap = AREAS.map((area) => ({
-    url: `${baseUrl}/?area=${encodeURIComponent(area)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.5,
-  }));
-
-  // Property type filter pages
-  const propertyTypePages: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/?minBeds=3`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?minBeds=4`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?minBeds=5`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?minBeds=6`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?maxPrice=2000000`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.5 },
-    { url: `${baseUrl}/?minPrice=2000000&maxPrice=5000000`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.5 },
-    { url: `${baseUrl}/?minPrice=5000000`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.5 },
-    { url: `${baseUrl}/?status=available`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.7 },
-  ];
-
-  // Popular area + bedroom combinations (long-tail keywords)
-  const popularCombinations: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/?area=Golden%20Mile&minBeds=4`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Golden%20Mile&minBeds=5`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Puerto%20Banus&minBeds=3`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Puerto%20Banus&minBeds=4`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Nueva%20Andalucia&minBeds=4`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Nueva%20Andalucia&minBeds=5`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Sierra%20Blanca&minBeds=5`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Benahavis&minBeds=4`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Benahavis&minBeds=5`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Estepona&minBeds=3`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Estepona&minBeds=4`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.6 },
-    { url: `${baseUrl}/?area=Mijas&minBeds=3`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.5 },
-  ];
-
-  // Sort order variations
-  const sortPages: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/?sort=price_asc`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.4 },
-    { url: `${baseUrl}/?sort=price_desc`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.4 },
-    { url: `${baseUrl}/?sort=newest`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.5 },
-  ];
-
-  return [
-    ...staticPages,
-    ...propertyPages,
-    ...areaPages,
-    ...areaFilterPages,
-    ...propertyTypePages,
-    ...popularCombinations,
-    ...sortPages,
-  ];
+  return result;
 }

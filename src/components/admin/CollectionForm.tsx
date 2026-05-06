@@ -35,7 +35,7 @@ export default function CollectionForm({ collection, isEditing }: CollectionForm
 
   const baseUrl = typeof window !== 'undefined'
     ? window.location.origin
-    : process.env.NEXT_PUBLIC_SITE_URL || 'https://marbella.live';
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
   const collectionUrl = `${baseUrl}/collection/${slug}`;
 
@@ -112,7 +112,7 @@ export default function CollectionForm({ collection, isEditing }: CollectionForm
     if (type === 'personal' && recipientName) {
       text = `Hi ${recipientName}, I've put together some properties I think you'll love.\n\n${collectionUrl}`;
     } else {
-      text = `*${title}*\n\nA curated selection of properties by Marbella Live\n\n${collectionUrl}`;
+      text = `*${title}*\n\nA curated selection of properties by Smartmove Marbella\n\n${collectionUrl}`;
     }
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
