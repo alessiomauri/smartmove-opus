@@ -56,3 +56,5 @@ workers/*/.wrangler
 
 # worker-specific node_modules
 workers/*/node_modules
+.resales-proxy-secret.local
+.sync-cron-secret.local
