@@ -1,8 +1,6 @@
--- Marbella Live V2 - Supabase Database Schema
--- Run this in your Supabase SQL Editor to set up the database
-
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Smartmove Marbella - Supabase Database Schema
+-- Inherited from Marbella Live seed; uuid_generate_v4 swapped for
+-- gen_random_uuid (built-in pgcrypto, already in Supabase search_path).
 
 -- Create property status enum
 CREATE TYPE property_status AS ENUM (
@@ -15,7 +13,7 @@ CREATE TYPE property_status AS ENUM (
 
 -- Create properties table
 CREATE TABLE properties (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   status property_status DEFAULT 'available' NOT NULL,

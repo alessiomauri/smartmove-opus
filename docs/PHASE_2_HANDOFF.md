@@ -2,6 +2,12 @@
 
 What's done autonomously, what needs your hand, and what happens next.
 
+**Update 2026-05-06**: Initial Supabase wiring went into the pre-existing
+"Smartmove 2" project by mistake (linked instead of created). Fully reverted:
+unlinked, no schema or data changes touched that project. A brand-new
+project `smartmove-marbella` (ref `vhsttqejskvofqxgddho`, EU West Ireland)
+was then created from scratch and used for everything below.
+
 ---
 
 ## ✅ Completed

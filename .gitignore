@@ -34,6 +34,11 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Supabase local secrets and CLI temp state
+.supabase-db-password.local
+supabase/.temp/
+supabase/.branches/
+
 # mcp config (contains access tokens)
 .mcp.json
 
