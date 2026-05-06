@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import { getAreaBySlug, getPublishedAreas } from '@/lib/actions/areas';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { getPropertiesForArea } from '@/lib/cache';
-import { shouldShowListings } from '@/lib/visibility';
 import AreaPageClient from './AreaPageClient';
 
 export const revalidate = 3600; // ISR: regenerate every hour
@@ -123,17 +122,11 @@ export default async function AreaPage({ params }: Props) {
     .filter((a) => a.pin_category === 'main')
     .map((a) => a.name);
 
-  // Only fetch + show properties on area pages when listings are public
-  // (or when an admin is previewing). Otherwise the area page renders as a
-  // pure information resource with a "coming soon" placeholder.
-  const showProperties = await shouldShowListings();
-  const properties = showProperties
-    ? await getPropertiesForArea({
-        areaName: area.pin_category === 'main' ? area.name : undefined,
-        childAreaNames,
-        microLocationSlugs,
-      })
-    : [];
+  const properties = await getPropertiesForArea({
+    areaName: area.pin_category === 'main' ? area.name : undefined,
+    childAreaNames,
+    microLocationSlugs,
+  });
 
   // Keep the same featured-first, newest-next ordering used on the homepage.
   properties.sort((a, b) => {
@@ -245,7 +238,7 @@ export default async function AreaPage({ params }: Props) {
         allDescendantAreas={allDescendantAreas}
         parentArea={parentArea}
         properties={properties}
-        showProperties={showProperties}
+        showProperties={true}
       />
     </>
   );

@@ -1,48 +1,15 @@
 import HomeListingsClient from './HomeListingsClient';
-import HomeInfo from './HomeInfo';
 import { getCachedPublishedProperties, getCachedDefaultSort } from '@/lib/cache';
-import { shouldShowListings, isAdmin } from '@/lib/visibility';
-import PreviewBanner from '@/components/admin/PreviewBanner';
 
-// Cannot use static `revalidate` here because rendering depends on auth
-// (logged-in admins see the listings homepage as preview). Each request
-// checks the auth cookie; the underlying property/sort fetches are still
-// cached via unstable_cache.
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
-interface HomePageProps {
-  searchParams: Promise<{ info?: string }>;
-}
-
-export default async function Home({ searchParams }: HomePageProps) {
-  const params = await searchParams;
-  const admin = await isAdmin();
-
-  // Logged-in admins always see the listings homepage as a live preview of
-  // what the public will see post-launch — even while PROPERTIES_PUBLIC is false.
-  // ?info=1 lets admins force the public info-mode view for QA.
-  if (!(await shouldShowListings(params))) {
-    return (
-      <>
-        {admin && (
-          <PreviewBanner
-            mode="info"
-            swapUrl="/"
-            swapLabel="View listings preview →"
-          />
-        )}
-        <HomeInfo />
-      </>
-    );
-  }
-
-  // ─── Listings homepage (current design, unchanged) ───
+export default async function Home() {
   const [properties, defaultSort] = await Promise.all([
     getCachedPublishedProperties(),
     getCachedDefaultSort(),
   ]);
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://marbella.live';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
   // Sort properties the same way HomeListingsClient will initially sort them
   // (featured first, then newest) so the SSR HTML matches the hydrated state.
@@ -152,13 +119,6 @@ export default async function Home({ searchParams }: HomePageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      {admin && (
-        <PreviewBanner
-          mode="listings"
-          swapUrl="/?info=1"
-          swapLabel="View as visitor (info-mode) →"
-        />
-      )}
       <HomeListingsClient initialProperties={sorted} defaultSort={defaultSort} />
     </>
   );

@@ -1,14 +1,7 @@
 import { MetadataRoute } from 'next';
-import { PROPERTIES_PUBLIC } from '@/lib/feature-flags';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://marbella.live';
-
-  // While listings are dark, additionally disallow property + favourites URLs.
-  // These rules clear automatically when PROPERTIES_PUBLIC flips to true.
-  const propertyDisallows = PROPERTIES_PUBLIC
-    ? []
-    : ['/property', '/property/*', '/favourites', '/favourites/*'];
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
   return {
     rules: [
@@ -17,9 +10,10 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: [
           '/',
-          ...(PROPERTIES_PUBLIC ? ['/property/'] : []),
+          '/property/',
           '/areas/',
           '/blog/',
+          '/new-developments/',
           '/sitemap.xml',
           '/robots.txt',
         ],
@@ -30,13 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           '/api/*',
           '/_next/',
           '/_next/*',
-          ...(PROPERTIES_PUBLIC ? ['/favourites/*'] : []), // share pages only
-          ...propertyDisallows,
-          // /new-developments is built but unlaunched. Remove these two lines
-          // when you flip NEW_DEVELOPMENTS_PUBLIC = true in
-          // src/app/new-developments/feature-flag.ts
-          '/new-developments',
-          '/new-developments/*',
+          '/favourites/*', // share pages only — keep individual share URLs out of search
         ],
       },
       // Google - prioritize for main search
@@ -44,19 +32,16 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: 'Googlebot',
         allow: [
           '/',
-          ...(PROPERTIES_PUBLIC ? ['/property/*'] : []),
+          '/property/*',
           '/areas/*',
           '/blog/*',
+          '/new-developments/*',
           '/*.jpg$',
           '/*.jpeg$',
           '/*.png$',
           '/*.webp$',
         ],
-        disallow: [
-          '/admin/',
-          '/api/',
-          ...propertyDisallows,
-        ],
+        disallow: ['/admin/', '/api/', '/favourites/*'],
       },
       // Google Images - allow all images
       {
@@ -73,11 +58,8 @@ export default function robots(): MetadataRoute.Robots {
       // Bing
       {
         userAgent: 'Bingbot',
-        allow: [
-          '/',
-          ...(PROPERTIES_PUBLIC ? ['/property/*'] : []),
-        ],
-        disallow: ['/admin/', '/api/', ...propertyDisallows],
+        allow: ['/', '/property/*', '/new-developments/*'],
+        disallow: ['/admin/', '/api/', '/favourites/*'],
       },
       // DuckDuckGo
       {
@@ -98,47 +80,20 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin/', '/api/'],
       },
       // Facebook crawler for Open Graph
-      {
-        userAgent: 'facebookexternalhit',
-        allow: '/',
-      },
+      { userAgent: 'facebookexternalhit', allow: '/' },
       // Twitter crawler
-      {
-        userAgent: 'Twitterbot',
-        allow: '/',
-      },
+      { userAgent: 'Twitterbot', allow: '/' },
       // LinkedIn crawler
-      {
-        userAgent: 'LinkedInBot',
-        allow: '/',
-      },
+      { userAgent: 'LinkedInBot', allow: '/' },
       // WhatsApp crawler
-      {
-        userAgent: 'WhatsApp',
-        allow: '/',
-      },
+      { userAgent: 'WhatsApp', allow: '/' },
       // Pinterest
-      {
-        userAgent: 'Pinterest',
-        allow: '/',
-      },
+      { userAgent: 'Pinterest', allow: '/' },
       // Block bad bots
-      {
-        userAgent: 'AhrefsBot',
-        disallow: '/',
-      },
-      {
-        userAgent: 'SemrushBot',
-        disallow: '/',
-      },
-      {
-        userAgent: 'MJ12bot',
-        disallow: '/',
-      },
-      {
-        userAgent: 'DotBot',
-        disallow: '/',
-      },
+      { userAgent: 'AhrefsBot', disallow: '/' },
+      { userAgent: 'SemrushBot', disallow: '/' },
+      { userAgent: 'MJ12bot', disallow: '/' },
+      { userAgent: 'DotBot', disallow: '/' },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
     host: baseUrl,

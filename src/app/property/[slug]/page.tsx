@@ -2,8 +2,6 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPropertyBySlug } from '@/lib/actions/properties';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
-import { shouldShowListings } from '@/lib/visibility';
-import { PROPERTIES_PUBLIC } from '@/lib/feature-flags';
 import PropertyPageClient from './PropertyPageClient';
 import { Property } from '@/types/property';
 
@@ -11,22 +9,10 @@ interface PropertyPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// ⚠ FLIP THESE WHEN PROPERTIES_PUBLIC GOES TRUE (see GOING_PUBLIC_CHECKLIST.md):
-// While listings are dark, the page MUST be force-dynamic so the auth cookie
-// can gate access per request. When you flip PROPERTIES_PUBLIC to true,
-// change these two lines back to:
-//   export const revalidate = 3600;
-//   (delete the `dynamic` export — defaults to 'auto' which enables ISR)
-// Next.js requires these to be literal values (no ternaries), so the
-// going-public checklist explicitly calls out this swap.
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 // Generate static params for all published properties (Static Site Generation).
-// Disabled while PROPERTIES_PUBLIC=false so we don't pre-build URLs that 404
-// publicly. Re-enables automatically when the flag flips.
 export async function generateStaticParams() {
-  if (!PROPERTIES_PUBLIC) return [];
-
   const supabase = createStaticSupabaseClient();
   const { data: properties } = await supabase
     .from('properties')
@@ -40,15 +26,6 @@ export async function generateStaticParams() {
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: PropertyPageProps): Promise<Metadata> {
-  // While listings are dark, return minimal noindex metadata so search
-  // engines don't try to surface these URLs even if they discover them.
-  if (!PROPERTIES_PUBLIC) {
-    return {
-      title: 'Marbella Live',
-      robots: { index: false, follow: false, nocache: true },
-    };
-  }
-
   const { slug } = await params;
   const property = await getPropertyBySlug(slug);
 
@@ -306,12 +283,6 @@ function generatePropertyJsonLd(property: Property, baseUrl: string) {
 }
 
 export default async function PropertyPage({ params }: PropertyPageProps) {
-  // Gate the page: public visitors get a 404 while listings are dark.
-  // Logged-in admins always see the page as it WILL look post-launch (preview).
-  if (!(await shouldShowListings())) {
-    notFound();
-  }
-
   const { slug } = await params;
   const property = await getPropertyBySlug(slug);
 

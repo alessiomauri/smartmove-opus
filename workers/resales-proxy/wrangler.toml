@@ -1,0 +1,19 @@
+name = "smartmove-resales-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+# Set these via `wrangler secret put` (NEVER commit values):
+#   wrangler secret put RESALES_P1
+#   wrangler secret put RESALES_P2
+#   wrangler secret put RESALES_PROXY_SECRET
+#
+# RESALES_P1 / RESALES_P2: the credentials issued by Resales (see RESALES_API_REFERENCE §2)
+# RESALES_PROXY_SECRET: a shared secret the Next.js app sends in `x-smartmove-secret`
+#                      header. Must match `RESALES_PROXY_SECRET` in Vercel env.
+
+[vars]
+RESALES_BASE = "https://webapi.resales-online.com/V6"
+RESALES_SANDBOX = "true"
+# Allowed endpoints — keeps the Worker tightly scoped. Do NOT add 'RegisterLead'.
+ALLOWED_ENDPOINTS = "SearchProperties,PropertyDetails,SearchFeatures,SearchLocations,SearchPropertyTypes,FeaturedProperties"

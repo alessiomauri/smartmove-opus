@@ -1,7 +1,5 @@
 /**
- * Public-facing /new-developments routes are built but inactive.
- *
- * Flip this to `true` (and remove the disallow rule in robots.ts +
- * uncomment the sitemap entries) when you're ready to launch.
+ * Public-facing /new-developments routes. Active for Smartmove from day one
+ * (per SMARTMOVE_BRIEF §3.15 — flagship surface).
  */
-export const NEW_DEVELOPMENTS_PUBLIC = false;
+export const NEW_DEVELOPMENTS_PUBLIC = true;

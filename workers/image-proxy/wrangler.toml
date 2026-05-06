@@ -1,0 +1,23 @@
+name = "smartmove-image-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+# R2 bucket binding — create the bucket via:
+#   npx wrangler r2 bucket create smartmove-property-images
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "smartmove-property-images"
+
+# Optional KV for source-URL lookups (alternative: query Supabase directly).
+# Uncomment if/when used:
+# [[kv_namespaces]]
+# binding = "SOURCE_URLS"
+# id = "<kv-namespace-id>"
+
+[vars]
+# Allowed source origins for lazy fetch on first miss.
+ALLOWED_ORIGINS = "media-webapi.resales-online.com,cdn.resales-online.com,picsum.photos"
+# Cloudflare Images delivery URL prefix — set to your account's URL once Images is enabled.
+# Format: https://imagedelivery.net/<account-hash>
+CF_IMAGES_DELIVERY = ""

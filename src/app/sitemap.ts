@@ -2,25 +2,17 @@ import { MetadataRoute } from 'next';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { AREAS } from '@/types/property';
 import { COSTA_DEL_SOL_AREAS } from '@/lib/areas-data';
-import { PROPERTIES_PUBLIC } from '@/lib/feature-flags';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://marbella.live';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
-  // Only fetch properties when listings are public — keeps the sitemap clean
-  // (no 404-returning URLs) during the info-mode pre-launch period.
   const supabase = createStaticSupabaseClient();
-  const properties = PROPERTIES_PUBLIC
-    ? (
-        await supabase
-          .from('properties')
-          .select('slug, updated_at, hero_image, gallery_images, location, status')
-          .eq('published', true)
-          .order('updated_at', { ascending: false })
-      ).data
-    : null;
+  const { data: properties } = await supabase
+    .from('properties')
+    .select('slug, updated_at, hero_image, gallery_images, location, status')
+    .eq('published', true)
+    .order('updated_at', { ascending: false });
 
-  // Static pages — favourites only listed when listings are public
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -40,16 +32,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.9,
     },
-    ...(PROPERTIES_PUBLIC
-      ? [
-          {
-            url: `${baseUrl}/favourites`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly' as const,
-            priority: 0.3,
-          },
-        ]
-      : []),
+    {
+      url: `${baseUrl}/new-developments`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/favourites`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.3,
+    },
   ];
 
   // Dynamic property pages - high priority with images
@@ -118,13 +112,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/?sort=price_desc`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.4 },
     { url: `${baseUrl}/?sort=newest`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.5 },
   ];
-
-  // While listings are dark we ONLY emit the info-mode URLs (homepage,
-  // /areas, /blog, area pages). All property/filter/sort URLs would 404
-  // publicly, so excluding them keeps Search Console clean.
-  if (!PROPERTIES_PUBLIC) {
-    return [...staticPages, ...areaPages];
-  }
 
   return [
     ...staticPages,
