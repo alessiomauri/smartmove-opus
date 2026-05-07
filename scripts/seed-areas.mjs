@@ -26,13 +26,16 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 // Mirror of PIN_CATEGORY_BY_SLUG from src/lib/actions/areas.ts so this
 // script doesn't need to import server-only code.
 const PIN_CATEGORY_BY_SLUG = {
-  // 5 resorts
+  // Resorts (Marbella Live "All Locations" hierarchy — show on the map
+  // with a distinct resort pin treatment).
   'puente-romano': 'resort',
   'finca-cortesin': 'resort',
   'la-zagaleta': 'resort',
   'villa-padierna': 'resort',
   'higueron': 'resort',
-  // 1 airport
+  'palo-alto': 'resort',
+  'real-de-la-quinta': 'resort',
+  // Airport
   'malaga-airport': 'airport',
   // Everything else falls through to main vs micro based on isMicroLocation.
 };

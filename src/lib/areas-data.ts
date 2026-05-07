@@ -745,7 +745,10 @@ Sotogrande appeals to buyers who value sports, privacy, and a refined lifestyle 
     priceRange: 'From €300,000 to €15,000,000+',
     nearbyAreas: ['manilva', 'casares'],
     keywords: ['Sotogrande property for sale', 'Sotogrande villas', 'Sotogrande marina apartments', 'Valderrama golf property', 'polo property Sotogrande', 'luxury real estate Sotogrande'],
+    // Treated as a MAIN-pin area on the map but nested under San Roque so
+    // its listings propagate up to /areas/san-roque too.
     isMicroLocation: false,
+    parentArea: 'san-roque',
   },
 
   // ═══════════════════════════════════════════
@@ -816,6 +819,201 @@ The small marina at Cabopino is one of the most charming on the coast, lined wit
   // ═══════════════════════════════════════════
   // TRANSIT REFERENCE (not a property area, map pin only)
   // ═══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // SAN ROQUE MUNICIPALITY (parent for Sotogrande)
+  // ═══════════════════════════════════════════
+  {
+    name: 'San Roque',
+    slug: 'san-roque',
+    region: 'San Roque',
+    title: 'San Roque Property for Sale | Sotogrande & Costa del Sol',
+    metaDescription: 'Discover property for sale in San Roque, the Cadiz-province municipality home to Sotogrande, Valderrama golf, and the Santa Maria Polo Club.',
+    heading: 'Property in San Roque',
+    subheading: 'Cadiz coast living, anchored by Sotogrande and the legendary Valderrama golf course',
+    description: `San Roque is the Cadiz-province municipality at the western edge of the Costa del Sol, best known to international buyers as the home of Sotogrande — Spain's most prestigious sporting estate. Set between the Mediterranean and the Sierra Bermeja, San Roque combines an authentic Andalusian town with some of Europe's finest golf and polo destinations.
+
+The property landscape ranges from traditional houses in the historic centre to the world-class developments of Sotogrande, La Alcaidesa, and the marina at Puerto de Sotogrande. The municipality enjoys a slightly cooler microclimate than Marbella and a quieter pace, with strong appeal for golf-focused buyers, equestrian families, and those seeking a refined lifestyle close to Gibraltar.`,
+    propertyTypes: ['Marina Apartments', 'Golf Villas', 'Equestrian Estates', 'Townhouses'],
+    highlights: ['Valderrama golf', 'Santa Maria Polo Club', '30 min to Gibraltar', 'Cadiz province', 'International schools'],
+    coordinates: { lat: 36.2103, lng: -5.3850 },
+    priceRange: 'From €300,000 to €15,000,000+',
+    nearbyAreas: ['sotogrande', 'manilva', 'casares'],
+    keywords: ['San Roque property for sale', 'San Roque Cadiz property', 'Sotogrande area property'],
+    isMicroLocation: false,
+  },
+
+  // ═══════════════════════════════════════════
+  // MARBELLA — additional resort
+  // ═══════════════════════════════════════════
+  {
+    name: 'Palo Alto',
+    slug: 'palo-alto',
+    region: 'Marbella',
+    title: 'Palo Alto Marbella Property for Sale | Hillside Resort Living',
+    metaDescription: 'Apartments and townhouses for sale in Palo Alto, the contemporary hillside resort in the foothills above Marbella with panoramic Mediterranean views.',
+    heading: 'Properties in Palo Alto',
+    subheading: 'A modern hillside community in the foothills above Marbella',
+    description: `Palo Alto is a contemporary master-planned community set in the foothills above Marbella, designed for buyers who want resort-style living without giving up proximity to the coast. The development is built around a central plaza with restaurants and concierge facilities, with low-rise apartment buildings and townhouses arranged across landscaped terraces.
+
+Properties here are characterised by clean contemporary architecture, generous outdoor space, and panoramic views over Marbella to the Mediterranean. Communal amenities include pools, a gym, paddle courts, and 24-hour security — appealing in particular to international buyers seeking a turn-key lock-up-and-leave home with a strong rental backdrop.`,
+    propertyTypes: ['Resort Apartments', 'Penthouses', 'Townhouses'],
+    highlights: ['Resort amenities', 'Panoramic views', 'Concierge services', '24-hour security', 'Hillside setting', 'Contemporary design'],
+    coordinates: { lat: 36.5340, lng: -4.8950 },
+    priceRange: '€600,000 – €5,000,000',
+    nearbyAreas: ['marbella', 'sierra-blanca', 'golden-mile', 'nueva-andalucia'],
+    keywords: ['Palo Alto Marbella', 'Palo Alto property for sale', 'resort apartments Marbella', 'hillside Marbella'],
+    isMicroLocation: true,
+    parentArea: 'marbella',
+  },
+
+  // ═══════════════════════════════════════════
+  // ESTEPONA — additional sub-areas
+  // ═══════════════════════════════════════════
+  {
+    name: 'Villa Padierna',
+    slug: 'villa-padierna',
+    region: 'Estepona',
+    title: 'Villa Padierna Property for Sale | Costa del Sol Resort Living',
+    metaDescription: 'Luxury villas and apartments for sale at Villa Padierna, the five-star Costa del Sol resort with three golf courses, a Tuscan-style hotel, and panoramic sea views.',
+    heading: 'Properties at Villa Padierna',
+    subheading: 'Five-star resort living with three championship golf courses',
+    description: `Villa Padierna is a five-star resort estate on the New Golden Mile, set between Marbella and Estepona. The community is anchored by the Tuscan-style Villa Padierna Palace Hotel and three championship golf courses (Flamingos, Tramores, and Alferini), with property options ranging from elegant golf-front villas to refined apartments in low-rise developments.
+
+The address has long appealed to international buyers seeking a serviced, country-club lifestyle with access to first-class hotel amenities, a tennis academy, and a private beach club. Its position offers easy reach to both Puerto Banús and the Estepona old town.`,
+    propertyTypes: ['Golf Villas', 'Resort Apartments', 'Penthouses', 'Townhouses'],
+    highlights: ['Three championship golf courses', '5-star hotel + spa', 'Tennis academy', 'Beach club', 'Tuscan architecture', 'Concierge services'],
+    coordinates: { lat: 36.4670, lng: -5.0130 },
+    priceRange: 'From €700,000 to €10,000,000+',
+    nearbyAreas: ['los-flamingos', 'new-golden-mile', 'estepona', 'benahavis'],
+    keywords: ['Villa Padierna property', 'Villa Padierna villas for sale', 'New Golden Mile resort', 'Flamingos golf property'],
+    isMicroLocation: true,
+    parentArea: 'estepona',
+  },
+  {
+    name: 'Los Flamingos',
+    slug: 'los-flamingos',
+    region: 'Estepona',
+    title: 'Los Flamingos Property for Sale | Golf Resort Villas Estepona',
+    metaDescription: 'Luxury villas and apartments for sale at Los Flamingos Golf Resort, Estepona — home to Villa Padierna and three championship golf courses.',
+    heading: 'Properties in Los Flamingos',
+    subheading: 'Golf-resort living on the New Golden Mile',
+    description: `Los Flamingos Golf Resort sits on the New Golden Mile between Marbella and Estepona, occupying one of the highest-rated golf settings on the Costa del Sol. The resort is best known for its three championship courses and the adjacent Villa Padierna Palace Hotel, with low-density villa plots and elegant apartment communities arranged around the fairways.
+
+Buyers here typically prioritise golf, year-round international community, and the polished resort infrastructure that comes with the Villa Padierna brand.`,
+    propertyTypes: ['Golf Villas', 'Apartments', 'Penthouses'],
+    highlights: ['Three golf courses', '5-star hotel adjacency', 'Sea + mountain views', 'Quiet golf setting'],
+    coordinates: { lat: 36.4530, lng: -5.0520 },
+    priceRange: 'From €600,000 to €8,000,000+',
+    nearbyAreas: ['villa-padierna', 'new-golden-mile', 'estepona'],
+    keywords: ['Los Flamingos property', 'Flamingos Golf Resort', 'Villa Padierna golf villas'],
+    isMicroLocation: true,
+    parentArea: 'estepona',
+  },
+  {
+    name: 'El Paraíso',
+    slug: 'el-paraiso',
+    region: 'Estepona',
+    title: 'El Paraíso Property for Sale | Golf & Beach Living, Estepona',
+    metaDescription: 'Villas and apartments for sale in El Paraíso, the established golf-and-beach community between Marbella and Estepona on the New Golden Mile.',
+    heading: 'Properties in El Paraíso',
+    subheading: 'Established golf and beach living on the New Golden Mile',
+    description: `El Paraíso is a long-established residential area straddling the Marbella–Estepona border, organised around the El Paraíso Golf Club and a stretch of beachfront punctuated by mature urbanisations. The area mixes traditional Andalusian villas with newer contemporary builds, with strong demand for renovation projects.
+
+It appeals to families and second-home buyers who want quiet golf-and-beach living within easy reach of San Pedro and Estepona town, without paying the premiums of the central Golden Mile.`,
+    propertyTypes: ['Villas', 'Townhouses', 'Apartments'],
+    highlights: ['El Paraíso Golf Club', 'Beach proximity', 'Mature urbanisations', 'Renovation opportunities'],
+    coordinates: { lat: 36.4730, lng: -4.9980 },
+    priceRange: 'From €450,000 to €5,000,000+',
+    nearbyAreas: ['new-golden-mile', 'estepona', 'cancelada', 'atalaya'],
+    keywords: ['El Paraiso property', 'El Paraiso golf villas', 'New Golden Mile property'],
+    isMicroLocation: true,
+    parentArea: 'estepona',
+  },
+  {
+    name: 'Cancelada',
+    slug: 'cancelada',
+    region: 'Estepona',
+    title: 'Cancelada Property for Sale | New Golden Mile, Estepona',
+    metaDescription: 'Townhouses, apartments, and villas for sale in Cancelada, a quiet residential area on the New Golden Mile in Estepona.',
+    heading: 'Properties in Cancelada',
+    subheading: 'Quiet residential living on the New Golden Mile',
+    description: `Cancelada is a residential village along the New Golden Mile, just inland from the coast between Marbella and Estepona. With its plaza, local restaurants, and easy access to the AP-7, it has become a popular choice for buyers seeking authentic Spanish life without the price premium of beachfront addresses.
+
+Property here ranges from townhouses and apartments in low-density complexes to country-style fincas in the hills behind the village.`,
+    propertyTypes: ['Townhouses', 'Apartments', 'Fincas', 'Villas'],
+    highlights: ['Authentic Spanish village feel', 'Strong rental demand', 'AP-7 access', 'Family-friendly'],
+    coordinates: { lat: 36.4520, lng: -5.0240 },
+    priceRange: 'From €300,000 to €2,500,000',
+    nearbyAreas: ['new-golden-mile', 'el-paraiso', 'estepona'],
+    keywords: ['Cancelada property', 'Cancelada Estepona', 'New Golden Mile property'],
+    isMicroLocation: true,
+    parentArea: 'estepona',
+  },
+  {
+    name: 'Selwo',
+    slug: 'selwo',
+    region: 'Estepona',
+    title: 'Selwo Property for Sale | Hillside Sea-View Living, Estepona',
+    metaDescription: 'Modern villas and townhouses for sale in Selwo, Estepona — hillside sea-view living a short drive from the New Golden Mile beaches.',
+    heading: 'Properties in Selwo',
+    subheading: 'Hillside sea-view living, just inland from the beach',
+    description: `Selwo sits on the hillside above the New Golden Mile coastline in Estepona, named after the adjacent Selwo Aventura wildlife park. The area has seen substantial new development in recent years, with low-density villa and townhouse communities favouring contemporary architecture and panoramic Mediterranean views.
+
+Selwo appeals to families and golf-focused buyers attracted by the combination of new-build quality, generous outdoor space, and proximity to both Estepona town and the international schools of the New Golden Mile.`,
+    propertyTypes: ['Modern Villas', 'Townhouses', 'Apartments'],
+    highlights: ['Sea views', 'Selwo Aventura park', 'Family-friendly', 'New developments', 'Hillside setting'],
+    coordinates: { lat: 36.4340, lng: -5.0550 },
+    priceRange: 'From €450,000 to €3,500,000',
+    nearbyAreas: ['new-golden-mile', 'estepona', 'los-flamingos'],
+    keywords: ['Selwo property', 'Selwo Estepona villas', 'sea view Estepona'],
+    isMicroLocation: true,
+    parentArea: 'estepona',
+  },
+  {
+    name: 'Valle Romano',
+    slug: 'valle-romano',
+    region: 'Estepona',
+    title: 'Valle Romano Property for Sale | Golf Resort Villas, Estepona',
+    metaDescription: 'Villas, townhouses, and apartments for sale at Valle Romano Golf Resort, Estepona — championship golf, modern architecture, and panoramic views.',
+    heading: 'Properties in Valle Romano',
+    subheading: 'Championship golf-resort living on the western edge of Estepona',
+    description: `Valle Romano is a master-planned golf resort on the western edge of Estepona, organised around the Valle Romano Golf Club. The development combines contemporary villas with apartment communities, all enjoying mountain and partial sea views from elevated plots.
+
+The resort is a popular choice with golf-focused families and buyers who want strong amenities without paying central-Estepona prices. The N-340 keeps it five minutes from the Estepona old town and beach.`,
+    propertyTypes: ['Golf Villas', 'Apartments', 'Townhouses'],
+    highlights: ['Valle Romano Golf', 'Modern architecture', 'Mountain + sea views', 'Family-friendly'],
+    coordinates: { lat: 36.4300, lng: -5.1650 },
+    priceRange: 'From €350,000 to €2,500,000',
+    nearbyAreas: ['estepona', 'manilva', 'casares'],
+    keywords: ['Valle Romano property', 'Valle Romano golf villas', 'Estepona golf resort'],
+    isMicroLocation: true,
+    parentArea: 'estepona',
+  },
+
+  // ═══════════════════════════════════════════
+  // MIJAS — Higueron Resort
+  // ═══════════════════════════════════════════
+  {
+    name: 'Higuerón',
+    slug: 'higueron',
+    region: 'Mijas',
+    title: 'Higuerón Resort Property for Sale | Five-Star Living, Costa del Sol',
+    metaDescription: 'Apartments, penthouses, and villas for sale at Higuerón Resort, the five-star hillside community between Mijas and Fuengirola with sea views and full resort amenities.',
+    heading: 'Properties at Higuerón Resort',
+    subheading: 'Five-star resort living between Mijas and Fuengirola',
+    description: `Higuerón is a five-star resort community set on the hillside between Mijas and Fuengirola, with sweeping views of the Mediterranean and direct access to the AP-7. The development is anchored by the Hilton-managed Higuerón Hotel and a comprehensive set of amenities — Nikki Beach club, multiple restaurants, padel courts, a wellness centre, and concierge services.
+
+Property options span low-rise apartment blocks, penthouses with private pools, and a small number of villas, all set among landscaped grounds and connected to the resort core. Higuerón is a particularly popular choice for international second-home owners drawn by the turn-key lifestyle, strong rental backdrop, and short transfer time from Málaga Airport.`,
+    propertyTypes: ['Resort Apartments', 'Penthouses', 'Villas'],
+    highlights: ['5-star Hilton hotel', 'Nikki Beach club', 'Padel + wellness', 'Sea views', '15 min from Málaga Airport', 'Concierge'],
+    coordinates: { lat: 36.5630, lng: -4.6160 },
+    priceRange: 'From €450,000 to €4,500,000',
+    nearbyAreas: ['fuengirola', 'mijas-costa', 'mijas-golf', 'la-cala-de-mijas'],
+    keywords: ['Higueron property', 'Higueron Resort apartments', 'Reserva del Higueron', 'Hilton Higueron'],
+    isMicroLocation: true,
+    parentArea: 'mijas',
+  },
+
   {
     name: 'Málaga Airport',
     slug: 'malaga-airport',
