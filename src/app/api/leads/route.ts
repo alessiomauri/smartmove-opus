@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 import { createLead as createMondayLead } from '@/lib/integrations/monday';
+
+/**
+ * Service-role Supabase client used by this route only.
+ *
+ * /api/leads is a public-facing endpoint (anon callers post contact
+ * forms). We use the service role here for two reasons:
+ *   1. INSERT followed by SELECT-id needs read-back access; granting
+ *      anon SELECT on `leads` would leak every lead. Service role
+ *      bypasses RLS for this single write+read flow only.
+ *   2. The Monday-sync columns (monday_item_id, monday_synced_at,
+ *      monday_sync_skipped) are written by this same route after the
+ *      Monday wrapper returns. Granting anon UPDATE would similarly
+ *      over-expose.
+ *
+ * The route still validates payload via zod and explicitly enumerates
+ * the columns it writes, so service role doesn't widen the attack
+ * surface beyond what the validator allows.
+ */
+function getServiceRoleClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 /**
  * Lead capture endpoint.
@@ -72,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
-  const supabase = await createServerSupabaseClient();
+  const supabase = getServiceRoleClient();
 
   // 1. Always write to local DB first. This is the durable record.
   // If Monday is down or disabled, the lead is still captured.
