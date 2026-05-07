@@ -1110,25 +1110,21 @@ select:focus {
 .sm-hero__brand {
   justify-self: center;
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
   text-decoration: none;
-  color: #fff;
-  font-family: var(--sm-font-display);
-  font-weight: var(--sm-weight-light);
-  font-size: 26px;
-  line-height: 1;
-  letter-spacing: var(--sm-tracking-tight);
-  text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  /* Lets the logo hang slightly above and below the 88px topbar so it
+     reads as a wordmark, not a button. Matches Brand Foundation v1. */
+  margin: -42px 0;
 }
-.sm-hero__brand-mark {
-  font-size: 10px;
-  font-family: var(--sm-font-body);
-  font-weight: var(--sm-weight-semibold);
-  letter-spacing: var(--sm-tracking-widest);
-  text-transform: uppercase;
-  color: var(--sm-gold-soft);
-  margin-top: 6px;
+.sm-hero__brand-img {
+  height: 160px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 2px 12px rgba(0,0,0,0.35));
+}
+@media (max-width: 900px) {
+  .sm-hero__brand { margin: -28px 0; }
+  .sm-hero__brand-img { height: 110px; }
 }
 
 .sm-hero__right-cluster {

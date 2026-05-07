@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -50,7 +51,7 @@ export default function HomeHero({ featured }: HomeHeroProps) {
           backgroundImage: `
             linear-gradient(180deg, rgba(28,26,23,.40) 0%, rgba(28,26,23,.10) 28%, rgba(28,26,23,.55) 70%, rgba(28,26,23,.85) 100%),
             linear-gradient(100deg, rgba(28,26,23,.45) 0%, rgba(28,26,23,0) 55%),
-            url('https://picsum.photos/seed/smartmove-hero/1920/1080')
+            url('/hero/marbella-living-2023.jpg')
           `,
         }}
       />
@@ -62,9 +63,15 @@ export default function HomeHero({ featured }: HomeHeroProps) {
           <Link href="/areas">{tNav('areas')}</Link>
         </nav>
 
-        <Link href="/" className="sm-hero__brand">
-          Smartmove
-          <span className="sm-hero__brand-mark">Marbella</span>
+        <Link href="/" className="sm-hero__brand" aria-label="Smartmove Marbella — home">
+          <Image
+            src="/brand/logo-white.png"
+            alt="Smartmove Marbella"
+            width={520}
+            height={160}
+            priority
+            className="sm-hero__brand-img"
+          />
         </Link>
 
         <div className="sm-hero__right-cluster">
