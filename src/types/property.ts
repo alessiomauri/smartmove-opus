@@ -59,6 +59,11 @@ export interface Property {
   property_type: PropertyType;
   micro_location: string | null;
 
+  // Origin (Resales sync, manual, or scraper). Optional on existing rows.
+  source?: PropertySource;
+  source_id?: string | null;
+  source_image_urls?: string[];
+
   // Metadata
   created_at: string;
   updated_at: string;

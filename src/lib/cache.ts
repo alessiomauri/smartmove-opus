@@ -16,7 +16,7 @@ export const DEVELOPMENTS_TAG = 'developments';
 // Columns we need for listing / card rendering. Keeping this narrow keeps
 // payload small and bandwidth cost low.
 const LIST_COLUMNS =
-  'id,slug,name,status,property_type,price,price_on_request,location,area,micro_location,bedrooms,bathrooms,interior_size,plot_size,hero_image,hero_image_blur,is_featured,featured_order,features,description,created_at';
+  'id,slug,name,status,property_type,price,price_on_request,location,area,micro_location,bedrooms,bathrooms,interior_size,plot_size,hero_image,hero_image_blur,is_featured,featured_order,features,description,created_at,source,source_id,source_image_urls';
 
 /**
  * Cached fetch for every published property — the grid source of truth

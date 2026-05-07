@@ -26,6 +26,9 @@ export interface Env {
   ALLOWED_ORIGINS: string;
   CF_IMAGES_DELIVERY: string;
   SOURCE_URLS?: KVNamespace;
+  /** Set via wrangler secret. Used for the source URL lookup. */
+  SUPABASE_URL?: string;
+  SUPABASE_ANON_KEY?: string;
 }
 
 const ROUTE_RE = /^\/(p|d)\/([\w-]+)\/(\d+)$/;
@@ -97,9 +100,38 @@ async function resolveSourceUrl(
     const v = await env.SOURCE_URLS.get(`${kind}/${id}/${index}`);
     if (v) return v;
   }
-  // TODO Phase 4: fall back to a Supabase RPC call to look up
-  // properties.source_image_urls[index] / developments.source_image_urls[index].
-  return null;
+  // Fallback: Supabase REST PostgREST lookup. Reads source_image_urls[index]
+  // from properties (kind='p') or developments (kind='d').
+  // The id is matched against either the row id (UUID) or the source_id
+  // (Resales Reference like R3479851) — the URL pattern lets the app pass
+  // whichever it has.
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
+
+  const table = kind === 'p' ? 'properties' : 'developments';
+  // Pick the filter column based on the id shape. UUIDs look like
+  // 8-4-4-4-12 hex; Resales references are R<digits>; everything else is
+  // assumed to be a slug.
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  const isResalesRef = /^R\d+$/i.test(id);
+  const column = isUuid ? 'id' : isResalesRef ? 'source_id' : 'slug';
+  const url = `${env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}?select=source_image_urls&${column}=eq.${encodeURIComponent(id)}&limit=1`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+      },
+    });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Array<{ source_image_urls?: string[] | null }>;
+    const arr = rows[0]?.source_image_urls;
+    const idx = Number(index);
+    if (!arr || !Number.isFinite(idx) || idx < 0 || idx >= arr.length) return null;
+    return arr[idx] || null;
+  } catch {
+    return null;
+  }
 }
 
 function isOriginAllowed(srcUrl: string, env: Env): boolean {

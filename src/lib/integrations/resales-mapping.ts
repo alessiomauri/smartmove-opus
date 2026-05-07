@@ -387,6 +387,23 @@ function parseGps(value: string | undefined): number | null {
   return n;
 }
 
+/**
+ * Build the public hero URL for a property/development. Routes through
+ * the Cloudflare image proxy when configured (lazy-fills R2, edge-cached);
+ * falls back to the canonical Resales URL when the proxy isn't set.
+ */
+function buildHeroUrl(
+  kind: 'p' | 'd',
+  reference: string,
+  fallbackSourceUrl: string | undefined
+): string {
+  const proxy = process.env.NEXT_PUBLIC_IMAGE_PROXY_URL;
+  if (proxy && reference) {
+    return `${proxy.replace(/\/$/, '')}/${kind}/${reference}/0`;
+  }
+  return fallbackSourceUrl ?? '';
+}
+
 // ────────────────────────────────────────────────── Public mappers
 
 /**
@@ -449,7 +466,7 @@ export function mapToPropertyRow(
     feature_labels: featureLabels,
     features,
     // Images
-    hero_image: sourceImageUrls[0] ?? '',
+    hero_image: buildHeroUrl('p', p.Reference, sourceImageUrls[0]),
     // Resales extras
     own_property: isOwn,
     community_fees_year: num(p.Community_Fees_Year),
@@ -523,7 +540,7 @@ export function mapToDevelopmentRow(
     area: p.Location ?? p.Area ?? '',
     latitude: parseGps(p.GpsY),
     longitude: parseGps(p.GpsX),
-    hero_image: sourceImageUrls[0] ?? '',
+    hero_image: buildHeroUrl('d', p.Reference, sourceImageUrls[0]),
     source_image_urls: sourceImageUrls,
     payment_terms: paymentTerms,
     brochure_pdf: p.PublicDocuments?.URL || null,
