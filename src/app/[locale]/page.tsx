@@ -1,6 +1,8 @@
 import HomeHero from '@/components/HomeHero';
 import HomeListingsClient from './HomeListingsClient';
 import AwardsBlock from '@/components/AwardsBlock';
+import SearchPill from '@/components/SearchPill';
+import PinnedFeaturedCard from '@/components/PinnedFeaturedCard';
 import { getCachedPublishedProperties, getCachedDefaultSort } from '@/lib/cache';
 
 export const revalidate = 3600;
@@ -73,6 +75,23 @@ export default async function Home() {
       />
 
       <HomeHero featured={featuredTag} />
+
+      {/* Mobile-only widgets (hidden on desktop via CSS): collapsed search pill
+          overlapping the hero, then the pinned featured card. */}
+      <SearchPill />
+      {heroFeatured && (
+        <PinnedFeaturedCard
+          property={{
+            slug: heroFeatured.slug,
+            name: heroFeatured.name,
+            location: heroFeatured.location,
+            area: heroFeatured.area,
+            hero_image: heroFeatured.hero_image,
+            price: heroFeatured.price,
+            price_on_request: heroFeatured.price_on_request,
+          }}
+        />
+      )}
 
       <section className="sm-section">
         <header className="sm-section__head">

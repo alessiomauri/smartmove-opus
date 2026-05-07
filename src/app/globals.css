@@ -1805,3 +1805,472 @@ select:focus {
 @media (max-width: 700px) {
   .sm-cards { grid-template-columns: 1fr; gap: 20px; }
 }
+
+/* ============================================================
+   Smartmove components — Mobile Foundation
+   Per ~/Downloads/Brand Foundation Mobile.html
+   ============================================================ */
+
+/* ============ HERO MOBILE OVERRIDES ============ */
+.sm-hero__hamburger {
+  display: none;  /* desktop default; shown at <=900 */
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  transition: opacity var(--sm-duration-fast) var(--sm-ease);
+  justify-self: start;
+}
+.sm-hero__hamburger:hover { opacity: 1; }
+.sm-hero__hamburger svg { width: 22px; height: 22px; }
+
+.sm-hero__cta-row {
+  display: none;  /* desktop default */
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+  animation: sm-rise 900ms 780ms cubic-bezier(.2,.7,.2,1) both;
+}
+.sm-hero__cta-primary,
+.sm-hero__cta-ghost {
+  height: 52px;
+  border-radius: var(--sm-radius-sm);
+  font-family: var(--sm-font-body);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--sm-duration-base) var(--sm-ease),
+              border-color var(--sm-duration-base) var(--sm-ease);
+}
+.sm-hero__cta-primary {
+  background: var(--sm-gold);
+  color: #fff;
+}
+.sm-hero__cta-primary:hover { background: var(--sm-gold-deep); }
+.sm-hero__cta-ghost {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.5);
+  backdrop-filter: blur(6px);
+}
+.sm-hero__cta-ghost:hover { border-color: #fff; background: rgba(255,255,255,0.15); }
+
+@media (max-width: 900px) {
+  .sm-hero {
+    aspect-ratio: 3 / 4;
+    min-height: 0;
+    margin: 0;
+    border-radius: 0;
+  }
+  .sm-hero__bg {
+    background:
+      linear-gradient(180deg, rgba(28,26,23,.55) 0%, rgba(28,26,23,.30) 35%, rgba(28,26,23,.55) 100%),
+      url('/hero/marbella-living-2023.jpg') center/cover no-repeat !important;
+  }
+  .sm-hero__topbar {
+    grid-template-columns: 44px 1fr 44px;
+    height: auto;
+    padding: 8px 12px;
+    gap: 0;
+  }
+  /* Mobile: hide the desktop nav clusters; show hamburger + favourite only */
+  .sm-hero__nav-left,
+  .sm-hero__nav-right,
+  .sm-hero__right-cluster,
+  .sm-hero__lang { display: none; }
+  .sm-hero__hamburger { display: inline-grid; place-items: center; }
+  .sm-hero__utils {
+    right: 12px;
+    gap: 0;
+  }
+  .sm-hero__fav {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+  }
+  .sm-hero__fav svg { width: 20px; height: 20px; }
+
+  .sm-hero__center {
+    grid-template-columns: 1fr;
+    gap: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 32px 22px 24px;
+  }
+
+  .sm-hero__eyebrow {
+    font-size: 10px;
+    margin-bottom: 14px;
+  }
+  .sm-hero__title {
+    font-size: 38px;
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    margin-bottom: 22px;
+    max-width: 100%;
+  }
+
+  /* Hide desktop search rail + side card on mobile */
+  .sm-hero__search { display: none; }
+  .sm-hero__feature { display: none; }
+
+  /* Show mobile CTA row */
+  .sm-hero__cta-row { display: grid; }
+}
+
+@media (min-width: 901px) {
+  /* Tablet/desktop default: hide mobile-only widgets */
+  .sm-hero__hamburger { display: none; }
+  .sm-hero__cta-row { display: none; }
+}
+
+/* Tablet variant (768-900): 4:5 hero */
+@media (min-width: 600px) and (max-width: 900px) {
+  .sm-hero { aspect-ratio: 4 / 5; }
+  .sm-hero__title { font-size: 56px; line-height: 1.02; max-width: 80%; }
+}
+
+/* ============ MOBILE NAV DRAWER ============ */
+.sm-drawer {
+  position: fixed;
+  inset: 0;
+  background: var(--sm-ink);
+  color: #fff;
+  padding: 28px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+  animation: sm-drawer-in 300ms var(--sm-ease-out) both;
+}
+@keyframes sm-drawer-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: none; }
+}
+.sm-drawer__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 48px;
+}
+.sm-drawer__logo {
+  height: 100px;
+  width: auto;
+  margin: -16px 0;
+}
+.sm-drawer__close {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.sm-drawer__close svg { width: 22px; height: 22px; }
+
+.sm-drawer__nav {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.sm-drawer__nav a {
+  font-family: var(--sm-font-display);
+  font-weight: var(--sm-weight-regular);
+  font-size: 32px;
+  line-height: 1;
+  color: #fff;
+  padding: 22px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  text-decoration: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: opacity var(--sm-duration-fast) var(--sm-ease);
+}
+.sm-drawer__nav a:hover { opacity: 0.7; }
+.sm-drawer__arrow {
+  color: var(--sm-gold-soft);
+  font-size: 18px;
+  transition: transform var(--sm-duration-base) var(--sm-ease);
+}
+.sm-drawer__nav a:hover .sm-drawer__arrow { transform: translateX(4px); }
+
+.sm-drawer__foot {
+  margin-top: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sm-drawer__lang {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: var(--sm-radius-pill);
+  padding: 8px 14px;
+  color: #fff;
+}
+.sm-drawer__saved {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: color var(--sm-duration-fast) var(--sm-ease);
+}
+.sm-drawer__saved:hover { color: #fff; }
+.sm-drawer__saved svg { width: 14px; height: 14px; }
+
+/* ============ SEARCH PILL ============ */
+.sm-search-pill {
+  display: none;  /* desktop default */
+  margin: -28px 18px 0;
+  background: #fff;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 14px 36px rgba(28,26,23,0.18);
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 6px 6px 6px 22px;
+  position: relative;
+  z-index: 5;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--sm-font-body);
+  width: calc(100% - 36px);
+}
+.sm-search-pill__text { display: flex; flex-direction: column; }
+.sm-search-pill__lbl {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--sm-text-muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.sm-search-pill__summary {
+  font-family: var(--sm-font-display);
+  font-size: 17px;
+  line-height: 1.2;
+  color: var(--sm-ink);
+  font-weight: 500;
+}
+.sm-search-pill__btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--sm-gold);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.sm-search-pill__btn svg { width: 18px; height: 18px; }
+@media (max-width: 900px) {
+  .sm-search-pill { display: grid; }
+}
+
+/* ============ FILTER BOTTOM SHEET ============ */
+.sm-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,26,23,0.5);
+  border: 0;
+  z-index: 60;
+  cursor: pointer;
+  animation: sm-fade-in 200ms ease both;
+}
+.sm-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 12px 22px 28px;
+  box-shadow: 0 -16px 40px rgba(28,26,23,0.25);
+  z-index: 61;
+  max-height: 88vh;
+  overflow-y: auto;
+  animation: sm-sheet-up 320ms var(--sm-ease-out) both;
+}
+@keyframes sm-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+.sm-sheet__grabber {
+  width: 38px;
+  height: 4px;
+  background: var(--sm-n-200);
+  border-radius: 4px;
+  margin: 0 auto 14px;
+}
+.sm-sheet__title {
+  font-family: var(--sm-font-display);
+  font-weight: var(--sm-weight-regular);
+  font-size: 22px;
+  line-height: 1.1;
+  margin: 0 0 16px;
+  color: var(--sm-ink);
+}
+.sm-sheet__field {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--sm-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sm-sheet__field:last-of-type { border-bottom: 0; }
+.sm-sheet__lbl {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--sm-text-muted);
+  font-weight: 600;
+}
+.sm-sheet__val {
+  font-family: var(--sm-font-display);
+  font-size: 17px;
+  color: var(--sm-ink);
+  font-weight: 500;
+}
+.sm-sheet__apply {
+  width: 100%;
+  height: 52px;
+  border: 0;
+  background: var(--sm-gold);
+  color: #fff;
+  border-radius: var(--sm-radius-sm);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background var(--sm-duration-base) var(--sm-ease);
+}
+.sm-sheet__apply:hover { background: var(--sm-gold-deep); }
+
+/* ============ PINNED FEATURED CARD (mobile) ============ */
+.sm-pinned {
+  display: none;  /* desktop default */
+  margin: 24px 18px 0;
+  border: 1px solid var(--sm-line);
+  border-radius: var(--sm-radius-md);
+  background: #fff;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--sm-ink);
+}
+.sm-pinned__lbl {
+  padding: 12px 18px;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--sm-gold);
+  font-weight: 700;
+  border-bottom: 1px solid var(--sm-line);
+  background: var(--sm-cream);
+}
+.sm-pinned__row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 14px;
+  padding: 14px;
+  align-items: center;
+}
+.sm-pinned__photo {
+  position: relative;
+  width: 100px;
+  height: 86px;
+  border-radius: var(--sm-radius-sm);
+  overflow: hidden;
+  background: var(--sm-cream);
+}
+.sm-pinned__photo img {
+  object-fit: cover;
+}
+.sm-pinned__info { min-width: 0; }
+.sm-pinned__area {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sm-gold);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.sm-pinned__title {
+  font-family: var(--sm-font-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.05;
+  margin: 0 0 6px;
+  color: var(--sm-ink);
+}
+.sm-pinned__price {
+  font-family: var(--sm-font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--sm-ink);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 900px) {
+  .sm-pinned { display: block; }
+}
+
+/* ============ PROPERTY CARD MOBILE OVERRIDES ============ */
+@media (max-width: 700px) {
+  /* Tighter card type per spec (already partly handled above). */
+  .sm-card__title { font-size: 22px; line-height: 1.05; letter-spacing: -0.012em; }
+  .sm-card__title-row { padding-bottom: 10px; margin-bottom: 12px; gap: 12px; }
+  .sm-card__price { font-size: 20px; }
+  .sm-card__specs { font-size: 11px; gap: 10px; }
+  .sm-card__specs strong { font-size: 12px; }
+  .sm-card__area { font-size: 9px; }
+  .sm-card__body { padding: 14px 16px 16px; }
+
+  /* Mobile flow: tap-the-card for details. The two-CTA grid hides;
+     bookmark + status badge + view-property reveal still convey state. */
+  .sm-card__ctas { display: none; }
+
+  /* Slightly tighter bookmark hit target. */
+  .sm-card__bookmark { width: 36px; height: 36px; top: 10px; right: 10px; }
+
+  .sm-cards { padding: 0; }
+}
+
+/* ============ SECTION HEADER MOBILE ============ */
+@media (max-width: 700px) {
+  .sm-section { margin: var(--sm-space-7) 22px; }
+  .sm-section__head { padding-bottom: 10px; margin-bottom: 18px; }
+  .sm-section__title { font-size: var(--sm-text-2xl); }
+}
+
+/* ============ AWARDS BLOCK MOBILE OVERRIDES ============ */
+/* Desktop already collapses to 1-col at <=900 in the existing rules.
+   Add mobile-specific tightening per spec. */
+@media (max-width: 700px) {
+  .sm-awards { padding: 56px 22px 64px; margin: var(--sm-space-7) 0; border-radius: 0; }
+  .sm-awards__title { font-size: 30px; line-height: 1.1; }
+  .sm-awards__cell { grid-template-columns: 90px 1fr; padding: 22px 0; gap: 18px; align-items: start; }
+  .sm-awards__row { padding: 0; }
+  .sm-awards__mark { width: 90px; height: 70px; }
+  .sm-awards__mark img { max-width: 90px; max-height: 70px; }
+  .sm-awards__cell-title { font-size: 17px; line-height: 1.18; }
+  .sm-awards__cite { font-size: 12.5px; }
+}
