@@ -29,8 +29,14 @@ export default function LocationSection({ property }: LocationSectionProps) {
     return () => observer.disconnect();
   }, []);
 
+  // Source-aware: partner listings (Resales) must NOT expose exact pins
+  // even when the source provides coordinates. We show the general area
+  // only — see SMARTMOVE_BRIEF §4.x: bulk inventory gets fuzzed location.
+  const isPartnerListing = property.source === 'resales_online';
   const hasCoordinates =
-    property.latitude !== null && property.longitude !== null;
+    !isPartnerListing &&
+    property.latitude !== null &&
+    property.longitude !== null;
 
   // Convert decimal degrees to DMS format
   const formatCoordinate = (decimal: number, isLat: boolean) => {

@@ -32,6 +32,10 @@ export default function PropertyCard({ property, priority = false }: PropertyCar
     property.status === 'sold' ||
     property.status === 'under_offer' ||
     property.status === 'reserved';
+  // Source-aware UX. Resales-sourced rows are bulk MLS inventory — they
+  // get a tighter card chrome and a subtle "Partner listing" indicator;
+  // Smartmove's own (manual / scraper) listings stay editorial-class.
+  const isPartnerListing = property.source === 'resales_online';
   const { isFavourite, toggleFavourite, isLoaded } = useFavourites();
   const saved = isFavourite(property.id);
 
@@ -64,7 +68,13 @@ export default function PropertyCard({ property, priority = false }: PropertyCar
         <span
           className={`sm-card__badge${isFeatured ? ' sm-card__badge--gold' : ''}`}
         >
-          {isUnavailable ? STATUS_LABELS[property.status] : isFeatured ? 'Featured' : 'New'}
+          {isUnavailable
+            ? STATUS_LABELS[property.status]
+            : isFeatured
+              ? 'Featured'
+              : isPartnerListing
+                ? 'Partner'
+                : 'New'}
         </span>
 
         <button

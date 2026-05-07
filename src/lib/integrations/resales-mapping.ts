@@ -428,10 +428,14 @@ export function mapToPropertyRow(
   const isOwn = p.OwnProperty === '1';
   const status = mapStatus(p.Status?.system);
 
-  // Slug: prefer description-derived if we have a sensible "Property in Location",
-  // otherwise fall back to the Reference. Stable across syncs.
-  const fallbackName = `${canonicalType.NameType ?? 'Property'} in ${p.Location ?? p.Area ?? 'Marbella'}`;
-  const slug = slugify(`${fallbackName}-${p.Reference}`).slice(0, 80);
+  // Resales-sourced properties don't have human-curated names, so synthesise
+  // a tight one. Display name = property type only (e.g. "Middle Floor
+  // Apartment"); the location is already shown in the card's area kicker
+  // and on the detail page. Avoids "Middle Floor Apartment in Casares" which
+  // reads awkwardly. Smartmove's hand-curated rows (source='manual') are
+  // free to use any editorial name they want.
+  const fallbackName = canonicalType.NameType?.trim() || 'Property';
+  const slug = slugify(`${fallbackName}-${p.Location ?? p.Area ?? ''}-${p.Reference}`).slice(0, 80);
 
   return {
     source: 'resales_online',
@@ -507,8 +511,10 @@ export function mapToDevelopmentRow(
   const built = parseRange(p.Built);
   const terrace = parseRange(p.Terrace);
 
-  const fallbackName = `New Development in ${p.Location ?? p.Area ?? 'Marbella'}`;
-  const slug = slugify(`${fallbackName}-${p.Reference}`).slice(0, 80);
+  // Same naming convention as Resales properties — just the type label.
+  // Location goes in the card's area kicker and the detail page header.
+  const fallbackName = 'New Development';
+  const slug = slugify(`new-development-${p.Location ?? p.Area ?? ''}-${p.Reference}`).slice(0, 80);
 
   const paymentTerms: Record<string, string> = {};
   if (p.PaymentTerms?.ContractPercentage) paymentTerms.contract = p.PaymentTerms.ContractPercentage;

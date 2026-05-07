@@ -12,21 +12,32 @@ interface PropertyPageClientProps {
   property: Property;
 }
 
+/**
+ * Property detail page composition.
+ *
+ * Source-aware: Resales-sourced (partner) listings get a tighter template
+ * because Resales doesn't provide floor plans, exact GPS coordinates, or
+ * editorial copy. Smartmove's hand-curated rows (manual / scraper) get
+ * the full template with floor plans + exact map pin.
+ */
 export default function PropertyPageClient({ property }: PropertyPageClientProps) {
+  const isPartnerListing = property.source === 'resales_online';
+
   return (
     <div className="min-h-screen bg-[#faf9f8]">
       <PropertyHeader propertyName={property.name} propertyId={property.id} propertySlug={property.slug} />
       <HeroSection property={property} />
       <FeaturesSection property={property} />
       <GallerySection property={property} />
-      <FloorPlanSection property={property} />
+      {/* Floor plans only for our own / scraper-imported curated listings —
+          Resales bulk inventory doesn't carry plans. */}
+      {!isPartnerListing && <FloorPlanSection property={property} />}
+      {/* Location: full pin for our own listings, generalised area-only for
+          partner listings (Resales properties shouldn't expose exact pins). */}
       <LocationSection property={property} />
 
-      {/* Footer - compact elegant design */}
       <footer className="py-16 lg:py-20 bg-[#faf9f8] relative overflow-hidden">
-        {/* Decorative background orb */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-[#3c9ba7]/[0.02] rounded-full blur-3xl pointer-events-none" />
-
         <div className="max-w-[1400px] mx-auto px-8 lg:px-16 text-center relative">
           <h2 className="font-gloock text-[28px] md:text-[36px] lg:text-[44px] text-[#3c9ba7] leading-none mb-3 tracking-tight">
             Smartmove Marbella
@@ -34,6 +45,11 @@ export default function PropertyPageClient({ property }: PropertyPageClientProps
           <p className="text-[12px] text-[#2e2e2e]/40 tracking-[0.2em] uppercase">
             © {new Date().getFullYear()} All Rights Reserved
           </p>
+          {isPartnerListing && (
+            <p className="text-[10px] tracking-[0.18em] uppercase text-[#2e2e2e]/30 mt-4">
+              Listed via partner network · Reference {property.source_id}
+            </p>
+          )}
         </div>
       </footer>
     </div>
