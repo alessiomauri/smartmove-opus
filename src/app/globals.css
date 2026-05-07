@@ -2274,3 +2274,87 @@ select:focus {
   .sm-awards__cell-title { font-size: 17px; line-height: 1.18; }
   .sm-awards__cite { font-size: 12.5px; }
 }
+
+/* ============ CONTACT FORM (lead capture) ============ */
+.sm-form__title {
+  font-family: var(--sm-font-display);
+  font-weight: var(--sm-weight-light);
+  font-size: var(--sm-text-2xl);
+  color: var(--sm-ink);
+  margin: 0 0 8px;
+}
+.sm-form__intro {
+  font-size: var(--sm-text-sm);
+  color: var(--sm-text-muted);
+  line-height: var(--sm-leading-relaxed);
+  margin: 0;
+}
+.sm-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.sm-form__grid--step2 { margin-top: 6px; }
+.sm-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.sm-form__lbl {
+  font-size: 10px;
+  letter-spacing: var(--sm-tracking-widest);
+  text-transform: uppercase;
+  color: var(--sm-text-muted);
+  font-weight: var(--sm-weight-semibold);
+}
+.sm-form__req { color: var(--sm-gold); }
+.sm-form__input {
+  font-family: var(--sm-font-body);
+  font-size: var(--sm-text-base);
+  padding: 12px 14px;
+  border: 1px solid var(--sm-line);
+  border-radius: var(--sm-radius-sm);
+  background: var(--sm-canvas);
+  color: var(--sm-ink);
+  transition: border-color var(--sm-duration-fast) var(--sm-ease);
+}
+.sm-form__input:focus {
+  outline: none;
+  border-color: var(--sm-gold);
+  box-shadow: var(--sm-shadow-focus);
+}
+.sm-form__textarea { resize: vertical; min-height: 96px; font-family: var(--sm-font-body); }
+.sm-form__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: var(--sm-text-xs);
+  color: var(--sm-text-muted);
+  line-height: var(--sm-leading-relaxed);
+  margin: 14px 0 18px;
+  cursor: pointer;
+}
+.sm-form__consent input { margin-top: 3px; accent-color: var(--sm-gold); }
+.sm-form__submit {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  background: var(--sm-gold);
+  color: #fff;
+  border-radius: var(--sm-radius-sm);
+  font-family: var(--sm-font-body);
+  font-size: 11px;
+  font-weight: var(--sm-weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--sm-duration-base) var(--sm-ease),
+              transform var(--sm-duration-fast) var(--sm-ease);
+}
+.sm-form__submit:hover:not(:disabled) {
+  background: var(--sm-gold-deep);
+  transform: translateY(-1px);
+}
+.sm-form__submit:disabled { opacity: 0.7; cursor: not-allowed; }
