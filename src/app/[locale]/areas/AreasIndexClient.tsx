@@ -9,8 +9,8 @@ import { Area, AreaRegion } from '@/types/area';
 
 function MapPlaceholder() {
   return (
-    <div className="bg-white rounded-xl border border-[#2e2e2e]/[0.06] h-[600px] flex items-center justify-center">
-      <p className="text-[13px] text-[#2e2e2e]/50">Loading map…</p>
+    <div className="bg-white rounded-xl border border-ink/[0.06] h-[600px] flex items-center justify-center">
+      <p className="text-[13px] text-ink/50">Loading map…</p>
     </div>
   );
 }
@@ -89,7 +89,7 @@ export default function AreasIndexClient({ areas }: Props) {
       {/* Map + macro region filter */}
       <section className="pb-12">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h2 className="font-gloock text-[22px] md:text-[26px] text-[#2e2e2e]">
+          <h2 className="font-display text-[22px] md:text-[26px] text-ink">
             Explore the Costa del Sol
           </h2>
           <div className="flex flex-wrap gap-1.5">
@@ -97,8 +97,8 @@ export default function AreasIndexClient({ areas }: Props) {
               onClick={() => setActiveMacro(null)}
               className={`px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase rounded-full border transition-all ${
                 !activeMacro
-                  ? 'bg-[#3c9ba7] text-white border-[#3c9ba7]'
-                  : 'bg-white text-[#2e2e2e]/60 border-[#2e2e2e]/[0.08] hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7]'
+                  ? 'bg-gold text-white border-gold'
+                  : 'bg-white text-ink/60 border-ink/[0.08] hover:border-gold/30 hover:text-gold'
               }`}
             >
               All
@@ -109,8 +109,8 @@ export default function AreasIndexClient({ areas }: Props) {
                 onClick={() => setActiveMacro(activeMacro === m.label ? null : m.label)}
                 className={`px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase rounded-full border transition-all ${
                   activeMacro === m.label
-                    ? 'bg-[#3c9ba7] text-white border-[#3c9ba7]'
-                    : 'bg-white text-[#2e2e2e]/60 border-[#2e2e2e]/[0.08] hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7]'
+                    ? 'bg-gold text-white border-gold'
+                    : 'bg-white text-ink/60 border-ink/[0.08] hover:border-gold/30 hover:text-gold'
                 }`}
               >
                 {m.label}
@@ -124,7 +124,7 @@ export default function AreasIndexClient({ areas }: Props) {
 
       {/* Compact directory — minimal text links grouped by region */}
       <section className="pb-16">
-        <h3 className="font-gloock text-[18px] text-[#2e2e2e] mb-4">
+        <h3 className="font-display text-[18px] text-ink mb-4">
           All Locations
         </h3>
         <CompactDirectory areas={propertyAreas} />
@@ -139,7 +139,7 @@ function FeaturedCard({ area }: { area: Area }) {
   return (
     <Link
       href={{ pathname: '/areas/[slug]', params: { slug: area.slug } }}
-      className="group relative bg-white rounded-xl overflow-hidden border border-[#2e2e2e]/[0.06] hover:border-[#3c9ba7]/20 hover:shadow-xl transition-all duration-500"
+      className="group relative bg-white rounded-xl overflow-hidden border border-ink/[0.06] hover:border-gold/20 hover:shadow-xl transition-all duration-500"
     >
       <div className="relative aspect-[4/3] bg-[#f0ede9] overflow-hidden">
         {area.hero_image ? (
@@ -151,8 +151,8 @@ function FeaturedCard({ area }: { area: Area }) {
             sizes="(max-width: 768px) 100vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#3c9ba7]/20 to-[#3c9ba7]/5 flex items-center justify-center">
-            <MapPin className="w-10 h-10 text-[#3c9ba7]/40" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+            <MapPin className="w-10 h-10 text-gold/40" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -160,7 +160,7 @@ function FeaturedCard({ area }: { area: Area }) {
           <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/80 mb-1">
             {area.region}
           </p>
-          <h2 className="font-gloock text-[32px] text-white leading-tight mb-1">
+          <h2 className="font-display text-[32px] text-white leading-tight mb-1">
             {area.name}
           </h2>
           <p className="text-[13px] text-white/70 line-clamp-1">
@@ -169,10 +169,10 @@ function FeaturedCard({ area }: { area: Area }) {
         </div>
       </div>
       <div className="p-5">
-        <p className="text-[12px] font-semibold text-[#2e2e2e]/50 mb-3">
+        <p className="text-[12px] font-semibold text-ink/50 mb-3">
           {area.price_range}
         </p>
-        <span className="text-[12px] font-semibold tracking-[0.05em] uppercase text-[#3c9ba7] flex items-center gap-1.5">
+        <span className="text-[12px] font-semibold tracking-[0.05em] uppercase text-gold flex items-center gap-1.5">
           Explore <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
         </span>
       </div>
@@ -243,12 +243,12 @@ function CompactDirectory({ areas }: { areas: Area[] }) {
           {mainArea ? (
             <Link
               href={{ pathname: '/areas/[slug]', params: { slug: mainArea.slug } }}
-              className="block text-[10px] font-semibold tracking-[0.12em] uppercase text-[#3c9ba7] mb-2.5 pb-1.5 border-b border-[#2e2e2e]/[0.06] hover:text-[#2d8a95] transition-colors"
+              className="block text-[10px] font-semibold tracking-[0.12em] uppercase text-gold mb-2.5 pb-1.5 border-b border-ink/[0.06] hover:text-gold-deep transition-colors"
             >
               {region} →
             </Link>
           ) : (
-            <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#2e2e2e]/40 mb-2.5 pb-1.5 border-b border-[#2e2e2e]/[0.06]">
+            <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-ink/40 mb-2.5 pb-1.5 border-b border-ink/[0.06]">
               {region}
             </p>
           )}
@@ -259,10 +259,10 @@ function CompactDirectory({ areas }: { areas: Area[] }) {
                   href={{ pathname: '/areas/[slug]', params: { slug: a.slug } }}
                   className={`inline-flex items-center gap-1.5 underline decoration-transparent hover:decoration-current transition-all ${
                     a.pin_category === 'main'
-                      ? 'text-[13px] font-semibold text-[#3c9ba7]'
+                      ? 'text-[13px] font-semibold text-gold'
                       : a.pin_category === 'resort'
                         ? 'text-[13px] font-medium text-[#9a8568]'
-                        : 'text-[13px] font-medium text-[#2e2e2e]/70 hover:text-[#2e2e2e]'
+                        : 'text-[13px] font-medium text-ink/70 hover:text-ink'
                   }`}
                 >
                   {a.name}
@@ -272,7 +272,7 @@ function CompactDirectory({ areas }: { areas: Area[] }) {
                 </Link>
                 {/* Nested children */}
                 {children.length > 0 && (
-                  <ul className="mt-1 ml-3 space-y-0.5 border-l border-[#2e2e2e]/[0.06] pl-3">
+                  <ul className="mt-1 ml-3 space-y-0.5 border-l border-ink/[0.06] pl-3">
                     {children.map(c => (
                       <li key={c.slug}>
                         <Link
@@ -280,7 +280,7 @@ function CompactDirectory({ areas }: { areas: Area[] }) {
                           className={`text-[12px] underline decoration-transparent hover:decoration-current transition-all ${
                             c.pin_category === 'resort'
                               ? 'font-medium text-[#9a8568]'
-                              : 'text-[#2e2e2e]/60 hover:text-[#2e2e2e]'
+                              : 'text-ink/60 hover:text-ink'
                           }`}
                         >
                           {c.name}

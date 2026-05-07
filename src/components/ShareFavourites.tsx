@@ -74,7 +74,7 @@ export default function ShareFavourites() {
     <>
       <button
         onClick={handleShare}
-        className="flex items-center gap-2 px-4 py-2.5 border border-[#3c9ba7] text-[#3c9ba7] text-[13px] uppercase tracking-wider hover:bg-[#3c9ba7] hover:text-white transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 border border-gold text-gold text-[13px] uppercase tracking-wider hover:bg-gold hover:text-white transition-colors"
       >
         <ShareIcon />
         Share
@@ -85,18 +85,18 @@ export default function ShareFavourites() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white p-8 max-w-md w-full mx-4 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-gloock text-[24px] text-[#3c9ba7]">
+              <h3 className="font-display text-[24px] text-gold">
                 Share Your Favorites
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1 text-[#2e2e2e]/40 hover:text-[#2e2e2e]"
+                className="p-1 text-ink/40 hover:text-ink"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-[15px] text-[#2e2e2e]/60 mb-6">
+            <p className="text-[15px] text-ink/60 mb-6">
               Copy this link to share your {favouriteCount} favorite{' '}
               {favouriteCount === 1 ? 'property' : 'properties'} with others.
             </p>
@@ -106,7 +106,7 @@ export default function ShareFavourites() {
                 type="text"
                 value={shareLink || ''}
                 readOnly
-                className="flex-1 px-4 py-2.5 border border-[#2e2e2e]/20 text-[14px] bg-[#faf9f8]/50 text-[#2e2e2e]"
+                className="flex-1 px-4 py-2.5 border border-ink/20 text-[14px] bg-paper/50 text-ink"
               />
               <button
                 onClick={handleCopy}
@@ -114,7 +114,7 @@ export default function ShareFavourites() {
                   'px-5 py-2.5 text-[13px] uppercase tracking-wider transition-colors flex items-center gap-2',
                   copied
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-[#3c9ba7] text-white hover:bg-[#358d98]'
+                    : 'bg-gold text-white hover:bg-gold-deep'
                 )}
               >
                 {copied ? (
@@ -132,8 +132,8 @@ export default function ShareFavourites() {
             </div>
 
             {/* Social Share Buttons */}
-            <div className="mt-6 pt-6 border-t border-[#2e2e2e]/10">
-              <p className="text-[13px] text-[#2e2e2e]/50 uppercase tracking-wider mb-4">
+            <div className="mt-6 pt-6 border-t border-ink/10">
+              <p className="text-[13px] text-ink/50 uppercase tracking-wider mb-4">
                 Or share via
               </p>
               <div className="flex items-center justify-center gap-3">
@@ -173,7 +173,7 @@ export default function ShareFavourites() {
                 {/* Email */}
                 <a
                   href={`mailto:?subject=${encodeURIComponent('My Favorite Properties in Marbella')}&body=${encodeURIComponent(`Check out my ${favouriteCount} favorite ${favouriteCount === 1 ? 'property' : 'properties'} in Marbella!\n\n${shareLink}`)}`}
-                  className="w-12 h-12 flex items-center justify-center rounded-full bg-[#2e2e2e] text-white hover:bg-[#1e1e1e] transition-colors"
+                  className="w-12 h-12 flex items-center justify-center rounded-full bg-ink text-white hover:bg-[#1e1e1e] transition-colors"
                   title="Share via Email"
                 >
                   <Mail className="w-5 h-5" />

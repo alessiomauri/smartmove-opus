@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic';
 
 // Brand colors
 const COLORS = {
-  teal: '#3c9ba7',
+  teal: 'var(--sm-gold)',
   tealLight: '#e8f4f5',
   dark: '#2e2e2e',
-  cream: '#faf9f8',
+  cream: 'var(--sm-paper)',
   white: '#ffffff',
   gray: '#6b7280',
   lightGray: '#e5e7eb',

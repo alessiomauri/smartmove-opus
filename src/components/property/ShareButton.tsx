@@ -98,7 +98,7 @@ export default function ShareButton({ propertyName, propertySlug, isScrolled }: 
         className={cn(
           'group relative flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-400',
           isScrolled
-            ? 'text-[#2e2e2e]/60 hover:text-[#3c9ba7] hover:bg-[#3c9ba7]/[0.06]'
+            ? 'text-ink/60 hover:text-gold hover:bg-gold/[0.06]'
             : 'text-white/80 hover:text-white hover:bg-white/[0.08]'
         )}
       >

@@ -67,23 +67,23 @@ export default async function BlogIndexPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }} />
 
-      <div className="min-h-screen bg-[#faf9f8]">
+      <div className="min-h-screen bg-paper">
         {/* Header */}
         <header className="sticky top-0 z-50 header-glass">
           <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
             <div className="flex items-center justify-between h-[60px] lg:h-[72px]">
               <Link href="/" className="group relative shrink-0 inline-block">
-                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-gloock text-[#3c9ba7] transition-colors group-hover:text-[#2d8a95]">
+                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-display text-gold transition-colors group-hover:text-gold-deep">
                   Smartmove Marbella
                 </span>
-                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
               </Link>
               <div className="flex items-center gap-4">
-                <Link href="/" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors">
+                <Link href="/" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors">
                   Properties
                 </Link>
-                <Link href="/areas" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors">
+                <Link href="/areas" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors">
                   Areas
                 </Link>
               </div>
@@ -96,15 +96,15 @@ export default async function BlogIndexPage() {
         <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pt-12 pb-8">
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-4 h-4 text-[#3c9ba7]" />
-              <span className="text-[12px] font-semibold tracking-[0.12em] uppercase text-[#3c9ba7]">
+              <BookOpen className="w-4 h-4 text-gold" />
+              <span className="text-[12px] font-semibold tracking-[0.12em] uppercase text-gold">
                 Property Blog
               </span>
             </div>
-            <h1 className="font-gloock text-[36px] md:text-[48px] lg:text-[56px] text-[#2e2e2e] leading-[1.1] tracking-tight mb-4">
+            <h1 className="font-display text-[36px] md:text-[48px] lg:text-[56px] text-ink leading-[1.1] tracking-tight mb-4">
               Insights & Guides
             </h1>
-            <p className="text-[18px] text-[#2e2e2e]/60 leading-relaxed">
+            <p className="text-[18px] text-ink/60 leading-relaxed">
               Expert advice on buying, selling, and investing in property on the Costa del Sol. Area guides, market reports, and everything you need to make informed decisions.
             </p>
           </div>
@@ -118,7 +118,7 @@ export default async function BlogIndexPage() {
                 <Link
                   key={post.slug}
                   href={{ pathname: '/blog/[slug]', params: { slug: post.slug } }}
-                  className="group bg-white rounded-xl border border-[#2e2e2e]/[0.06] hover:border-[#3c9ba7]/20 hover:shadow-xl transition-all duration-500 overflow-hidden"
+                  className="group bg-white rounded-xl border border-ink/[0.06] hover:border-gold/20 hover:shadow-xl transition-all duration-500 overflow-hidden"
                 >
                   {/* Hero image */}
                   <div className="relative aspect-[16/9] overflow-hidden bg-[#f0ede9]">
@@ -132,24 +132,24 @@ export default async function BlogIndexPage() {
                       />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                    <span className="absolute bottom-3 left-4 text-[11px] font-semibold tracking-[0.1em] uppercase text-white/90 bg-[#3c9ba7]/80 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                    <span className="absolute bottom-3 left-4 text-[11px] font-semibold tracking-[0.1em] uppercase text-white/90 bg-gold/80 backdrop-blur-sm px-2.5 py-1 rounded-full">
                       {BLOG_CATEGORY_LABELS[post.category]}
                     </span>
                   </div>
                   <div className="p-6 lg:p-8">
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="flex items-center gap-1 text-[11px] text-[#2e2e2e]/40">
+                      <span className="flex items-center gap-1 text-[11px] text-ink/40">
                         <Clock className="w-3 h-3" />
                         {post.reading_time}
                       </span>
                     </div>
-                    <h2 className="font-gloock text-[20px] md:text-[22px] text-[#2e2e2e] group-hover:text-[#3c9ba7] transition-colors leading-tight mb-3">
+                    <h2 className="font-display text-[20px] md:text-[22px] text-ink group-hover:text-gold transition-colors leading-tight mb-3">
                       {post.title}
                     </h2>
-                    <p className="text-[14px] text-[#2e2e2e]/50 leading-relaxed line-clamp-3 mb-4">
+                    <p className="text-[14px] text-ink/50 leading-relaxed line-clamp-3 mb-4">
                       {post.excerpt}
                     </p>
-                    <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#3c9ba7] tracking-[0.05em] uppercase">
+                    <div className="flex items-center gap-1.5 text-[12px] font-semibold text-gold tracking-[0.05em] uppercase">
                       Read Article <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -161,9 +161,9 @@ export default async function BlogIndexPage() {
 
         {/* All Posts */}
         {other.length > 0 && (
-          <section className="bg-white border-t border-[#2e2e2e]/[0.06]">
+          <section className="bg-white border-t border-ink/[0.06]">
             <div className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-              <h2 className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e] mb-8">
+              <h2 className="font-display text-[24px] md:text-[28px] text-ink mb-8">
                 More Articles
               </h2>
               <div className="space-y-6">
@@ -171,24 +171,24 @@ export default async function BlogIndexPage() {
                   <Link
                     key={post.slug}
                     href={{ pathname: '/blog/[slug]', params: { slug: post.slug } }}
-                    className="group flex flex-col md:flex-row gap-4 md:gap-8 py-6 border-b border-[#2e2e2e]/[0.06] last:border-0"
+                    className="group flex flex-col md:flex-row gap-4 md:gap-8 py-6 border-b border-ink/[0.06] last:border-0"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#3c9ba7]">
+                        <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-gold">
                           {BLOG_CATEGORY_LABELS[post.category]}
                         </span>
-                        <span className="text-[11px] text-[#2e2e2e]/40">{post.reading_time}</span>
+                        <span className="text-[11px] text-ink/40">{post.reading_time}</span>
                       </div>
-                      <h3 className="font-gloock text-[18px] md:text-[20px] text-[#2e2e2e] group-hover:text-[#3c9ba7] transition-colors mb-2">
+                      <h3 className="font-display text-[18px] md:text-[20px] text-ink group-hover:text-gold transition-colors mb-2">
                         {post.title}
                       </h3>
-                      <p className="text-[14px] text-[#2e2e2e]/50 line-clamp-2">
+                      <p className="text-[14px] text-ink/50 line-clamp-2">
                         {post.excerpt}
                       </p>
                     </div>
                     <div className="flex items-center">
-                      <ArrowRight className="w-5 h-5 text-[#2e2e2e]/20 group-hover:text-[#3c9ba7] transition-all group-hover:translate-x-1" />
+                      <ArrowRight className="w-5 h-5 text-ink/20 group-hover:text-gold transition-all group-hover:translate-x-1" />
                     </div>
                   </Link>
                 ))}
@@ -199,22 +199,22 @@ export default async function BlogIndexPage() {
 
         {allPosts.length === 0 && (
           <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
-            <div className="bg-white rounded-xl border border-[#2e2e2e]/[0.06] p-12 text-center">
-              <p className="text-[16px] text-[#2e2e2e]/60">No articles published yet. Check back soon.</p>
+            <div className="bg-white rounded-xl border border-ink/[0.06] p-12 text-center">
+              <p className="text-[16px] text-ink/60">No articles published yet. Check back soon.</p>
             </div>
           </section>
         )}
 
         {/* Footer */}
-        <footer className="py-16 bg-[#faf9f8]">
+        <footer className="py-16 bg-paper">
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12 text-center">
             <Link href="/" className="group relative inline-block">
-              <span className="font-gloock text-[28px] md:text-[36px] text-[#3c9ba7]/90 leading-none tracking-tight transition-colors group-hover:text-[#2d8a95]">
+              <span className="font-display text-[28px] md:text-[36px] text-gold/90 leading-none tracking-tight transition-colors group-hover:text-gold-deep">
                 Smartmove Marbella
               </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
-            <p className="text-[13px] text-[#2e2e2e]/40 tracking-widest uppercase mt-4">
+            <p className="text-[13px] text-ink/40 tracking-widest uppercase mt-4">
               &copy; {new Date().getFullYear()} All Rights Reserved
             </p>
           </div>

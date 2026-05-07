@@ -24,7 +24,7 @@ export default function PropertyPageClient({ property }: PropertyPageClientProps
   const isPartnerListing = property.source === 'resales_online';
 
   return (
-    <div className="min-h-screen bg-[#faf9f8]">
+    <div className="min-h-screen bg-paper">
       <PropertyHeader propertyName={property.name} propertyId={property.id} propertySlug={property.slug} />
       <HeroSection property={property} />
       <FeaturesSection property={property} />
@@ -36,17 +36,17 @@ export default function PropertyPageClient({ property }: PropertyPageClientProps
           partner listings (Resales properties shouldn't expose exact pins). */}
       <LocationSection property={property} />
 
-      <footer className="py-16 lg:py-20 bg-[#faf9f8] relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-[#3c9ba7]/[0.02] rounded-full blur-3xl pointer-events-none" />
+      <footer className="py-16 lg:py-20 bg-paper relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-gold/[0.02] rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-[1400px] mx-auto px-8 lg:px-16 text-center relative">
-          <h2 className="font-gloock text-[28px] md:text-[36px] lg:text-[44px] text-[#3c9ba7] leading-none mb-3 tracking-tight">
+          <h2 className="font-display text-[28px] md:text-[36px] lg:text-[44px] text-gold leading-none mb-3 tracking-tight">
             Smartmove Marbella
           </h2>
-          <p className="text-[12px] text-[#2e2e2e]/40 tracking-[0.2em] uppercase">
+          <p className="text-[12px] text-ink/40 tracking-[0.2em] uppercase">
             © {new Date().getFullYear()} All Rights Reserved
           </p>
           {isPartnerListing && (
-            <p className="text-[10px] tracking-[0.18em] uppercase text-[#2e2e2e]/30 mt-4">
+            <p className="text-[10px] tracking-[0.18em] uppercase text-ink/30 mt-4">
               Listed via partner network · Reference {property.source_id}
             </p>
           )}

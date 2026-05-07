@@ -59,18 +59,18 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
       <section ref={sectionRef} id="floor-plans" className="py-16 lg:py-20 bg-white">
         <div className={`max-w-[1400px] mx-auto px-8 lg:px-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-transparent" />
-            <span className="text-[11px] tracking-[0.25em] uppercase text-[#3c9ba7]">Architecture</span>
+            <div className="w-12 h-[1px] bg-gradient-to-r from-gold to-transparent" />
+            <span className="text-[11px] tracking-[0.25em] uppercase text-gold">Architecture</span>
           </div>
-          <h2 className="font-gloock text-[36px] md:text-[48px] lg:text-[56px] text-[#3c9ba7] leading-[1.05] mb-12">
+          <h2 className="font-display text-[36px] md:text-[48px] lg:text-[56px] text-gold leading-[1.05] mb-12">
             Floor Plans
           </h2>
 
-          <div className="text-center py-20 border border-dashed border-[#2e2e2e]/10 rounded-lg">
-            <div className="w-16 h-16 rounded-full bg-[#3c9ba7]/5 flex items-center justify-center mx-auto mb-6">
-              <Layers className="w-7 h-7 text-[#3c9ba7]/40" />
+          <div className="text-center py-20 border border-dashed border-ink/10 rounded-lg">
+            <div className="w-16 h-16 rounded-full bg-gold/5 flex items-center justify-center mx-auto mb-6">
+              <Layers className="w-7 h-7 text-gold/40" />
             </div>
-            <p className="text-[#2e2e2e]/40 text-base">
+            <p className="text-ink/40 text-base">
               Floor plans coming soon
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
 
         {/* Section divider */}
         <div className="max-w-[1400px] mx-auto px-8 lg:px-16 mt-16">
-          <div className="h-[1px] bg-gradient-to-r from-transparent via-[#3c9ba7]/15 to-transparent" />
+          <div className="h-[1px] bg-gradient-to-r from-transparent via-gold/15 to-transparent" />
         </div>
       </section>
     );
@@ -96,10 +96,10 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
         <div className={`flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-transparent" />
-              <span className="text-[11px] tracking-[0.25em] uppercase text-[#3c9ba7]">Architecture</span>
+              <div className="w-12 h-[1px] bg-gradient-to-r from-gold to-transparent" />
+              <span className="text-[11px] tracking-[0.25em] uppercase text-gold">Architecture</span>
             </div>
-            <h2 className="font-gloock text-[36px] md:text-[48px] lg:text-[56px] text-[#3c9ba7] leading-[1.05]">
+            <h2 className="font-display text-[36px] md:text-[48px] lg:text-[56px] text-gold leading-[1.05]">
               Floor Plans
             </h2>
           </div>
@@ -113,8 +113,8 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
                   onClick={() => setActiveTab(index)}
                   className={`px-5 py-2.5 text-[12px] tracking-[0.15em] uppercase rounded-full transition-all duration-300 ${
                     activeTab === index
-                      ? 'bg-[#3c9ba7] text-white'
-                      : 'bg-[#faf9f8] text-[#2e2e2e]/60 hover:bg-[#f0ede9] hover:text-[#2e2e2e]'
+                      ? 'bg-gold text-white'
+                      : 'bg-paper text-ink/60 hover:bg-[#f0ede9] hover:text-ink'
                   }`}
                 >
                   Level {index + 1}
@@ -128,7 +128,7 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
         <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <button
             onClick={() => openLightbox(activeTab)}
-            className="group relative w-full bg-[#faf9f8] rounded-lg overflow-hidden border border-[#2e2e2e]/5"
+            className="group relative w-full bg-paper rounded-lg overflow-hidden border border-ink/5"
           >
             <div className="relative aspect-[16/10] md:aspect-[21/12]">
               <Image
@@ -140,21 +140,21 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
               />
 
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-[#3c9ba7]/0 group-hover:bg-[#3c9ba7]/[0.02] transition-colors duration-500" />
+              <div className="absolute inset-0 bg-gold/0 group-hover:bg-gold/[0.02] transition-colors duration-500" />
 
               {/* Expand button */}
               <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
-                <div className="flex items-center gap-3 px-5 py-2.5 bg-white shadow-lg rounded-full border border-[#2e2e2e]/5">
-                  <Expand className="w-4 h-4 text-[#3c9ba7]" />
-                  <span className="text-[12px] tracking-[0.1em] uppercase text-[#2e2e2e] font-medium">Enlarge</span>
+                <div className="flex items-center gap-3 px-5 py-2.5 bg-white shadow-lg rounded-full border border-ink/5">
+                  <Expand className="w-4 h-4 text-gold" />
+                  <span className="text-[12px] tracking-[0.1em] uppercase text-ink font-medium">Enlarge</span>
                 </div>
               </div>
 
               {/* Plan label */}
               <div className="absolute top-6 left-6">
-                <div className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full border border-[#2e2e2e]/5">
-                  <Layers className="w-4 h-4 text-[#3c9ba7]" />
-                  <span className="text-[11px] tracking-[0.15em] uppercase text-[#2e2e2e]/70">
+                <div className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full border border-ink/5">
+                  <Layers className="w-4 h-4 text-gold" />
+                  <span className="text-[11px] tracking-[0.15em] uppercase text-ink/70">
                     {floorPlans.length > 1 ? `Level ${activeTab + 1}` : 'Floor Plan'}
                   </span>
                 </div>
@@ -172,7 +172,7 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
                 onClick={() => setActiveTab(index)}
                 className={`relative w-20 h-20 rounded-md overflow-hidden border-2 transition-all duration-300 ${
                   activeTab === index
-                    ? 'border-[#3c9ba7] ring-2 ring-[#3c9ba7]/20'
+                    ? 'border-gold ring-2 ring-gold/20'
                     : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
@@ -180,7 +180,7 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
                   src={plan}
                   alt={`Thumbnail - Level ${index + 1}`}
                   fill
-                  className="object-contain p-1 bg-[#faf9f8]"
+                  className="object-contain p-1 bg-paper"
                   sizes="80px"
                 />
               </button>
@@ -191,7 +191,7 @@ export default function FloorPlanSection({ property }: FloorPlanSectionProps) {
 
       {/* Section divider */}
       <div className="max-w-[1400px] mx-auto px-8 lg:px-16 mt-16">
-        <div className="h-[1px] bg-gradient-to-r from-transparent via-[#3c9ba7]/15 to-transparent" />
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-gold/15 to-transparent" />
       </div>
 
       {/* Lightbox */}

@@ -39,9 +39,9 @@ export default function CookieBanner() {
     <div
       role="dialog"
       aria-label="Cookie consent"
-      className="fixed bottom-4 inset-x-4 lg:inset-x-auto lg:left-6 lg:bottom-6 lg:w-[360px] z-[60] bg-white border border-[#2e2e2e]/10 rounded-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.18)] p-5"
+      className="fixed bottom-4 inset-x-4 lg:inset-x-auto lg:left-6 lg:bottom-6 lg:w-[360px] z-[60] bg-white border border-ink/10 rounded-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.18)] p-5"
     >
-      <p className="text-[13px] leading-relaxed text-[#2e2e2e]/80 mb-4">
+      <p className="text-[13px] leading-relaxed text-ink/80 mb-4">
         We use cookies to understand how visitors use the site (Google Analytics)
         and for marketing measurement (Meta Pixel). Decline keeps the site fully
         functional.
@@ -49,13 +49,13 @@ export default function CookieBanner() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => handleChoice('accepted')}
-          className="flex-1 bg-[#3c9ba7] hover:bg-[#2d8a95] text-white text-[12px] font-semibold tracking-[0.04em] uppercase py-2.5 rounded-full transition-colors duration-200"
+          className="flex-1 bg-gold hover:bg-gold-deep text-white text-[12px] font-semibold tracking-[0.04em] uppercase py-2.5 rounded-full transition-colors duration-200"
         >
           Accept
         </button>
         <button
           onClick={() => handleChoice('declined')}
-          className="flex-1 bg-transparent text-[#2e2e2e]/60 hover:text-[#2e2e2e] text-[12px] font-semibold tracking-[0.04em] uppercase py-2.5 rounded-full border border-[#2e2e2e]/15 transition-colors duration-200"
+          className="flex-1 bg-transparent text-ink/60 hover:text-ink text-[12px] font-semibold tracking-[0.04em] uppercase py-2.5 rounded-full border border-ink/15 transition-colors duration-200"
         >
           Decline
         </button>

@@ -174,10 +174,10 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
   };
 
   return (
-    <section ref={sectionRef} id="overview" className="py-16 lg:py-20 bg-[#faf9f8] relative overflow-hidden">
+    <section ref={sectionRef} id="overview" className="py-16 lg:py-20 bg-paper relative overflow-hidden">
       {/* Subtle background elements */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-radial from-[#3c9ba7]/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-radial from-[#3c9ba7]/[0.02] to-transparent rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/3" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-radial from-gold/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-radial from-gold/[0.02] to-transparent rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/3" />
 
       <div className="max-w-[1400px] mx-auto px-8 lg:px-16 relative">
         {/* Top row: Title and Price */}
@@ -185,20 +185,20 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
           {/* Property Name */}
           <div>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-transparent" />
-              <span className="text-[11px] tracking-[0.25em] uppercase text-[#3c9ba7]">Overview</span>
+              <div className="w-12 h-[1px] bg-gradient-to-r from-gold to-transparent" />
+              <span className="text-[11px] tracking-[0.25em] uppercase text-gold">Overview</span>
             </div>
-            <h2 className="font-gloock text-[36px] md:text-[48px] lg:text-[56px] text-[#3c9ba7] leading-[1.05]">
+            <h2 className="font-display text-[36px] md:text-[48px] lg:text-[56px] text-gold leading-[1.05]">
               {property.name}
             </h2>
           </div>
 
           {/* Price */}
           <div className="lg:text-right lg:self-end">
-            <p className="text-[36px] md:text-[48px] text-[#2e2e2e] font-light leading-none tracking-tight">
+            <p className="text-[36px] md:text-[48px] text-ink font-light leading-none tracking-tight">
               {formatPriceDisplay()}
             </p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#2e2e2e]/50 mt-3">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-ink/50 mt-3">
               Starting Price
             </p>
           </div>
@@ -217,15 +217,15 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
                 >
                   <div className="relative mb-4">
                     {/* Subtle background glow on hover */}
-                    <div className="absolute inset-0 rounded-full bg-[#3c9ba7]/0 group-hover:bg-[#3c9ba7]/5 scale-150 transition-all duration-500" />
-                    <div className="relative text-[#2e2e2e]/70 group-hover:text-[#3c9ba7] transition-colors duration-400">
+                    <div className="absolute inset-0 rounded-full bg-gold/0 group-hover:bg-gold/5 scale-150 transition-all duration-500" />
+                    <div className="relative text-ink/70 group-hover:text-gold transition-colors duration-400">
                       <feature.Icon />
                     </div>
                   </div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#2e2e2e]/50 mb-1.5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-ink/50 mb-1.5">
                     {feature.label}
                   </p>
-                  <p className="text-[15px] text-[#2e2e2e] font-medium">
+                  <p className="text-[15px] text-ink font-medium">
                     {feature.value}
                   </p>
                 </div>
@@ -234,12 +234,12 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
 
             {/* Amenity Tags - compact inline */}
             {property.features.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-[#2e2e2e]/5">
+              <div className="mt-8 pt-6 border-t border-ink/5">
                 <div className="flex flex-wrap gap-1.5">
                   {property.features.map((feature, index) => (
                     <span
                       key={index}
-                      className="inline-block px-3 py-1 text-[11px] text-[#2e2e2e]/60 border border-[#2e2e2e]/8 rounded-full bg-white/50 hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7] transition-all duration-300 cursor-default"
+                      className="inline-block px-3 py-1 text-[11px] text-ink/60 border border-ink/8 rounded-full bg-white/50 hover:border-gold/30 hover:text-gold transition-all duration-300 cursor-default"
                     >
                       {feature}
                     </span>
@@ -253,7 +253,7 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
           <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="relative">
               {/* Decorative quote mark */}
-              <div className="absolute -top-6 -left-4 text-[120px] font-gloock text-[#3c9ba7]/[0.06] leading-none select-none pointer-events-none">
+              <div className="absolute -top-6 -left-4 text-[120px] font-display text-gold/[0.06] leading-none select-none pointer-events-none">
                 "
               </div>
 
@@ -261,7 +261,7 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
               <div className="relative">
                 <div
                   className={cn(
-                    'text-[15px] md:text-[16px] text-[#2e2e2e]/75 leading-[2]',
+                    'text-[15px] md:text-[16px] text-ink/75 leading-[2]',
                     !isExpanded && 'line-clamp-[10]'
                   )}
                 >
@@ -270,14 +270,14 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
 
                 {/* Fade overlay when collapsed */}
                 {!isExpanded && (
-                  <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#faf9f8] to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-paper to-transparent pointer-events-none" />
                 )}
               </div>
 
               {/* Read More Button */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="group mt-8 flex items-center gap-3 text-[#3c9ba7] text-[13px] tracking-[0.1em] uppercase hover:text-[#2d8a95] transition-colors duration-300"
+                className="group mt-8 flex items-center gap-3 text-gold text-[13px] tracking-[0.1em] uppercase hover:text-gold-deep transition-colors duration-300"
               >
                 <span className="relative font-medium">
                   {isExpanded ? 'Read Less' : 'Continue Reading'}
@@ -297,7 +297,7 @@ export default function FeaturesSection({ property }: FeaturesSectionProps) {
       {/* Section divider */}
       <div className="absolute bottom-0 left-0 right-0">
         <div className="max-w-[1400px] mx-auto px-8 lg:px-16">
-          <div className="h-[1px] bg-gradient-to-r from-transparent via-[#3c9ba7]/15 to-transparent" />
+          <div className="h-[1px] bg-gradient-to-r from-transparent via-gold/15 to-transparent" />
         </div>
       </div>
     </section>

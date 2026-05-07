@@ -81,7 +81,7 @@ export default function FilterBar({
       <div className="flex items-start w-full gap-8">
         {/* Search */}
         <div className="flex flex-col flex-1 group">
-          <label className="text-[10px] font-semibold text-[#3c9ba7] tracking-[0.12em] uppercase mb-2 opacity-80">
+          <label className="text-[10px] font-semibold text-gold tracking-[0.12em] uppercase mb-2 opacity-80">
             Search
           </label>
           <input
@@ -89,20 +89,20 @@ export default function FilterBar({
             placeholder="Property name..."
             value={filters.search || ''}
             onChange={(e) => updateFilter('search', e.target.value || undefined)}
-            className="w-full bg-transparent text-[14px] text-[#2e2e2e] placeholder-[#2e2e2e]/35 border-b border-[#2e2e2e]/10 pb-2 focus:border-[#3c9ba7]/50 transition-colors duration-300"
+            className="w-full bg-transparent text-[14px] text-ink placeholder-ink/35 border-b border-ink/10 pb-2 focus:border-gold/50 transition-colors duration-300"
           />
         </div>
 
         {/* Location */}
         <div className="flex flex-col flex-1 group">
-          <label className="text-[10px] font-semibold text-[#3c9ba7] tracking-[0.12em] uppercase mb-2 opacity-80">
+          <label className="text-[10px] font-semibold text-gold tracking-[0.12em] uppercase mb-2 opacity-80">
             Location
           </label>
           <div className="relative">
             <select
               value={filters.area || ''}
               onChange={(e) => updateFilter('area', e.target.value || undefined)}
-              className="w-full appearance-none bg-transparent text-[14px] text-[#2e2e2e] border-b border-[#2e2e2e]/10 pb-2 pr-6 focus:border-[#3c9ba7]/50 cursor-pointer transition-colors duration-300"
+              className="w-full appearance-none bg-transparent text-[14px] text-ink border-b border-ink/10 pb-2 pr-6 focus:border-gold/50 cursor-pointer transition-colors duration-300"
             >
               <option value="">All locations</option>
               {AREAS.map((area) => (
@@ -111,13 +111,13 @@ export default function FilterBar({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-0 bottom-2.5 w-4 h-4 text-[#3c9ba7]/50 pointer-events-none" />
+            <ChevronDown className="absolute right-0 bottom-2.5 w-4 h-4 text-gold/50 pointer-events-none" />
           </div>
         </div>
 
         {/* Status */}
         <div className="flex flex-col flex-1 group">
-          <label className="text-[10px] font-semibold text-[#3c9ba7] tracking-[0.12em] uppercase mb-2 opacity-80">
+          <label className="text-[10px] font-semibold text-gold tracking-[0.12em] uppercase mb-2 opacity-80">
             Status
           </label>
           <div className="relative">
@@ -129,7 +129,7 @@ export default function FilterBar({
                   e.target.value === 'all' ? undefined : (e.target.value as PropertyStatus | 'all')
                 )
               }
-              className="w-full appearance-none bg-transparent text-[14px] text-[#2e2e2e] border-b border-[#2e2e2e]/10 pb-2 pr-6 focus:border-[#3c9ba7]/50 cursor-pointer transition-colors duration-300"
+              className="w-full appearance-none bg-transparent text-[14px] text-ink border-b border-ink/10 pb-2 pr-6 focus:border-gold/50 cursor-pointer transition-colors duration-300"
             >
               <option value="all">All statuses</option>
               {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -138,25 +138,25 @@ export default function FilterBar({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-0 bottom-2.5 w-4 h-4 text-[#3c9ba7]/50 pointer-events-none" />
+            <ChevronDown className="absolute right-0 bottom-2.5 w-4 h-4 text-gold/50 pointer-events-none" />
           </div>
         </div>
 
         {/* Price - Dropdown with slider */}
         <div className="flex flex-col flex-1 relative group">
-          <label className="text-[10px] font-semibold text-[#3c9ba7] tracking-[0.12em] uppercase mb-2 opacity-80">
+          <label className="text-[10px] font-semibold text-gold tracking-[0.12em] uppercase mb-2 opacity-80">
             Price
           </label>
           <button
             onClick={() => setShowPriceDropdown(!showPriceDropdown)}
-            className="flex items-center justify-between w-full bg-transparent text-[14px] text-[#2e2e2e] border-b border-[#2e2e2e]/10 pb-2 transition-colors duration-300 hover:border-[#3c9ba7]/30"
+            className="flex items-center justify-between w-full bg-transparent text-[14px] text-ink border-b border-ink/10 pb-2 transition-colors duration-300 hover:border-gold/30"
           >
             <span>
               {priceRange[0] === 0 && priceRange[1] >= MAX_PRICE
                 ? 'Any price'
                 : `${formatPriceDisplay(priceRange[0])} to ${formatPriceDisplay(priceRange[1], true)}`}
             </span>
-            <ChevronDown className={cn("w-4 h-4 text-[#3c9ba7]/50 transition-transform duration-300", showPriceDropdown && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 text-gold/50 transition-transform duration-300", showPriceDropdown && "rotate-180")} />
           </button>
 
           {/* Price dropdown */}
@@ -167,13 +167,13 @@ export default function FilterBar({
                 <div className="space-y-4">
                   {/* Min price */}
                   <div>
-                    <label className="text-[10px] font-semibold text-[#2e2e2e]/50 tracking-[0.1em] uppercase mb-1.5 block">
+                    <label className="text-[10px] font-semibold text-ink/50 tracking-[0.1em] uppercase mb-1.5 block">
                       Min Price
                     </label>
                     <select
                       value={priceRange[0]}
                       onChange={(e) => handlePriceChange(Number(e.target.value), priceRange[1])}
-                      className="w-full px-3 py-2 bg-[#f8f6f3] rounded-lg text-[14px] text-[#2e2e2e] border-0"
+                      className="w-full px-3 py-2 bg-[#f8f6f3] rounded-lg text-[14px] text-ink border-0"
                     >
                       <option value="0">No minimum</option>
                       <option value="500000">€500K</option>
@@ -187,13 +187,13 @@ export default function FilterBar({
                   </div>
                   {/* Max price */}
                   <div>
-                    <label className="text-[10px] font-semibold text-[#2e2e2e]/50 tracking-[0.1em] uppercase mb-1.5 block">
+                    <label className="text-[10px] font-semibold text-ink/50 tracking-[0.1em] uppercase mb-1.5 block">
                       Max Price
                     </label>
                     <select
                       value={priceRange[1]}
                       onChange={(e) => handlePriceChange(priceRange[0], Number(e.target.value))}
-                      className="w-full px-3 py-2 bg-[#f8f6f3] rounded-lg text-[14px] text-[#2e2e2e] border-0"
+                      className="w-full px-3 py-2 bg-[#f8f6f3] rounded-lg text-[14px] text-ink border-0"
                     >
                       <option value="1000000">€1M</option>
                       <option value="2000000">€2M</option>
@@ -212,15 +212,15 @@ export default function FilterBar({
 
         {/* Features */}
         <div className="flex flex-col flex-1 relative group">
-          <label className="text-[10px] font-semibold text-[#3c9ba7] tracking-[0.12em] uppercase mb-2 opacity-80">
+          <label className="text-[10px] font-semibold text-gold tracking-[0.12em] uppercase mb-2 opacity-80">
             Features
           </label>
           <button
             onClick={() => setShowFeatures(!showFeatures)}
-            className="flex items-center justify-between w-full bg-transparent text-[14px] text-[#2e2e2e] border-b border-[#2e2e2e]/10 pb-2 transition-colors duration-300 hover:border-[#3c9ba7]/30"
+            className="flex items-center justify-between w-full bg-transparent text-[14px] text-ink border-b border-ink/10 pb-2 transition-colors duration-300 hover:border-gold/30"
           >
             <span>{filters.features?.length ? `${filters.features.length} selected` : 'Any'}</span>
-            <ChevronDown className={cn("w-4 h-4 text-[#3c9ba7]/50 transition-transform duration-300", showFeatures && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 text-gold/50 transition-transform duration-300", showFeatures && "rotate-180")} />
           </button>
 
           {/* Features dropdown */}
@@ -236,8 +236,8 @@ export default function FilterBar({
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-200',
                         filters.features?.includes(feature)
-                          ? 'bg-[#3c9ba7] text-white'
-                          : 'bg-[#f5f2ef] text-[#2e2e2e]/70 hover:bg-[#3c9ba7]/10 hover:text-[#3c9ba7]'
+                          ? 'bg-gold text-white'
+                          : 'bg-[#f5f2ef] text-ink/70 hover:bg-gold/10 hover:text-gold'
                       )}
                     >
                       {feature}
@@ -251,21 +251,21 @@ export default function FilterBar({
 
         {/* Sort */}
         <div className="flex flex-col w-[130px] shrink-0 group">
-          <label className="text-[10px] font-semibold text-[#3c9ba7] tracking-[0.12em] uppercase mb-2 opacity-80">
+          <label className="text-[10px] font-semibold text-gold tracking-[0.12em] uppercase mb-2 opacity-80">
             Sort
           </label>
           <div className="relative">
             <select
               value={sort}
               onChange={(e) => onSortChange(e.target.value as SortOption)}
-              className="w-full appearance-none bg-transparent text-[14px] text-[#2e2e2e] border-b border-[#2e2e2e]/10 pb-2 pr-6 focus:border-[#3c9ba7]/50 cursor-pointer transition-colors duration-300"
+              className="w-full appearance-none bg-transparent text-[14px] text-ink border-b border-ink/10 pb-2 pr-6 focus:border-gold/50 cursor-pointer transition-colors duration-300"
             >
               <option value="newest">Newest</option>
               <option value="price_desc">Price: High</option>
               <option value="price_asc">Price: Low</option>
               <option value="name">Name: A-Z</option>
             </select>
-            <ChevronDown className="absolute right-0 bottom-2.5 w-4 h-4 text-[#3c9ba7]/50 pointer-events-none" />
+            <ChevronDown className="absolute right-0 bottom-2.5 w-4 h-4 text-gold/50 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -278,12 +278,12 @@ export default function FilterBar({
       {/* Mobile Filter Bar - refined */}
       <button
         onClick={() => setShowMobileFilters(!showMobileFilters)}
-        className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 bg-white rounded-xl text-[14px] font-medium text-[#2e2e2e] shadow-luxury transition-all duration-200 hover:shadow-lg active:scale-[0.98]"
+        className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 bg-white rounded-xl text-[14px] font-medium text-ink shadow-luxury transition-all duration-200 hover:shadow-lg active:scale-[0.98]"
       >
         <SlidersHorizontal className="w-4 h-4" />
         Filters & Sort
         {hasActiveFilters && (
-          <span className="bg-[#3c9ba7] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
+          <span className="bg-gold text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
             Active
           </span>
         )}
@@ -293,7 +293,7 @@ export default function FilterBar({
       {showMobileFilters && (
         <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
           <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#2e2e2e]">Filters</h2>
+            <h2 className="text-lg font-semibold text-ink">Filters</h2>
             <button
               onClick={() => setShowMobileFilters(false)}
               className="p-2 hover:bg-gray-100 rounded-full"
@@ -305,7 +305,7 @@ export default function FilterBar({
           <div className="p-4 space-y-6">
             {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-[#2e2e2e] mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Location
               </label>
               <select
@@ -324,7 +324,7 @@ export default function FilterBar({
 
             {/* Availability */}
             <div>
-              <label className="block text-sm font-medium text-[#2e2e2e] mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Availability
               </label>
               <select
@@ -348,7 +348,7 @@ export default function FilterBar({
 
             {/* Price Range */}
             <div>
-              <label className="block text-sm font-medium text-[#2e2e2e] mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Price Range
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -383,7 +383,7 @@ export default function FilterBar({
 
             {/* Features */}
             <div>
-              <label className="block text-sm font-medium text-[#2e2e2e] mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Features
               </label>
               <div className="flex flex-wrap gap-2">
@@ -394,8 +394,8 @@ export default function FilterBar({
                     className={cn(
                       'px-3 py-2 rounded text-sm font-medium transition-colors',
                       filters.features?.includes(feature)
-                        ? 'bg-[#3c9ba7] text-white'
-                        : 'bg-[#faf9f8] text-[#2e2e2e]'
+                        ? 'bg-gold text-white'
+                        : 'bg-paper text-ink'
                     )}
                   >
                     {feature}
@@ -406,7 +406,7 @@ export default function FilterBar({
 
             {/* Sort */}
             <div>
-              <label className="block text-sm font-medium text-[#2e2e2e] mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Sort By
               </label>
               <select
@@ -427,14 +427,14 @@ export default function FilterBar({
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="flex-1 py-3 border border-gray-300 rounded text-sm font-medium text-[#2e2e2e]"
+                className="flex-1 py-3 border border-gray-300 rounded text-sm font-medium text-ink"
               >
                 Clear All
               </button>
             )}
             <button
               onClick={() => setShowMobileFilters(false)}
-              className="flex-1 py-3 bg-[#3c9ba7] text-white rounded text-sm font-medium"
+              className="flex-1 py-3 bg-gold text-white rounded text-sm font-medium"
             >
               Show {resultCount} {resultCount === 1 ? 'Property' : 'Properties'}
             </button>

@@ -14,7 +14,7 @@ export default async function Image() {
       <div
         style={{
           fontSize: 48,
-          background: 'linear-gradient(135deg, #faf9f8 0%, #f0ede8 100%)',
+          background: 'linear-gradient(135deg, var(--sm-paper) 0%, #f0ede8 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -57,7 +57,7 @@ export default async function Image() {
             left: 0,
             right: 0,
             height: 6,
-            background: 'linear-gradient(90deg, #3c9ba7 0%, #4aabb7 50%, #3c9ba7 100%)',
+            background: 'linear-gradient(90deg, var(--sm-gold) 0%, var(--sm-gold-soft) 50%, var(--sm-gold) 100%)',
           }}
         />
 
@@ -76,7 +76,7 @@ export default async function Image() {
             style={{
               fontSize: 72,
               fontWeight: 400,
-              color: '#3c9ba7',
+              color: 'var(--sm-gold)',
               letterSpacing: '-0.02em',
               marginBottom: 20,
               fontFamily: 'serif',
@@ -127,7 +127,7 @@ export default async function Image() {
                   background: 'rgba(60, 155, 167, 0.1)',
                   borderRadius: 50,
                   fontSize: 16,
-                  color: '#3c9ba7',
+                  color: 'var(--sm-gold)',
                   fontWeight: 500,
                   border: '1px solid rgba(60, 155, 167, 0.2)',
                 }}

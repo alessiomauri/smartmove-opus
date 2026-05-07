@@ -55,7 +55,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
   if (!dev || !dev.published) notFound();
 
   return (
-    <div className="min-h-screen bg-[#faf9f8]">
+    <div className="min-h-screen bg-paper">
       {/* Hero */}
       {dev.hero_image && (
         <section className="relative h-[60vh] min-h-[420px] max-h-[680px] overflow-hidden">
@@ -75,7 +75,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
             <span className="inline-flex items-center px-3 py-1 text-[10px] tracking-[0.25em] uppercase bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-4">
               {DEVELOPMENT_STATUS_LABELS[dev.status]}
             </span>
-            <h1 className="font-gloock text-[44px] md:text-[80px] leading-[0.95] tracking-tight">
+            <h1 className="font-display text-[44px] md:text-[80px] leading-[0.95] tracking-tight">
               {dev.name}
             </h1>
             {dev.subtitle && (
@@ -94,7 +94,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
 
       <main className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
         {/* Quick stats */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 pb-16 border-b border-[#2e2e2e]/10">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 pb-16 border-b border-ink/10">
           <Stat label="Price" value={dev.price_on_request ? 'On request' : formatPriceFrom(dev.price_from)} />
           {dev.bedrooms_from && dev.bedrooms_to && (
             <Stat label="Bedrooms" value={`${dev.bedrooms_from}–${dev.bedrooms_to}`} />
@@ -108,9 +108,9 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
         {/* Description */}
         {dev.description && (
           <section className="max-w-3xl mb-16">
-            <h2 className="font-gloock text-[28px] md:text-[36px] text-[#2e2e2e] mb-6">About the development</h2>
+            <h2 className="font-display text-[28px] md:text-[36px] text-ink mb-6">About the development</h2>
             {dev.description.split('\n\n').map((p, i) => (
-              <p key={i} className="text-[15px] text-[#2e2e2e]/80 leading-relaxed mb-4">{p}</p>
+              <p key={i} className="text-[15px] text-ink/80 leading-relaxed mb-4">{p}</p>
             ))}
           </section>
         )}
@@ -118,10 +118,10 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
         {/* Amenities */}
         {dev.amenities.length > 0 && (
           <section className="mb-16">
-            <h2 className="font-gloock text-[28px] md:text-[36px] text-[#2e2e2e] mb-6">Amenities</h2>
+            <h2 className="font-display text-[28px] md:text-[36px] text-ink mb-6">Amenities</h2>
             <div className="flex flex-wrap gap-2">
               {dev.amenities.map((a) => (
-                <span key={a} className="px-3 py-1.5 text-[12px] text-[#2e2e2e]/70 bg-white border border-[#2e2e2e]/10 rounded-full">
+                <span key={a} className="px-3 py-1.5 text-[12px] text-ink/70 bg-white border border-ink/10 rounded-full">
                   {a}
                 </span>
               ))}
@@ -132,7 +132,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
         {/* Gallery */}
         {dev.gallery_images.length > 0 && (
           <section className="mb-16">
-            <h2 className="font-gloock text-[28px] md:text-[36px] text-[#2e2e2e] mb-6">Gallery</h2>
+            <h2 className="font-display text-[28px] md:text-[36px] text-ink mb-6">Gallery</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {dev.gallery_images.map((img) => (
                 <div key={img} className="relative aspect-[4/3] bg-[#f0ede9] rounded overflow-hidden">
@@ -150,7 +150,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
               href={dev.brochure_pdf}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#3c9ba7] text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-full hover:bg-[#2d8a95] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-full hover:bg-gold-deep transition-colors"
             >
               Download brochure
             </a>
@@ -159,7 +159,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
 
         <Link
           href="/new-developments"
-          className="text-[12px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors"
+          className="text-[12px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors"
         >
           ← Back to all developments
         </Link>
@@ -171,8 +171,8 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-[#2e2e2e]/50 mb-2">{label}</p>
-      <p className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e]">{value}</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-ink/50 mb-2">{label}</p>
+      <p className="font-display text-[24px] md:text-[28px] text-ink">{value}</p>
     </div>
   );
 }

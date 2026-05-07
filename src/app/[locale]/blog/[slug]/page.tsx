@@ -150,20 +150,20 @@ export default async function BlogPostPage({ params }: Props) {
     if (!trimmed) return null;
     if (trimmed.startsWith('## ')) {
       return (
-        <h2 key={i} className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e] mt-10 mb-4">
+        <h2 key={i} className="font-display text-[24px] md:text-[28px] text-ink mt-10 mb-4">
           {trimmed.replace('## ', '')}
         </h2>
       );
     }
     if (trimmed.startsWith('### ')) {
       return (
-        <h3 key={i} className="font-gloock text-[20px] md:text-[22px] text-[#2e2e2e] mt-8 mb-3">
+        <h3 key={i} className="font-display text-[20px] md:text-[22px] text-ink mt-8 mb-3">
           {trimmed.replace('### ', '')}
         </h3>
       );
     }
     return (
-      <p key={i} className="text-[16px] md:text-[17px] text-[#2e2e2e]/70 leading-[1.8] mb-4">
+      <p key={i} className="text-[16px] md:text-[17px] text-ink/70 leading-[1.8] mb-4">
         {trimmed}
       </p>
     );
@@ -174,23 +174,23 @@ export default async function BlogPostPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
-      <div className="min-h-screen bg-[#faf9f8]">
+      <div className="min-h-screen bg-paper">
         {/* Header */}
         <header className="sticky top-0 z-50 header-glass">
           <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
             <div className="flex items-center justify-between h-[60px] lg:h-[72px]">
               <Link href="/" className="group relative shrink-0 inline-block">
-                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-gloock text-[#3c9ba7] transition-colors group-hover:text-[#2d8a95]">
+                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-display text-gold transition-colors group-hover:text-gold-deep">
                   Smartmove Marbella
                 </span>
-                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
               </Link>
               <div className="flex items-center gap-4">
-                <Link href="/blog" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors">
+                <Link href="/blog" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors">
                   All Articles
                 </Link>
-                <Link href="/" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors">
+                <Link href="/" className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors">
                   Properties
                 </Link>
               </div>
@@ -201,12 +201,12 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Breadcrumbs */}
         <nav className="max-w-[1600px] mx-auto px-6 lg:px-12 pt-6" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-1.5 text-[12px] text-[#2e2e2e]/50">
-            <li><Link href="/" className="hover:text-[#3c9ba7] transition-colors">Home</Link></li>
+          <ol className="flex items-center gap-1.5 text-[12px] text-ink/50">
+            <li><Link href="/" className="hover:text-gold transition-colors">Home</Link></li>
             <ChevronRight className="w-3 h-3" />
-            <li><Link href="/blog" className="hover:text-[#3c9ba7] transition-colors">Blog</Link></li>
+            <li><Link href="/blog" className="hover:text-gold transition-colors">Blog</Link></li>
             <ChevronRight className="w-3 h-3" />
-            <li className="text-[#2e2e2e]/80 font-medium truncate max-w-[200px]">{post.title}</li>
+            <li className="text-ink/80 font-medium truncate max-w-[200px]">{post.title}</li>
           </ol>
         </nav>
 
@@ -231,26 +231,26 @@ export default async function BlogPostPage({ params }: Props) {
         <article className="max-w-3xl mx-auto px-6 lg:px-12 pt-8 pb-16">
           {/* Category & meta */}
           <div className="flex flex-wrap items-center gap-3 mb-6">
-            <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#3c9ba7] bg-[#3c9ba7]/[0.06] px-2.5 py-1 rounded-full">
+            <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-gold bg-gold/[0.06] px-2.5 py-1 rounded-full">
               {BLOG_CATEGORY_LABELS[post.category]}
             </span>
-            <span className="flex items-center gap-1 text-[12px] text-[#2e2e2e]/40">
+            <span className="flex items-center gap-1 text-[12px] text-ink/40">
               <Clock className="w-3 h-3" />
               {post.reading_time}
             </span>
-            <span className="flex items-center gap-1 text-[12px] text-[#2e2e2e]/40">
+            <span className="flex items-center gap-1 text-[12px] text-ink/40">
               <Calendar className="w-3 h-3" />
               {formatDate(post.published_at)}
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="font-gloock text-[32px] md:text-[42px] lg:text-[48px] text-[#2e2e2e] leading-[1.1] tracking-tight mb-6">
+          <h1 className="font-display text-[32px] md:text-[42px] lg:text-[48px] text-ink leading-[1.1] tracking-tight mb-6">
             {post.title}
           </h1>
 
           {/* Excerpt */}
-          <p className="text-[18px] md:text-[20px] text-[#2e2e2e]/60 leading-relaxed mb-10 pb-10 border-b border-[#2e2e2e]/[0.08]">
+          <p className="text-[18px] md:text-[20px] text-ink/60 leading-relaxed mb-10 pb-10 border-b border-ink/[0.08]">
             {post.excerpt}
           </p>
 
@@ -260,10 +260,10 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
 
           {/* Back to blog */}
-          <div className="mt-16 pt-8 border-t border-[#2e2e2e]/[0.08]">
+          <div className="mt-16 pt-8 border-t border-ink/[0.08]">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#3c9ba7] hover:text-[#2d8a95] transition-colors"
+              className="inline-flex items-center gap-2 text-[13px] font-semibold text-gold hover:text-gold-deep transition-colors"
             >
               <ArrowLeft className="w-4 h-4" /> Back to all articles
             </Link>
@@ -272,9 +272,9 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Related Posts */}
         {related.length > 0 && (
-          <section className="bg-white border-t border-[#2e2e2e]/[0.06]">
+          <section className="bg-white border-t border-ink/[0.06]">
             <div className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-              <h2 className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e] mb-8">
+              <h2 className="font-display text-[24px] md:text-[28px] text-ink mb-8">
                 Related Articles
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -282,15 +282,15 @@ export default async function BlogPostPage({ params }: Props) {
                   <Link
                     key={relPost.slug}
                     href={{ pathname: '/blog/[slug]', params: { slug: relPost.slug } }}
-                    className="group bg-[#faf9f8] rounded-lg p-6 border border-[#2e2e2e]/[0.04] hover:border-[#3c9ba7]/20 hover:bg-white transition-all duration-300"
+                    className="group bg-paper rounded-lg p-6 border border-ink/[0.04] hover:border-gold/20 hover:bg-white transition-all duration-300"
                   >
-                    <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#3c9ba7] mb-2 block">
+                    <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-gold mb-2 block">
                       {BLOG_CATEGORY_LABELS[relPost.category]}
                     </span>
-                    <h3 className="font-gloock text-[17px] text-[#2e2e2e] group-hover:text-[#3c9ba7] transition-colors mb-2 line-clamp-2">
+                    <h3 className="font-display text-[17px] text-ink group-hover:text-gold transition-colors mb-2 line-clamp-2">
                       {relPost.title}
                     </h3>
-                    <span className="flex items-center gap-1 text-[12px] text-[#3c9ba7]">
+                    <span className="flex items-center gap-1 text-[12px] text-gold">
                       Read <ArrowRight className="w-3 h-3" />
                     </span>
                   </Link>
@@ -302,16 +302,16 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* CTA */}
         <section className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-          <div className="bg-gradient-to-br from-[#3c9ba7]/[0.06] to-[#3c9ba7]/[0.02] rounded-2xl p-8 md:p-12 text-center border border-[#3c9ba7]/10">
-            <h2 className="font-gloock text-[28px] md:text-[32px] text-[#2e2e2e] mb-3">
+          <div className="bg-gradient-to-br from-gold/[0.06] to-gold/[0.02] rounded-2xl p-8 md:p-12 text-center border border-gold/10">
+            <h2 className="font-display text-[28px] md:text-[32px] text-ink mb-3">
               Ready to find your property?
             </h2>
-            <p className="text-[16px] text-[#2e2e2e]/60 mb-6 max-w-xl mx-auto">
+            <p className="text-[16px] text-ink/60 mb-6 max-w-xl mx-auto">
               Browse our exclusive collection of luxury properties across the Costa del Sol.
             </p>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#3c9ba7] text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-lg hover:bg-[#2d8a95] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-lg hover:bg-gold-deep transition-colors"
             >
               Browse Properties <ArrowRight className="w-4 h-4" />
             </Link>
@@ -319,15 +319,15 @@ export default async function BlogPostPage({ params }: Props) {
         </section>
 
         {/* Footer */}
-        <footer className="py-16 bg-[#faf9f8] border-t border-[#2e2e2e]/[0.06]">
+        <footer className="py-16 bg-paper border-t border-ink/[0.06]">
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12 text-center">
             <Link href="/" className="group relative inline-block">
-              <span className="font-gloock text-[28px] md:text-[36px] text-[#3c9ba7]/90 leading-none tracking-tight transition-colors group-hover:text-[#2d8a95]">
+              <span className="font-display text-[28px] md:text-[36px] text-gold/90 leading-none tracking-tight transition-colors group-hover:text-gold-deep">
                 Smartmove Marbella
               </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
-            <p className="text-[13px] text-[#2e2e2e]/40 tracking-widest uppercase mt-4">
+            <p className="text-[13px] text-ink/40 tracking-widest uppercase mt-4">
               &copy; {new Date().getFullYear()} All Rights Reserved
             </p>
           </div>

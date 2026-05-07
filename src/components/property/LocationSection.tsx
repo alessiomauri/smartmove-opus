@@ -60,20 +60,20 @@ export default function LocationSection({ property }: LocationSectionProps) {
     : null;
 
   return (
-    <section ref={sectionRef} id="location" className="py-16 lg:py-20 bg-[#faf9f8]">
+    <section ref={sectionRef} id="location" className="py-16 lg:py-20 bg-paper">
       {/* Section Header */}
       <div className={`max-w-[1400px] mx-auto px-8 lg:px-16 mb-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-transparent" />
-              <span className="text-[11px] tracking-[0.25em] uppercase text-[#3c9ba7]">Location</span>
+              <div className="w-12 h-[1px] bg-gradient-to-r from-gold to-transparent" />
+              <span className="text-[11px] tracking-[0.25em] uppercase text-gold">Location</span>
             </div>
-            <h2 className="font-gloock text-[36px] md:text-[48px] lg:text-[56px] text-[#3c9ba7] leading-[1.05]">
+            <h2 className="font-display text-[36px] md:text-[48px] lg:text-[56px] text-gold leading-[1.05]">
               Location
             </h2>
           </div>
-          <p className="text-[#2e2e2e]/50 text-sm tracking-wide max-w-xs">
+          <p className="text-ink/50 text-sm tracking-wide max-w-xs">
             {property.area || property.location}
           </p>
         </div>
@@ -105,8 +105,8 @@ export default function LocationSection({ property }: LocationSectionProps) {
                   {/* Mobile: Compact single row with location + buttons */}
                   <div className="flex md:hidden items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <MapPin className="w-4 h-4 text-[#3c9ba7] flex-shrink-0" />
-                      <span className="text-[12px] font-medium text-[#2e2e2e] truncate">
+                      <MapPin className="w-4 h-4 text-gold flex-shrink-0" />
+                      <span className="text-[12px] font-medium text-ink truncate">
                         {property.area || property.location}
                       </span>
                     </div>
@@ -115,7 +115,7 @@ export default function LocationSection({ property }: LocationSectionProps) {
                         href={`https://www.google.com/maps/dir/?api=1&destination=${property.latitude},${property.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#3c9ba7] text-white rounded-lg"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 bg-gold text-white rounded-lg"
                       >
                         <Navigation className="w-3.5 h-3.5" />
                         <span className="text-[10px] tracking-[0.05em] uppercase font-medium">Directions</span>
@@ -124,9 +124,9 @@ export default function LocationSection({ property }: LocationSectionProps) {
                         href={`https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center px-2.5 py-2 bg-white border border-[#2e2e2e]/10 rounded-lg"
+                        className="flex items-center justify-center px-2.5 py-2 bg-white border border-ink/10 rounded-lg"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 text-[#2e2e2e]/60" />
+                        <ExternalLink className="w-3.5 h-3.5 text-ink/60" />
                       </a>
                     </div>
                   </div>
@@ -135,12 +135,12 @@ export default function LocationSection({ property }: LocationSectionProps) {
                   <div className="hidden md:block">
                     {/* Coordinates */}
                     <div className="flex items-start gap-3 mb-4">
-                      <div className="w-9 h-9 rounded-full bg-[#3c9ba7]/10 flex items-center justify-center flex-shrink-0">
-                        <MapPin className="w-4 h-4 text-[#3c9ba7]" />
+                      <div className="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-gold" />
                       </div>
                       <div>
-                        <p className="text-[10px] tracking-[0.15em] uppercase text-[#2e2e2e]/50 mb-0.5">Coordinates</p>
-                        <p className="text-[13px] font-medium text-[#2e2e2e] tracking-wide">
+                        <p className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-0.5">Coordinates</p>
+                        <p className="text-[13px] font-medium text-ink tracking-wide">
                           {coordinatesString}
                         </p>
                       </div>
@@ -148,15 +148,15 @@ export default function LocationSection({ property }: LocationSectionProps) {
 
                     {/* Location Name */}
                     <div className="mb-5">
-                      <p className="text-[10px] tracking-[0.15em] uppercase text-[#2e2e2e]/50 mb-0.5">Area</p>
-                      <p className="text-[15px] text-[#2e2e2e]">
+                      <p className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-0.5">Area</p>
+                      <p className="text-[15px] text-ink">
                         {property.area || property.location}
                       </p>
                     </div>
 
                     {/* Location description if available */}
                     {property.location_description && (
-                      <p className="text-[13px] text-[#2e2e2e]/70 leading-relaxed mb-5 pb-5 border-b border-[#2e2e2e]/5">
+                      <p className="text-[13px] text-ink/70 leading-relaxed mb-5 pb-5 border-b border-ink/5">
                         {property.location_description}
                       </p>
                     )}
@@ -167,7 +167,7 @@ export default function LocationSection({ property }: LocationSectionProps) {
                         href={`https://www.google.com/maps/dir/?api=1&destination=${property.latitude},${property.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#3c9ba7] text-white rounded-lg hover:bg-[#358d98] transition-all duration-300"
+                        className="group flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gold text-white rounded-lg hover:bg-gold-deep transition-all duration-300"
                       >
                         <Navigation className="w-3.5 h-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                         <span className="text-[11px] tracking-[0.1em] uppercase font-medium">Directions</span>
@@ -176,9 +176,9 @@ export default function LocationSection({ property }: LocationSectionProps) {
                         href={`https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-[#2e2e2e]/10 rounded-lg hover:border-[#3c9ba7]/30 hover:bg-[#faf9f8] transition-all duration-300"
+                        className="group flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-ink/10 rounded-lg hover:border-gold/30 hover:bg-paper transition-all duration-300"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 text-[#2e2e2e]/60 group-hover:text-[#3c9ba7] transition-colors" />
+                        <ExternalLink className="w-3.5 h-3.5 text-ink/60 group-hover:text-gold transition-colors" />
                       </a>
                     </div>
                   </div>
@@ -194,13 +194,13 @@ export default function LocationSection({ property }: LocationSectionProps) {
               }} />
 
               <div className="text-center relative">
-                <div className="w-20 h-20 rounded-full bg-[#3c9ba7]/5 flex items-center justify-center mx-auto mb-6">
-                  <MapPin className="w-8 h-8 text-[#3c9ba7]/30" />
+                <div className="w-20 h-20 rounded-full bg-gold/5 flex items-center justify-center mx-auto mb-6">
+                  <MapPin className="w-8 h-8 text-gold/30" />
                 </div>
-                <p className="text-[#2e2e2e]/40 text-base mb-2">
+                <p className="text-ink/40 text-base mb-2">
                   Precise location available upon request
                 </p>
-                <p className="text-[#2e2e2e]/30 text-sm">
+                <p className="text-ink/30 text-sm">
                   {property.area || property.location}
                 </p>
               </div>

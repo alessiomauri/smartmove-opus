@@ -46,27 +46,27 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f8] relative overflow-hidden">
+    <div className="min-h-screen bg-paper relative overflow-hidden">
       {/* Background orbs */}
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-gradient-radial from-[#3c9ba7]/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-gradient-radial from-[#3c9ba7]/[0.02] to-transparent rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/3" />
+      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-gradient-radial from-gold/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
+      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-gradient-radial from-gold/[0.02] to-transparent rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/3" />
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-black/[0.04]">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#3c9ba7]/40 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12">
           <div className="flex items-center justify-between h-[60px] sm:h-[76px]">
             <Link href="/" className="group relative flex-shrink-0">
-              <span className="text-[20px] sm:text-[26px] tracking-[-0.02em] font-gloock text-[#3c9ba7] transition-all duration-500 group-hover:text-[#2d8a95]">
+              <span className="text-[20px] sm:text-[26px] tracking-[-0.02em] font-display text-gold transition-all duration-500 group-hover:text-gold-deep">
                 Smartmove Marbella
               </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gradient-to-r from-[#3c9ba7] to-[#4aabb7] transition-all duration-500 ease-out group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gradient-to-r from-gold to-gold-soft transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
 
             <nav className="hidden sm:flex items-center gap-1">
               <Link
                 href="/"
-                className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#2e2e2e]/60 hover:text-[#3c9ba7] hover:bg-[#3c9ba7]/[0.06] transition-all duration-400"
+                className="group flex items-center gap-2 px-4 py-2 rounded-full text-ink/60 hover:text-gold hover:bg-gold/[0.06] transition-all duration-400"
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="transition-transform duration-400 group-hover:scale-110">
                   <rect x="3" y="3" width="7" height="7" />
@@ -77,11 +77,11 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
                 <span className="text-[11px] font-semibold tracking-[0.08em] uppercase">Properties</span>
               </Link>
 
-              <div className="w-[1px] h-5 bg-gradient-to-b from-transparent via-[#2e2e2e]/10 to-transparent mx-2" />
+              <div className="w-[1px] h-5 bg-gradient-to-b from-transparent via-ink/10 to-transparent mx-2" />
 
               <Link
                 href="/favourites"
-                className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#2e2e2e]/60 hover:text-[#3c9ba7] hover:bg-[#3c9ba7]/[0.06] transition-all duration-400"
+                className="group flex items-center gap-2 px-4 py-2 rounded-full text-ink/60 hover:text-gold hover:bg-gold/[0.06] transition-all duration-400"
               >
                 <Heart className="w-4 h-4" strokeWidth="1.5" />
                 <span className="text-[11px] font-semibold tracking-[0.08em] uppercase">Favorites</span>
@@ -90,7 +90,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
 
             {/* Mobile nav */}
             <nav className="flex sm:hidden items-center gap-2">
-              <Link href="/" className="p-2 rounded-full text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-all">
+              <Link href="/" className="p-2 rounded-full text-ink/60 hover:text-gold transition-all">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <rect x="3" y="3" width="7" height="7" />
                   <rect x="14" y="3" width="7" height="7" />
@@ -98,7 +98,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
                   <rect x="3" y="14" width="7" height="7" />
                 </svg>
               </Link>
-              <Link href="/favourites" className="p-2 rounded-full text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-all">
+              <Link href="/favourites" className="p-2 rounded-full text-ink/60 hover:text-gold transition-all">
                 <Heart className="w-4 h-4" strokeWidth="1.5" />
               </Link>
             </nav>
@@ -117,27 +117,27 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
             <div className="max-w-2xl">
               {/* Brand badge */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-transparent" />
-                <span className="text-[10px] tracking-[0.2em] uppercase text-[#3c9ba7] font-medium">
+                <div className="w-8 h-[1px] bg-gradient-to-r from-gold to-transparent" />
+                <span className="text-[10px] tracking-[0.2em] uppercase text-gold font-medium">
                   Smartmove Marbella
                 </span>
               </div>
 
               {/* Greeting */}
-              <h1 className="font-gloock text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] text-[#2e2e2e] leading-[1.1] tracking-tight mb-2">
+              <h1 className="font-display text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] text-ink leading-[1.1] tracking-tight mb-2">
                 Selected for{' '}
-                <span className="text-[#3c9ba7]">{collection.recipient_name}</span>
+                <span className="text-gold">{collection.recipient_name}</span>
               </h1>
 
-              <p className="text-[14px] sm:text-[15px] text-[#2e2e2e]/40 mb-4">
+              <p className="text-[14px] sm:text-[15px] text-ink/40 mb-4">
                 {collection.properties.length} {collection.properties.length === 1 ? 'property' : 'properties'} curated for you
               </p>
 
               {/* Personal note */}
               {collection.message && (
                 <div className="relative pl-5 py-4 mb-2">
-                  <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#3c9ba7]/40 via-[#3c9ba7]/20 to-transparent rounded-full" />
-                  <p className="text-[15px] sm:text-[16px] text-[#2e2e2e]/70 leading-relaxed italic">
+                  <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-gold/40 via-gold/20 to-transparent rounded-full" />
+                  <p className="text-[15px] sm:text-[16px] text-ink/70 leading-relaxed italic">
                     {collection.message}
                   </p>
                 </div>
@@ -149,15 +149,15 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4 sm:gap-6">
                   <div className="hidden sm:flex items-center gap-3">
-                    <div className="w-8 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-transparent" />
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#3c9ba7] font-medium">
+                    <div className="w-8 h-[1px] bg-gradient-to-r from-gold to-transparent" />
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-gold font-medium">
                       Curated Selection
                     </span>
                   </div>
-                  <h1 className="font-gloock text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] text-[#3c9ba7] leading-[1.1] tracking-tight">
+                  <h1 className="font-display text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] text-gold leading-[1.1] tracking-tight">
                     {collection.title}
                   </h1>
-                  <span className="hidden md:inline-block text-[13px] text-[#2e2e2e]/40">
+                  <span className="hidden md:inline-block text-[13px] text-ink/40">
                     {collection.properties.length} {collection.properties.length === 1 ? 'property' : 'properties'}
                   </span>
                 </div>
@@ -176,7 +176,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
                   </button>
                   <button
                     onClick={copyLink}
-                    className="group flex items-center gap-2 px-4 py-2 border border-[#2e2e2e]/10 rounded-full text-[#2e2e2e]/50 hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7] hover:bg-[#3c9ba7]/[0.04] transition-all duration-300"
+                    className="group flex items-center gap-2 px-4 py-2 border border-ink/10 rounded-full text-ink/50 hover:border-gold/30 hover:text-gold hover:bg-gold/[0.04] transition-all duration-300"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                     <span className="text-[10px] tracking-[0.1em] uppercase font-medium">
@@ -188,7 +188,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
 
               {/* Community intro message */}
               {collection.message && (
-                <p className="text-[15px] sm:text-[16px] text-[#2e2e2e]/60 leading-relaxed max-w-2xl">
+                <p className="text-[15px] sm:text-[16px] text-ink/60 leading-relaxed max-w-2xl">
                   {collection.message}
                 </p>
               )}
@@ -207,7 +207,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
                 </button>
                 <button
                   onClick={copyLink}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-[#2e2e2e]/10 rounded-full text-[#2e2e2e]/50 transition-all duration-300"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-ink/10 rounded-full text-ink/50 transition-all duration-300"
                 >
                   {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   <span className="text-[11px] tracking-[0.08em] uppercase font-medium">
@@ -221,7 +221,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
 
         {/* Divider */}
         <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-16 mt-4 sm:mt-6">
-          <div className="h-[1px] bg-gradient-to-r from-transparent via-[#3c9ba7]/15 to-transparent" />
+          <div className="h-[1px] bg-gradient-to-r from-transparent via-gold/15 to-transparent" />
         </div>
       </section>
 
@@ -268,7 +268,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           )}>
             <div className="max-w-md mx-auto">
-              <p className="text-[15px] text-[#2e2e2e]/50 mb-6 leading-relaxed">
+              <p className="text-[15px] text-ink/50 mb-6 leading-relaxed">
                 Interested in any of these properties? I&apos;d love to arrange a viewing or answer any questions.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -285,7 +285,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
                 </a>
                 <Link
                   href="/"
-                  className="group inline-flex items-center gap-2.5 px-6 py-3 border border-[#2e2e2e]/10 rounded-full text-[#2e2e2e]/50 hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7] transition-all duration-300"
+                  className="group inline-flex items-center gap-2.5 px-6 py-3 border border-ink/10 rounded-full text-ink/50 hover:border-gold/30 hover:text-gold transition-all duration-300"
                 >
                   <span className="text-[11px] sm:text-[12px] tracking-[0.12em] uppercase font-medium">
                     Browse All Properties
@@ -304,7 +304,7 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
           )}>
             <Link
               href="/"
-              className="group inline-flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-[#3c9ba7] text-white rounded-full hover:bg-[#358d98] hover:shadow-xl hover:shadow-[#3c9ba7]/20 transition-all duration-500"
+              className="group inline-flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-gold text-white rounded-full hover:bg-gold-deep hover:shadow-xl hover:shadow-gold/20 transition-all duration-500"
             >
               <span className="text-[11px] sm:text-[12px] tracking-[0.15em] uppercase font-medium">
                 Explore All Properties
@@ -315,13 +315,13 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
       </main>
 
       {/* Footer */}
-      <footer className="py-16 lg:py-20 bg-[#faf9f8] relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-[#3c9ba7]/[0.02] rounded-full blur-3xl pointer-events-none" />
+      <footer className="py-16 lg:py-20 bg-paper relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-gold/[0.02] rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-16 text-center relative">
-          <h2 className="font-gloock text-[28px] md:text-[36px] lg:text-[44px] text-[#3c9ba7] leading-none mb-3 tracking-tight">
+          <h2 className="font-display text-[28px] md:text-[36px] lg:text-[44px] text-gold leading-none mb-3 tracking-tight">
             Smartmove Marbella
           </h2>
-          <p className="text-[12px] text-[#2e2e2e]/40 tracking-[0.2em] uppercase">
+          <p className="text-[12px] text-ink/40 tracking-[0.2em] uppercase">
             &copy; {new Date().getFullYear()} All Rights Reserved
           </p>
         </div>

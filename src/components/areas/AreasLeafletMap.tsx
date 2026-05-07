@@ -23,8 +23,8 @@ interface Props {
 /* ───────── palette ───────── */
 
 const PIN_PALETTE: Record<PinCategory, { fill: string; stroke: string; radius: number; weight: number }> = {
-  main:    { fill: '#3c9ba7', stroke: '#ffffff', radius: 10, weight: 2 },
-  micro:   { fill: '#ffffff', stroke: '#3c9ba7', radius: 4.5, weight: 1.75 },
+  main:    { fill: 'var(--sm-gold)', stroke: '#ffffff', radius: 10, weight: 2 },
+  micro:   { fill: '#ffffff', stroke: 'var(--sm-gold)', radius: 4.5, weight: 1.75 },
   resort:  { fill: '#9a8568', stroke: '#ffffff', radius: 6.5, weight: 1.75 },
   airport: { fill: '#546d85', stroke: '#ffffff', radius: 7, weight: 2 },
 };
@@ -97,20 +97,20 @@ export default function AreasLeafletMap({ areas }: Props) {
   const microCount = grouped.micro.length;
 
   return (
-    <div className="relative bg-white rounded-xl border border-[#2e2e2e]/[0.06] overflow-hidden">
+    <div className="relative bg-white rounded-xl border border-ink/[0.06] overflow-hidden">
       {/* Legend */}
-      <div className="absolute top-3 right-3 z-[500] bg-white/95 backdrop-blur-sm rounded-lg border border-[#2e2e2e]/[0.06] px-3 py-2 shadow-sm pointer-events-none">
-        <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#2e2e2e]/60 mb-1.5">
+      <div className="absolute top-3 right-3 z-[500] bg-white/95 backdrop-blur-sm rounded-lg border border-ink/[0.06] px-3 py-2 shadow-sm pointer-events-none">
+        <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-ink/60 mb-1.5">
           Costa del Sol
         </p>
-        <div className="flex flex-col gap-1 text-[11px] text-[#2e2e2e]/70">
+        <div className="flex flex-col gap-1 text-[11px] text-ink/70">
           <LegendDot color={PIN_PALETTE.main.fill} label="Location" />
           <LegendDot color={PIN_PALETTE.micro.fill} outline={PIN_PALETTE.micro.stroke} label="Area" />
           <LegendDot color={PIN_PALETTE.resort.fill} label="Resort" />
           <LegendDot color={PIN_PALETTE.airport.fill} label="Airport" icon />
         </div>
         {!showMicros && microCount > 0 && (
-          <p className="mt-2 pt-2 border-t border-[#2e2e2e]/[0.06] text-[10px] text-[#2e2e2e]/50 leading-snug max-w-[140px]">
+          <p className="mt-2 pt-2 border-t border-ink/[0.06] text-[10px] text-ink/50 leading-snug max-w-[140px]">
             Zoom in to reveal {microCount} more areas
           </p>
         )}
@@ -186,7 +186,7 @@ export default function AreasLeafletMap({ areas }: Props) {
         ))}
       </MapContainer>
 
-      <div className="px-4 py-3 bg-[#faf9f8] border-t border-[#2e2e2e]/[0.06] text-[11px] text-[#2e2e2e]/50">
+      <div className="px-4 py-3 bg-paper border-t border-ink/[0.06] text-[11px] text-ink/50">
         Scroll to zoom · Drag to pan · Click a pin for details
       </div>
     </div>
@@ -258,22 +258,22 @@ function AreaPopup({ area, category }: { area: Area; category: PinCategory }) {
           />
         </div>
       )}
-      <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#3c9ba7] mb-0.5">
+      <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-gold mb-0.5">
         {category === 'resort' && 'Resort · '}
         {category === 'airport' && 'Airport · '}
         {area.region}
         {category === 'micro' && area.parent_area && (
-          <span className="text-[#2e2e2e]/40 normal-case font-normal"> · part of {area.parent_area.replace(/-/g, ' ')}</span>
+          <span className="text-ink/40 normal-case font-normal"> · part of {area.parent_area.replace(/-/g, ' ')}</span>
         )}
       </p>
-      <p className="text-[15px] font-semibold text-[#2e2e2e] mb-1">{area.name}</p>
+      <p className="text-[15px] font-semibold text-ink mb-1">{area.name}</p>
       {area.price_range && (
-        <p className="text-[12px] text-[#2e2e2e]/60 mb-2">{area.price_range}</p>
+        <p className="text-[12px] text-ink/60 mb-2">{area.price_range}</p>
       )}
       {!isAirport && (
         <Link
           href={{ pathname: '/areas/[slug]', params: { slug: area.slug } }}
-          className="inline-block text-[12px] font-semibold text-[#3c9ba7] hover:text-[#2d8a95] transition-colors"
+          className="inline-block text-[12px] font-semibold text-gold hover:text-gold-deep transition-colors"
         >
           View area →
         </Link>

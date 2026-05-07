@@ -31,34 +31,34 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
   const paragraphs = area.description.split('\n\n').filter(p => p.trim());
 
   return (
-    <div className="min-h-screen bg-[#faf9f8]">
+    <div className="min-h-screen bg-paper">
       {/* Header */}
       <header className="sticky top-0 z-50 header-glass">
         <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
         <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between h-[60px] lg:h-[72px]">
             <Link href="/" className="group relative shrink-0 inline-block">
-              <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-gloock text-[#3c9ba7] transition-all duration-500 group-hover:text-[#2d8a95]">
+              <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-display text-gold transition-all duration-500 group-hover:text-gold-deep">
                 Smartmove Marbella
               </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
             <div className="flex items-center gap-4">
               <Link
                 href="/"
-                className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors"
+                className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors"
               >
                 All Properties
               </Link>
               <Link
                 href="/favourites"
-                className="relative p-2.5 text-[#2e2e2e]/60 rounded-full hover:bg-[#3c9ba7]/[0.06] transition-colors duration-300"
+                className="relative p-2.5 text-ink/60 rounded-full hover:bg-gold/[0.06] transition-colors duration-300"
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
                 {favouriteCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold text-white bg-gradient-to-br from-[#3c9ba7] to-[#2d8a95] rounded-full shadow-sm">
+                  <span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold text-white bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-sm">
                     {favouriteCount}
                   </span>
                 )}
@@ -72,22 +72,22 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
 
       {/* Breadcrumbs */}
       <nav className="max-w-[1600px] mx-auto px-6 lg:px-12 pt-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-1.5 text-[12px] text-[#2e2e2e]/50">
-          <li><Link href="/" className="hover:text-[#3c9ba7] transition-colors">Home</Link></li>
+        <ol className="flex items-center gap-1.5 text-[12px] text-ink/50">
+          <li><Link href="/" className="hover:text-gold transition-colors">Home</Link></li>
           <ChevronRight className="w-3 h-3" />
-          <li><Link href="/areas" className="hover:text-[#3c9ba7] transition-colors">Areas</Link></li>
+          <li><Link href="/areas" className="hover:text-gold transition-colors">Areas</Link></li>
           {parentArea && (
             <>
               <ChevronRight className="w-3 h-3" />
               <li>
-                <Link href={{ pathname: '/areas/[slug]', params: { slug: parentArea.slug } }} className="hover:text-[#3c9ba7] transition-colors">
+                <Link href={{ pathname: '/areas/[slug]', params: { slug: parentArea.slug } }} className="hover:text-gold transition-colors">
                   {parentArea.name}
                 </Link>
               </li>
             </>
           )}
           <ChevronRight className="w-3 h-3" />
-          <li className="text-[#2e2e2e]/80 font-medium">{area.name}</li>
+          <li className="text-ink/80 font-medium">{area.name}</li>
         </ol>
       </nav>
 
@@ -115,21 +115,21 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
           <div className="flex flex-col justify-center">
             {/* Region tag */}
             <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-4 h-4 text-[#3c9ba7]" />
-              <span className="text-[12px] font-semibold tracking-[0.12em] uppercase text-[#3c9ba7]">
+              <MapPin className="w-4 h-4 text-gold" />
+              <span className="text-[12px] font-semibold tracking-[0.12em] uppercase text-gold">
                 {area.region} · Costa del Sol
               </span>
             </div>
 
-            <h1 className="font-gloock text-[32px] md:text-[40px] lg:text-[48px] text-[#2e2e2e] leading-[1.1] tracking-tight mb-4">
+            <h1 className="font-display text-[32px] md:text-[40px] lg:text-[48px] text-ink leading-[1.1] tracking-tight mb-4">
               {area.heading}
             </h1>
-            <p className="text-[16px] md:text-[18px] text-[#2e2e2e]/60 leading-relaxed mb-8">
+            <p className="text-[16px] md:text-[18px] text-ink/60 leading-relaxed mb-8">
               {area.subheading}
             </p>
 
             {/* Description */}
-            <div className="space-y-4 text-[15px] text-[#2e2e2e]/65 leading-relaxed mb-8">
+            <div className="space-y-4 text-[15px] text-ink/65 leading-relaxed mb-8">
               {paragraphs.map((paragraph, i) => (
                 <p key={i}>{paragraph}</p>
               ))}
@@ -138,14 +138,14 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
             {/* Highlights */}
             {area.highlights.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#2e2e2e]/40 mb-3">
+                <h3 className="text-[11px] font-semibold tracking-[0.1em] uppercase text-ink/40 mb-3">
                   Key Highlights
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
                   {area.highlights.map((highlight) => (
                     <div key={highlight} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#3c9ba7] shrink-0" />
-                      <span className="text-[14px] text-[#2e2e2e]/70">{highlight}</span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                      <span className="text-[14px] text-ink/70">{highlight}</span>
                     </div>
                   ))}
                 </div>
@@ -155,14 +155,14 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
             {/* Property types */}
             {area.property_types.length > 0 && (
               <div>
-                <h3 className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#2e2e2e]/40 mb-3">
+                <h3 className="text-[11px] font-semibold tracking-[0.1em] uppercase text-ink/40 mb-3">
                   Property Types Available
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {area.property_types.map((type) => (
                     <span
                       key={type}
-                      className="inline-flex items-center px-3 py-1 text-[12px] font-medium text-[#3c9ba7] bg-[#3c9ba7]/[0.06] rounded-full border border-[#3c9ba7]/10"
+                      className="inline-flex items-center px-3 py-1 text-[12px] font-medium text-gold bg-gold/[0.06] rounded-full border border-gold/10"
                     >
                       {type}
                     </span>
@@ -178,25 +178,25 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
       {showProperties && (
         <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e]">
+            <h2 className="font-display text-[24px] md:text-[28px] text-ink">
               Properties in {area.name}
             </h2>
             {properties.length > 0 && (
-              <p className="text-[13px] font-medium text-[#2e2e2e]/40">
+              <p className="text-[13px] font-medium text-ink/40">
                 {`${properties.length} available`}
               </p>
             )}
           </div>
           <PropertyGrid properties={properties} loading={false} />
           {properties.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-lg border border-[#2e2e2e]/[0.06]">
-              <Home className="w-10 h-10 text-[#3c9ba7]/40 mx-auto mb-3" />
-              <p className="text-[#2e2e2e]/60 mb-4">
+            <div className="text-center py-12 bg-white rounded-lg border border-ink/[0.06]">
+              <Home className="w-10 h-10 text-gold/40 mx-auto mb-3" />
+              <p className="text-ink/60 mb-4">
                 No properties currently listed in {area.name}.
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#3c9ba7] hover:text-[#2d8a95] transition-colors"
+                className="inline-flex items-center gap-2 text-[13px] font-semibold text-gold hover:text-gold-deep transition-colors"
               >
                 Browse all properties <ArrowRight className="w-4 h-4" />
               </Link>
@@ -242,23 +242,23 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
           {/* What makes this area special — highlights as visual cards */}
           {area.highlights.length > 0 && (
             <section className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#3c9ba7] mb-3">
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-gold mb-3">
                 What to know
               </p>
-              <h2 className="font-gloock text-[28px] md:text-[36px] text-[#2e2e2e] leading-tight mb-10">
+              <h2 className="font-display text-[28px] md:text-[36px] text-ink leading-tight mb-10">
                 What makes {area.name} special.
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
                 {area.highlights.map((highlight, i) => (
                   <div
                     key={i}
-                    className="bg-white border border-[#2e2e2e]/[0.06] rounded-[6px] p-5 lg:p-6"
+                    className="bg-white border border-ink/[0.06] rounded-[6px] p-5 lg:p-6"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#3c9ba7]/10 text-[#3c9ba7] flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-7 h-7 rounded-full bg-gold/10 text-gold flex items-center justify-center shrink-0 mt-0.5">
                         <Sparkles className="w-3.5 h-3.5" />
                       </div>
-                      <p className="text-[14px] md:text-[15px] text-[#2e2e2e]/80 leading-relaxed">
+                      <p className="text-[14px] md:text-[15px] text-ink/80 leading-relaxed">
                         {highlight}
                       </p>
                     </div>
@@ -271,17 +271,17 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
           {/* Property types you'll find — pills */}
           {area.property_types.length > 0 && (
             <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#3c9ba7] mb-3">
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-gold mb-3">
                 Available in {area.name}
               </p>
-              <h3 className="font-gloock text-[22px] md:text-[28px] text-[#2e2e2e] leading-tight mb-6">
+              <h3 className="font-display text-[22px] md:text-[28px] text-ink leading-tight mb-6">
                 Property types you&apos;ll find here.
               </h3>
               <div className="flex flex-wrap gap-2">
                 {area.property_types.map((type) => (
                   <span
                     key={type}
-                    className="inline-flex items-center px-4 py-2 text-[13px] font-medium text-[#2e2e2e]/75 bg-white border border-[#2e2e2e]/10 rounded-full"
+                    className="inline-flex items-center px-4 py-2 text-[13px] font-medium text-ink/75 bg-white border border-ink/10 rounded-full"
                   >
                     {type}
                   </span>
@@ -304,10 +304,10 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
       {/* Child areas (micro-locations) */}
       {childAreas.length > 0 && (
         <section className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-          <h2 className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e] mb-2">
+          <h2 className="font-display text-[24px] md:text-[28px] text-ink mb-2">
             Neighbourhoods in {area.name}
           </h2>
-          <p className="text-[15px] text-[#2e2e2e]/50 mb-8">
+          <p className="text-[15px] text-ink/50 mb-8">
             Explore specific areas within {area.name}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -315,7 +315,7 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
               <Link
                 key={child.slug}
                 href={{ pathname: '/areas/[slug]', params: { slug: child.slug } }}
-                className="group bg-white rounded-xl overflow-hidden border border-[#2e2e2e]/[0.06] hover:border-[#3c9ba7]/20 hover:shadow-lg transition-all duration-300"
+                className="group bg-white rounded-xl overflow-hidden border border-ink/[0.06] hover:border-gold/20 hover:shadow-lg transition-all duration-300"
               >
                 {child.hero_image ? (
                   <div className="relative aspect-[16/9] bg-[#f0ede9] overflow-hidden">
@@ -328,21 +328,21 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[16/9] bg-gradient-to-br from-[#3c9ba7]/10 to-[#3c9ba7]/[0.03] flex items-center justify-center">
-                    <MapPin className="w-8 h-8 text-[#3c9ba7]/30" />
+                  <div className="aspect-[16/9] bg-gradient-to-br from-gold/10 to-gold/[0.03] flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-gold/30" />
                   </div>
                 )}
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-gloock text-[18px] text-[#2e2e2e] group-hover:text-[#3c9ba7] transition-colors">
+                    <h3 className="font-display text-[18px] text-ink group-hover:text-gold transition-colors">
                       {child.name}
                     </h3>
-                    <ArrowRight className="w-4 h-4 text-[#2e2e2e]/20 group-hover:text-[#3c9ba7] group-hover:translate-x-0.5 transition-all mt-1" />
+                    <ArrowRight className="w-4 h-4 text-ink/20 group-hover:text-gold group-hover:translate-x-0.5 transition-all mt-1" />
                   </div>
-                  <p className="text-[13px] text-[#2e2e2e]/50 mb-3 line-clamp-2">
+                  <p className="text-[13px] text-ink/50 mb-3 line-clamp-2">
                     {child.subheading}
                   </p>
-                  <p className="text-[12px] font-semibold text-[#2e2e2e]/40">{child.price_range}</p>
+                  <p className="text-[12px] font-semibold text-ink/40">{child.price_range}</p>
                 </div>
               </Link>
             ))}
@@ -352,12 +352,12 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
 
       {/* Nearby areas */}
       {nearbyAreas.length > 0 && (
-        <section className="bg-white border-t border-[#2e2e2e]/[0.06]">
+        <section className="bg-white border-t border-ink/[0.06]">
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-            <h2 className="font-gloock text-[24px] md:text-[28px] text-[#2e2e2e] mb-2">
+            <h2 className="font-display text-[24px] md:text-[28px] text-ink mb-2">
               Nearby Areas
             </h2>
-            <p className="text-[15px] text-[#2e2e2e]/50 mb-8">
+            <p className="text-[15px] text-ink/50 mb-8">
               Explore neighbouring locations on the Costa del Sol
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -365,14 +365,14 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
                 <Link
                   key={nearby.slug}
                   href={{ pathname: '/areas/[slug]', params: { slug: nearby.slug } }}
-                  className="group flex items-center gap-3 bg-[#faf9f8] rounded-lg p-4 border border-[#2e2e2e]/[0.04] hover:border-[#3c9ba7]/20 hover:bg-white transition-all duration-300"
+                  className="group flex items-center gap-3 bg-paper rounded-lg p-4 border border-ink/[0.04] hover:border-gold/20 hover:bg-white transition-all duration-300"
                 >
-                  <MapPin className="w-4 h-4 text-[#3c9ba7]/60 group-hover:text-[#3c9ba7] transition-colors shrink-0" />
+                  <MapPin className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors shrink-0" />
                   <div>
-                    <p className="text-[14px] font-medium text-[#2e2e2e] group-hover:text-[#3c9ba7] transition-colors">
+                    <p className="text-[14px] font-medium text-ink group-hover:text-gold transition-colors">
                       {nearby.name}
                     </p>
-                    <p className="text-[11px] text-[#2e2e2e]/40">{nearby.region}</p>
+                    <p className="text-[11px] text-ink/40">{nearby.region}</p>
                   </div>
                 </Link>
               ))}
@@ -383,23 +383,23 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
 
       {/* CTA Section */}
       <section className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
-        <div className="bg-gradient-to-br from-[#3c9ba7]/[0.06] to-[#3c9ba7]/[0.02] rounded-2xl p-8 md:p-12 text-center border border-[#3c9ba7]/10">
-          <h2 className="font-gloock text-[28px] md:text-[36px] text-[#2e2e2e] mb-3">
+        <div className="bg-gradient-to-br from-gold/[0.06] to-gold/[0.02] rounded-2xl p-8 md:p-12 text-center border border-gold/10">
+          <h2 className="font-display text-[28px] md:text-[36px] text-ink mb-3">
             Looking for property in {area.name}?
           </h2>
-          <p className="text-[16px] text-[#2e2e2e]/60 mb-8 max-w-2xl mx-auto">
+          <p className="text-[16px] text-ink/60 mb-8 max-w-2xl mx-auto">
             Our team of experts specialises in {area.name} and the wider Costa del Sol. Let us help you find your perfect property.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href={{ pathname: '/', query: { area: area.name } }}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#3c9ba7] text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-lg hover:bg-[#2d8a95] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-lg hover:bg-gold-deep transition-colors"
             >
               Browse Properties <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/areas"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#2e2e2e] text-[13px] font-semibold tracking-[0.05em] uppercase rounded-lg border border-[#2e2e2e]/10 hover:border-[#3c9ba7]/30 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-ink text-[13px] font-semibold tracking-[0.05em] uppercase rounded-lg border border-ink/10 hover:border-gold/30 transition-colors"
             >
               View All Areas
             </Link>
@@ -416,11 +416,11 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white border border-[#2e2e2e]/[0.06] rounded-[6px] px-5 py-5">
-      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#2e2e2e]/40 mb-2">
+    <div className="bg-white border border-ink/[0.06] rounded-[6px] px-5 py-5">
+      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-ink/40 mb-2">
         {label}
       </p>
-      <p className="font-gloock text-[20px] md:text-[22px] text-[#2e2e2e] leading-tight">
+      <p className="font-display text-[20px] md:text-[22px] text-ink leading-tight">
         {value}
       </p>
     </div>

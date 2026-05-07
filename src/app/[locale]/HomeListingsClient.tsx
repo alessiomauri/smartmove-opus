@@ -172,8 +172,8 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
         <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
 
         {/* Floating orb accents - decorative */}
-        <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#3c9ba7]/[0.08] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-10 right-1/4 w-32 h-32 bg-[#4aabb7]/[0.06] rounded-full blur-2xl pointer-events-none animate-float-slow" />
+        <div className="absolute -top-20 -left-20 w-40 h-40 bg-gold/[0.08] rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-10 right-1/4 w-32 h-32 bg-gold-soft/[0.06] rounded-full blur-2xl pointer-events-none animate-float-slow" />
 
         {/* Inner shimmer effect */}
         <div className="absolute inset-0 header-shimmer pointer-events-none" />
@@ -183,14 +183,14 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
           <div className="flex items-center gap-10 h-[72px]">
             {/* Logo */}
             <Link href="/" className="group relative shrink-0">
-              <span className="text-[26px] tracking-[-0.02em] font-gloock text-[#3c9ba7] transition-all duration-500 group-hover:text-[#2d8a95]">
+              <span className="text-[26px] tracking-[-0.02em] font-display text-gold transition-all duration-500 group-hover:text-gold-deep">
                 Smartmove Marbella
               </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gradient-to-r from-[#3c9ba7] to-[#4aabb7] transition-all duration-500 ease-out group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gradient-to-r from-gold to-gold-soft transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
 
             {/* Divider */}
-            <div className="w-[1px] h-7 bg-gradient-to-b from-transparent via-[#2e2e2e]/10 to-transparent shrink-0" />
+            <div className="w-[1px] h-7 bg-gradient-to-b from-transparent via-ink/10 to-transparent shrink-0" />
 
             {/* Filters - takes remaining space */}
             <div className="flex-1">
@@ -205,12 +205,12 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
             </div>
 
             {/* Divider */}
-            <div className="w-[1px] h-7 bg-gradient-to-b from-transparent via-[#2e2e2e]/10 to-transparent shrink-0" />
+            <div className="w-[1px] h-7 bg-gradient-to-b from-transparent via-ink/10 to-transparent shrink-0" />
 
             {/* Favorites */}
             <Link
               href="/favourites"
-              className="group flex items-center gap-2 px-4 py-2 rounded-full text-[#2e2e2e]/60 transition-all duration-400 hover:text-[#3c9ba7] hover:bg-[#3c9ba7]/[0.06] hover:shadow-[0_2px_12px_-3px_rgba(60,155,167,0.15)] shrink-0"
+              className="group flex items-center gap-2 px-4 py-2 rounded-full text-ink/60 transition-all duration-400 hover:text-gold hover:bg-gold/[0.06] hover:shadow-[0_2px_12px_-3px_rgba(60,155,167,0.15)] shrink-0"
             >
               <div className="relative">
                 <svg
@@ -225,7 +225,7 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
                 {favouriteCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] flex items-center justify-center text-[9px] font-bold text-white bg-gradient-to-br from-[#3c9ba7] to-[#2d8a95] rounded-full shadow-sm">
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] flex items-center justify-center text-[9px] font-bold text-white bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-sm">
                     {favouriteCount}
                   </span>
                 )}
@@ -239,19 +239,19 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
         <div className="lg:hidden max-w-[1600px] mx-auto px-6 relative">
           <div className="flex items-center justify-between h-[60px]">
             <Link href="/" className="group relative">
-              <span className="text-[24px] tracking-[-0.02em] font-gloock text-[#3c9ba7]">
+              <span className="text-[24px] tracking-[-0.02em] font-display text-gold">
                 Smartmove Marbella
               </span>
             </Link>
             <Link
               href="/favourites"
-              className="relative p-2.5 text-[#2e2e2e]/60 rounded-full hover:bg-[#3c9ba7]/[0.06] transition-colors duration-300"
+              className="relative p-2.5 text-ink/60 rounded-full hover:bg-gold/[0.06] transition-colors duration-300"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
               {favouriteCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold text-white bg-gradient-to-br from-[#3c9ba7] to-[#2d8a95] rounded-full shadow-sm">
+                <span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold text-white bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-sm">
                   {favouriteCount}
                 </span>
               )}
@@ -272,8 +272,8 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
             onClick={() => handleQuickType('villa')}
             className={`px-4 py-2 text-[12px] font-semibold tracking-[0.04em] rounded-full border transition-all duration-300 ${
               quickType === 'villa'
-                ? 'bg-[#2e2e2e] text-white border-[#2e2e2e]'
-                : 'bg-white text-[#2e2e2e]/70 border-[#2e2e2e]/[0.1] hover:border-[#2e2e2e]/30 hover:text-[#2e2e2e]'
+                ? 'bg-ink text-white border-ink'
+                : 'bg-white text-ink/70 border-ink/[0.1] hover:border-ink/30 hover:text-ink'
             }`}
           >
             Villas
@@ -282,21 +282,21 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
             onClick={() => handleQuickType('apartment')}
             className={`px-4 py-2 text-[12px] font-semibold tracking-[0.04em] rounded-full border transition-all duration-300 ${
               quickType === 'apartment'
-                ? 'bg-[#2e2e2e] text-white border-[#2e2e2e]'
-                : 'bg-white text-[#2e2e2e]/70 border-[#2e2e2e]/[0.1] hover:border-[#2e2e2e]/30 hover:text-[#2e2e2e]'
+                ? 'bg-ink text-white border-ink'
+                : 'bg-white text-ink/70 border-ink/[0.1] hover:border-ink/30 hover:text-ink'
             }`}
           >
             Apartments
           </button>
 
-          <div className="w-[1px] h-5 bg-[#2e2e2e]/[0.08] mx-1" />
+          <div className="w-[1px] h-5 bg-ink/[0.08] mx-1" />
 
           <button
             onClick={() => handleQuickPrice('under3')}
             className={`px-4 py-2 text-[12px] font-semibold tracking-[0.04em] rounded-full border transition-all duration-300 ${
               quickPrice === 'under3'
-                ? 'bg-[#3c9ba7] text-white border-[#3c9ba7]'
-                : 'bg-white text-[#2e2e2e]/70 border-[#2e2e2e]/[0.1] hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7]'
+                ? 'bg-gold text-white border-gold'
+                : 'bg-white text-ink/70 border-ink/[0.1] hover:border-gold/30 hover:text-gold'
             }`}
           >
             Under €3M
@@ -305,8 +305,8 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
             onClick={() => handleQuickPrice('3to6')}
             className={`px-4 py-2 text-[12px] font-semibold tracking-[0.04em] rounded-full border transition-all duration-300 ${
               quickPrice === '3to6'
-                ? 'bg-[#3c9ba7] text-white border-[#3c9ba7]'
-                : 'bg-white text-[#2e2e2e]/70 border-[#2e2e2e]/[0.1] hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7]'
+                ? 'bg-gold text-white border-gold'
+                : 'bg-white text-ink/70 border-ink/[0.1] hover:border-gold/30 hover:text-gold'
             }`}
           >
             €3M – €6M
@@ -315,8 +315,8 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
             onClick={() => handleQuickPrice('6plus')}
             className={`px-4 py-2 text-[12px] font-semibold tracking-[0.04em] rounded-full border transition-all duration-300 ${
               quickPrice === '6plus'
-                ? 'bg-[#3c9ba7] text-white border-[#3c9ba7]'
-                : 'bg-white text-[#2e2e2e]/70 border-[#2e2e2e]/[0.1] hover:border-[#3c9ba7]/30 hover:text-[#3c9ba7]'
+                ? 'bg-gold text-white border-gold'
+                : 'bg-white text-ink/70 border-ink/[0.1] hover:border-gold/30 hover:text-gold'
             }`}
           >
             €6M+
@@ -325,7 +325,7 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
           {hasQuickFilters && (
             <button
               onClick={clearAllQuickFilters}
-              className="ml-1 px-3 py-2 text-[11px] font-medium text-[#2e2e2e]/40 hover:text-[#2e2e2e]/70 transition-colors"
+              className="ml-1 px-3 py-2 text-[11px] font-medium text-ink/40 hover:text-ink/70 transition-colors"
             >
               Clear
             </button>
@@ -351,12 +351,12 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
       </main>
 
       {/* Footer */}
-      <footer className="py-20 mt-16 bg-[#faf9f8] overflow-hidden">
+      <footer className="py-20 mt-16 bg-paper overflow-hidden">
         <div className="max-w-[1600px] mx-auto px-6 lg:px-10 text-center">
-          <h2 className="font-gloock text-[28px] md:text-[36px] lg:text-[44px] text-[#3c9ba7]/90 leading-none mb-4 tracking-tight">
+          <h2 className="font-display text-[28px] md:text-[36px] lg:text-[44px] text-gold/90 leading-none mb-4 tracking-tight">
             Smartmove Marbella
           </h2>
-          <p className="text-[13px] text-[#2e2e2e]/40 tracking-widest uppercase">
+          <p className="text-[13px] text-ink/40 tracking-widest uppercase">
             © {new Date().getFullYear()} All Rights Reserved
           </p>
         </div>

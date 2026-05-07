@@ -62,6 +62,30 @@
   --color-foreground: var(--foreground);
   --color-teal: var(--teal);
   --color-bone: var(--bone);
+
+  /* Smartmove brand tokens registered as Tailwind colour utilities so
+     classes like `bg-gold`, `text-ink/60`, `border-line` work natively
+     and compose with Tailwind's opacity modifier via color-mix. */
+  --color-gold: var(--sm-gold);
+  --color-gold-deep: var(--sm-gold-deep);
+  --color-gold-soft: var(--sm-gold-soft);
+  --color-gold-tint: var(--sm-gold-tint);
+  --color-paper: var(--sm-paper);
+  --color-cream: var(--sm-cream);
+  --color-canvas: var(--sm-canvas);
+  --color-ink: var(--sm-ink);
+  --color-ink-soft: var(--sm-ink-soft);
+  --color-text-muted: var(--sm-text-muted);
+  --color-text-subtle: var(--sm-text-subtle);
+  --color-line: var(--sm-line);
+  --color-line-strong: var(--sm-line-strong);
+  --color-slate: var(--sm-slate);
+  --color-slate-deep: var(--sm-slate-deep);
+  --color-slate-soft: var(--sm-slate-soft);
+
+  --font-display: var(--sm-font-display);
+  --font-body: var(--sm-font-body);
+
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

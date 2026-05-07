@@ -40,15 +40,15 @@ export default function NewsletterForm({
 
   if (variant === 'card') {
     return (
-      <div className="bg-white border border-[#2e2e2e]/[0.06] rounded-xl px-8 py-10 lg:px-12 lg:py-12">
-        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#3c9ba7] mb-4">
+      <div className="bg-white border border-ink/[0.06] rounded-xl px-8 py-10 lg:px-12 lg:py-12">
+        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gold mb-4">
           Quarterly Report
         </p>
-        <h3 className="font-gloock text-[24px] md:text-[32px] text-[#2e2e2e] leading-tight mb-3">
+        <h3 className="font-display text-[24px] md:text-[32px] text-ink leading-tight mb-3">
           {label}
         </h3>
         {helperText && (
-          <p className="text-[14px] text-[#2e2e2e]/60 mb-6">{helperText}</p>
+          <p className="text-[14px] text-ink/60 mb-6">{helperText}</p>
         )}
         <FormBody
           email={email}
@@ -64,11 +64,11 @@ export default function NewsletterForm({
   // inline variant
   return (
     <div>
-      <h3 className="font-gloock text-[18px] md:text-[20px] text-[#2e2e2e] mb-2 leading-tight">
+      <h3 className="font-display text-[18px] md:text-[20px] text-ink mb-2 leading-tight">
         {label}
       </h3>
       {helperText && (
-        <p className="text-[13px] text-[#2e2e2e]/60 mb-4">{helperText}</p>
+        <p className="text-[13px] text-ink/60 mb-4">{helperText}</p>
       )}
       <FormBody
         email={email}
@@ -96,7 +96,7 @@ function FormBody({
 }) {
   if (submitted) {
     return (
-      <div className="py-3 text-[14px] text-[#3c9ba7]">
+      <div className="py-3 text-[14px] text-gold">
         Thank you. We&apos;ll be in touch.
       </div>
     );
@@ -110,11 +110,11 @@ function FormBody({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         aria-label="Email address"
-        className="flex-1 px-4 py-3 text-[14px] bg-white border border-[#2e2e2e]/15 rounded-full focus:outline-none focus:border-[#3c9ba7] transition-colors"
+        className="flex-1 px-4 py-3 text-[14px] bg-white border border-ink/15 rounded-full focus:outline-none focus:border-gold transition-colors"
       />
       <button
         type="submit"
-        className="px-6 py-3 text-[12px] font-semibold tracking-[0.08em] uppercase bg-[#3c9ba7] text-white rounded-full hover:bg-[#2d8a95] transition-colors whitespace-nowrap"
+        className="px-6 py-3 text-[12px] font-semibold tracking-[0.08em] uppercase bg-gold text-white rounded-full hover:bg-gold-deep transition-colors whitespace-nowrap"
       >
         Subscribe
       </button>

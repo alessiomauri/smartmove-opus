@@ -44,7 +44,7 @@ export default function FavouritePropertyCard({
 
   return (
     <div
-      className="group relative bg-white rounded-xl overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-[#3c9ba7]/10"
+      className="group relative bg-white rounded-xl overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-gold/10"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -52,13 +52,13 @@ export default function FavouritePropertyCard({
       <div className={cn(
         "absolute inset-0 rounded-xl pointer-events-none transition-all duration-500 z-10",
         isHovered
-          ? "ring-1 ring-[#3c9ba7]/20"
+          ? "ring-1 ring-gold/20"
           : "ring-0 ring-transparent"
       )} />
 
       {/* Top accent line */}
       <div className={cn(
-        "absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#3c9ba7] via-[#4aabb7] to-[#3c9ba7]/50 transition-all duration-500 origin-left z-10",
+        "absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-gold via-gold-soft to-gold/50 transition-all duration-500 origin-left z-10",
         isHovered ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
       )} />
 
@@ -84,7 +84,7 @@ export default function FavouritePropertyCard({
 
           {/* Teal accent on hover */}
           <div className={cn(
-            "absolute inset-0 bg-gradient-to-br from-[#3c9ba7]/20 via-transparent to-transparent transition-opacity duration-700",
+            "absolute inset-0 bg-gradient-to-br from-gold/20 via-transparent to-transparent transition-opacity duration-700",
             isHovered ? "opacity-100" : "opacity-0"
           )} />
 
@@ -93,7 +93,7 @@ export default function FavouritePropertyCard({
             <span className={cn(
               "inline-flex items-center px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-white backdrop-blur-md rounded-full border transition-all duration-500",
               isHovered
-                ? "bg-[#3c9ba7]/60 border-[#3c9ba7]/30"
+                ? "bg-gold/60 border-gold/30"
                 : "bg-black/25 border-white/10"
             )}>
               {statusText}
@@ -105,7 +105,7 @@ export default function FavouritePropertyCard({
             "absolute bottom-4 left-4 flex items-center gap-2 text-white/90 transition-all duration-500",
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
           )}>
-            <div className="w-6 h-[1px] bg-gradient-to-r from-[#3c9ba7] to-white/50" />
+            <div className="w-6 h-[1px] bg-gradient-to-r from-gold to-white/50" />
             <span className="text-[11px] font-medium tracking-[0.15em] uppercase">View Property</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </div>
@@ -116,10 +116,10 @@ export default function FavouritePropertyCard({
           <div>
             {/* Location */}
             <div className="flex items-center gap-2 mb-2">
-              <MapPin className="w-3.5 h-3.5 text-[#3c9ba7]" />
+              <MapPin className="w-3.5 h-3.5 text-gold" />
               <span className={cn(
                 "text-[11px] uppercase tracking-[0.12em] transition-colors duration-400",
-                isHovered ? "text-[#3c9ba7]" : "text-[#2e2e2e]/50"
+                isHovered ? "text-gold" : "text-ink/50"
               )}>
                 {property.location}
               </span>
@@ -127,7 +127,7 @@ export default function FavouritePropertyCard({
 
             {/* Property Name */}
             <Link href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}>
-              <h3 className="font-gloock text-[24px] lg:text-[34px] text-[#3c9ba7] leading-tight mb-3 hover:text-[#2d8a95] transition-colors duration-300">
+              <h3 className="font-display text-[24px] lg:text-[34px] text-gold leading-tight mb-3 hover:text-gold-deep transition-colors duration-300">
                 {property.name}
               </h3>
             </Link>
@@ -139,15 +139,15 @@ export default function FavouritePropertyCard({
                   <span
                     key={index}
                     className={cn(
-                      "inline-block px-2.5 py-1 text-[10px] text-[#2e2e2e]/60 border border-[#2e2e2e]/8 rounded-full bg-[#faf9f8] transition-all duration-300",
-                      isHovered && "border-[#3c9ba7]/20 text-[#3c9ba7]/80"
+                      "inline-block px-2.5 py-1 text-[10px] text-ink/60 border border-ink/8 rounded-full bg-paper transition-all duration-300",
+                      isHovered && "border-gold/20 text-gold/80"
                     )}
                   >
                     {feature}
                   </span>
                 ))}
                 {property.features.length > 4 && (
-                  <span className="inline-block px-2.5 py-1 text-[10px] text-[#2e2e2e]/40">
+                  <span className="inline-block px-2.5 py-1 text-[10px] text-ink/40">
                     +{property.features.length - 4} more
                   </span>
                 )}
@@ -155,13 +155,13 @@ export default function FavouritePropertyCard({
             )}
 
             {/* Specs */}
-            <div className="flex items-center gap-5 text-[14px] text-[#2e2e2e]/60">
+            <div className="flex items-center gap-5 text-[14px] text-ink/60">
               {specs.map((spec, index) => (
                 <span key={index} className={cn(
                   "transition-colors duration-400",
-                  isHovered && "text-[#3c9ba7]"
+                  isHovered && "text-gold"
                 )}>
-                  <span className="font-semibold text-[#2e2e2e] text-[15px]">{spec.value}</span>
+                  <span className="font-semibold text-ink text-[15px]">{spec.value}</span>
                   <span className="ml-1">{spec.label}</span>
                 </span>
               ))}
@@ -169,8 +169,8 @@ export default function FavouritePropertyCard({
           </div>
 
           {/* Price */}
-          <div className="mt-4 pt-4 border-t border-[#2e2e2e]/[0.06]">
-            <p className="text-[22px] lg:text-[28px] text-[#2e2e2e] font-light tracking-tight">
+          <div className="mt-4 pt-4 border-t border-ink/[0.06]">
+            <p className="text-[22px] lg:text-[28px] text-ink font-light tracking-tight">
               {formatPrice()}
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function FavouritePropertyCard({
           {/* Remove Button */}
           <button
             onClick={() => removeFavourite(property.id)}
-            className="group/btn flex items-center gap-2 text-[#2e2e2e]/40 hover:text-red-400 transition-all duration-300"
+            className="group/btn flex items-center gap-2 text-ink/40 hover:text-red-400 transition-all duration-300"
           >
             <Heart className="w-4 h-4 fill-current transition-transform duration-300 group-hover/btn:scale-110" />
             <span className="text-[11px] tracking-[0.1em] uppercase">Remove</span>
@@ -193,8 +193,8 @@ export default function FavouritePropertyCard({
             className={cn(
               "group/view flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300",
               isHovered
-                ? "bg-[#3c9ba7] text-white shadow-lg shadow-[#3c9ba7]/20"
-                : "bg-[#faf9f8] text-[#2e2e2e]/60 hover:bg-[#3c9ba7] hover:text-white"
+                ? "bg-gold text-white shadow-lg shadow-gold/20"
+                : "bg-paper text-ink/60 hover:bg-gold hover:text-white"
             )}
           >
             <span className="text-[11px] tracking-[0.1em] uppercase font-medium">View</span>
@@ -207,14 +207,14 @@ export default function FavouritePropertyCard({
       <div className="lg:hidden flex items-center justify-between px-5 pb-5">
         <button
           onClick={() => removeFavourite(property.id)}
-          className="flex items-center gap-2 text-[#2e2e2e]/40 hover:text-red-400 transition-colors"
+          className="flex items-center gap-2 text-ink/40 hover:text-red-400 transition-colors"
         >
           <Heart className="w-4 h-4 fill-current" />
           <span className="text-[11px] tracking-[0.1em] uppercase">Remove</span>
         </button>
         <Link
           href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#3c9ba7] text-white rounded-full text-[11px] tracking-[0.1em] uppercase font-medium"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gold text-white rounded-full text-[11px] tracking-[0.1em] uppercase font-medium"
         >
           View Property
           <ArrowUpRight className="w-3.5 h-3.5" />

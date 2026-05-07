@@ -28,13 +28,13 @@ export default async function Image({ params }: { params: { slug: string } }) {
         <div
           style={{
             fontSize: 48,
-            background: 'linear-gradient(135deg, #faf9f8 0%, #f0ede8 100%)',
+            background: 'linear-gradient(135deg, var(--sm-paper) 0%, #f0ede8 100%)',
             width: '100%',
             height: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#3c9ba7',
+            color: 'var(--sm-gold)',
             fontFamily: 'Georgia, serif',
           }}
         >
@@ -138,7 +138,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
               style={{
                 width: '40px',
                 height: '2px',
-                backgroundColor: '#3c9ba7',
+                backgroundColor: 'var(--sm-gold)',
               }}
             />
             <span
@@ -146,7 +146,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
                 fontSize: '16px',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: '#3c9ba7',
+                color: 'var(--sm-gold)',
                 fontWeight: 500,
               }}
             >

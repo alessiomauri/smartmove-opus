@@ -142,13 +142,13 @@ export default function HeroSection({ property }: HeroSectionProps) {
             </p>
 
             {/* Property Name - hero typography */}
-            <h1 className={`font-gloock text-5xl md:text-7xl lg:text-8xl xl:text-[110px] text-white leading-[0.9] tracking-tight transition-all duration-1000 delay-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <h1 className={`font-display text-5xl md:text-7xl lg:text-8xl xl:text-[110px] text-white leading-[0.9] tracking-tight transition-all duration-1000 delay-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               {property.name}
             </h1>
 
             {/* Decorative accent line */}
             <div className={`mt-8 flex items-center gap-4 transition-all duration-1000 delay-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="h-[1px] w-16 bg-gradient-to-r from-[#3c9ba7] to-[#3c9ba7]/0" />
+              <div className="h-[1px] w-16 bg-gradient-to-r from-gold to-gold/0" />
               <span className="text-white/40 text-[11px] tracking-[0.2em] uppercase">
                 Exclusive Property
               </span>
@@ -182,7 +182,7 @@ export default function HeroSection({ property }: HeroSectionProps) {
         <div className="w-20 h-20 border-l border-t border-white/10" />
       </div>
       <div className={`absolute bottom-20 right-8 lg:right-16 transition-all duration-1000 delay-[1.6s] ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="w-20 h-20 border-r border-b border-[#3c9ba7]/30" />
+        <div className="w-20 h-20 border-r border-b border-gold/30" />
       </div>
     </section>
   );

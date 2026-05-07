@@ -121,12 +121,12 @@ export default function ShareModal({
         )}
       >
         {/* Header accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#3c9ba7] via-[#4aabb7] to-[#3c9ba7]" />
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-gold via-gold-soft to-gold" />
 
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-full text-[#2e2e2e]/40 hover:text-[#2e2e2e] hover:bg-[#f0ede9] transition-all duration-200 z-10"
+          className="absolute top-4 right-4 p-2 rounded-full text-ink/40 hover:text-ink hover:bg-[#f0ede9] transition-all duration-200 z-10"
         >
           <X className="w-5 h-5" />
         </button>
@@ -135,25 +135,25 @@ export default function ShareModal({
         <div className="p-6 pt-8">
           {/* Title */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#3c9ba7]/10 to-[#3c9ba7]/5 mb-4">
-              <Link2 className="w-6 h-6 text-[#3c9ba7]" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-gold/10 to-gold/5 mb-4">
+              <Link2 className="w-6 h-6 text-gold" />
             </div>
-            <h2 className="font-gloock text-[24px] text-[#3c9ba7] mb-1">
+            <h2 className="font-display text-[24px] text-gold mb-1">
               Share Collection
             </h2>
-            <p className="text-[13px] text-[#2e2e2e]/50">
+            <p className="text-[13px] text-ink/50">
               Share your saved properties with friends and family
             </p>
           </div>
 
           {/* Link input */}
           <div className="mb-6">
-            <div className="flex items-center gap-2 p-3 bg-[#faf9f8] rounded-xl border border-[#2e2e2e]/5">
+            <div className="flex items-center gap-2 p-3 bg-paper rounded-xl border border-ink/5">
               <input
                 type="text"
                 value={shareUrl}
                 readOnly
-                className="flex-1 bg-transparent text-[13px] text-[#2e2e2e]/70 outline-none truncate"
+                className="flex-1 bg-transparent text-[13px] text-ink/70 outline-none truncate"
               />
               <button
                 onClick={handleCopy}
@@ -161,7 +161,7 @@ export default function ShareModal({
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium uppercase tracking-wide transition-all duration-200",
                   copied
                     ? "bg-emerald-500 text-white"
-                    : "bg-[#3c9ba7] text-white hover:bg-[#358d98]"
+                    : "bg-gold text-white hover:bg-gold-deep"
                 )}
               >
                 {copied ? (
@@ -181,9 +181,9 @@ export default function ShareModal({
 
           {/* Divider */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#2e2e2e]/10" />
-            <span className="text-[10px] text-[#2e2e2e]/40 uppercase tracking-widest">or share via</span>
-            <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#2e2e2e]/10" />
+            <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-ink/10" />
+            <span className="text-[10px] text-ink/40 uppercase tracking-widest">or share via</span>
+            <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-ink/10" />
           </div>
 
           {/* Share buttons */}
@@ -209,8 +209,8 @@ export default function ShareModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-[#faf9f8] border-t border-[#2e2e2e]/5">
-          <p className="text-[11px] text-center text-[#2e2e2e]/40">
+        <div className="px-6 py-4 bg-paper border-t border-ink/5">
+          <p className="text-[11px] text-center text-ink/40">
             Anyone with this link can view your saved properties
           </p>
         </div>

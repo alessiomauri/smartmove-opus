@@ -45,23 +45,23 @@ export default async function AreasIndexPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <div className="min-h-screen bg-[#faf9f8]">
+      <div className="min-h-screen bg-paper">
         {/* Header */}
         <header className="sticky top-0 z-50 header-glass">
           <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
             <div className="flex items-center justify-between h-[60px] lg:h-[72px]">
               <Link href="/" className="group relative shrink-0 inline-block">
-                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-gloock text-[#3c9ba7] transition-colors group-hover:text-[#2d8a95]">
+                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-display text-gold transition-colors group-hover:text-gold-deep">
                   Smartmove Marbella
                 </span>
-                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
               </Link>
               {/* Single nav link — wordmark already serves as the home link.
                   Removed "All Properties" (real-estate language + redundant). */}
               <Link
                 href="/blog"
-                className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#2e2e2e]/60 hover:text-[#3c9ba7] transition-colors"
+                className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors"
               >
                 Blog
               </Link>
@@ -75,15 +75,15 @@ export default async function AreasIndexPage() {
         <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pt-12 pb-8">
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-4 h-4 text-[#3c9ba7]" />
-              <span className="text-[12px] font-semibold tracking-[0.12em] uppercase text-[#3c9ba7]">
+              <MapPin className="w-4 h-4 text-gold" />
+              <span className="text-[12px] font-semibold tracking-[0.12em] uppercase text-gold">
                 Costa del Sol
               </span>
             </div>
-            <h1 className="font-gloock text-[36px] md:text-[48px] lg:text-[56px] text-[#2e2e2e] leading-[1.1] tracking-tight mb-4">
+            <h1 className="font-display text-[36px] md:text-[48px] lg:text-[56px] text-ink leading-[1.1] tracking-tight mb-4">
               Explore by Area
             </h1>
-            <p className="text-[18px] text-[#2e2e2e]/60 leading-relaxed">
+            <p className="text-[18px] text-ink/60 leading-relaxed">
               From the glamour of Marbella&apos;s Golden Mile to the whitewashed villages of the mountains, discover {areas.length} unique locations across the Costa del Sol.
             </p>
           </div>
@@ -93,15 +93,15 @@ export default async function AreasIndexPage() {
         <AreasIndexClient areas={areas} />
 
         {/* Footer */}
-        <footer className="py-16 bg-[#faf9f8] border-t border-[#2e2e2e]/[0.06]">
+        <footer className="py-16 bg-paper border-t border-ink/[0.06]">
           <div className="max-w-[1600px] mx-auto px-6 lg:px-12 text-center">
             <Link href="/" className="group relative inline-block">
-              <span className="font-gloock text-[28px] md:text-[36px] text-[#3c9ba7]/90 leading-none tracking-tight transition-colors group-hover:text-[#2d8a95]">
+              <span className="font-display text-[28px] md:text-[36px] text-gold/90 leading-none tracking-tight transition-colors group-hover:text-gold-deep">
                 Smartmove Marbella
               </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-[#3c9ba7] transition-all duration-500 ease-out group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
             </Link>
-            <p className="text-[13px] text-[#2e2e2e]/40 tracking-widest uppercase mt-4">
+            <p className="text-[13px] text-ink/40 tracking-widest uppercase mt-4">
               &copy; {new Date().getFullYear()} All Rights Reserved
             </p>
           </div>
