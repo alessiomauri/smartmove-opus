@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAreaBySlug, getPublishedAreas } from '@/lib/actions/areas';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
-import { getPropertiesForArea } from '@/lib/cache';
+import { getPropertiesForArea, getDevelopmentsForArea } from '@/lib/cache';
 import AreaPageClient from './AreaPageClient';
 
 export const revalidate = 3600; // ISR: regenerate every hour
@@ -122,14 +122,33 @@ export default async function AreaPage({ params }: Props) {
     .filter((a) => a.pin_category === 'main')
     .map((a) => a.name);
 
-  const properties = await getPropertiesForArea({
-    areaName: area.pin_category === 'main' ? area.name : undefined,
-    childAreaNames,
-    microLocationSlugs,
-  });
+  const [properties, developments] = await Promise.all([
+    // Editorial filter: manual + scraper rows only. Resales bulk
+    // inventory is excluded from area pages.
+    getPropertiesForArea({
+      areaName: area.pin_category === 'main' ? area.name : undefined,
+      childAreaNames,
+      microLocationSlugs,
+    }),
+    // New developments: include both manual + Resales-sourced (off-plan
+    // is editorial-class even when sourced, per user direction).
+    getDevelopmentsForArea({
+      areaName: area.pin_category === 'main' ? area.name : undefined,
+      childAreaNames,
+      microLocationSlugs,
+    }),
+  ]);
 
   // Keep the same featured-first, newest-next ordering used on the homepage.
   properties.sort((a, b) => {
+    if (a.is_featured && !b.is_featured) return -1;
+    if (!a.is_featured && b.is_featured) return 1;
+    if (a.is_featured && b.is_featured) {
+      return (a.featured_order ?? 0) - (b.featured_order ?? 0);
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+  developments.sort((a, b) => {
     if (a.is_featured && !b.is_featured) return -1;
     if (!a.is_featured && b.is_featured) return 1;
     if (a.is_featured && b.is_featured) {
@@ -238,6 +257,7 @@ export default async function AreaPage({ params }: Props) {
         allDescendantAreas={allDescendantAreas}
         parentArea={parentArea}
         properties={properties}
+        developments={developments}
         showProperties={true}
       />
     </>

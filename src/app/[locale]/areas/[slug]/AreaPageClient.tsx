@@ -5,7 +5,9 @@ import Image from 'next/image';
 import { MapPin, Home, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
 import { Area } from '@/types/area';
 import { Property } from '@/types/property';
+import { Development } from '@/types/development';
 import PropertyGrid from '@/components/PropertyGrid';
+import DevelopmentCard from '@/components/DevelopmentCard';
 import SiteFooter from '@/components/SiteFooter';
 import NewsletterForm from '@/components/NewsletterForm';
 import { useFavourites } from '@/hooks/useFavourites';
@@ -17,15 +19,16 @@ interface AreaPageClientProps {
   allDescendantAreas: Area[];
   parentArea: Area | null;
   properties: Property[];
+  developments: Development[];
   /**
    * When false, the "Properties in {area}" section renders a "coming soon"
-   * placeholder instead of the property grid. Decided server-side based on
-   * the PROPERTIES_PUBLIC feature flag + admin auth state.
+   * placeholder instead of the property grid. Kept for legacy reasons —
+   * Smartmove always passes true.
    */
   showProperties: boolean;
 }
 
-export default function AreaPageClient({ area, nearbyAreas, childAreas, allDescendantAreas, parentArea, properties, showProperties }: AreaPageClientProps) {
+export default function AreaPageClient({ area, nearbyAreas, childAreas, allDescendantAreas, parentArea, properties, developments, showProperties }: AreaPageClientProps) {
   const { favouriteCount } = useFavourites();
 
   const paragraphs = area.description.split('\n\n').filter(p => p.trim());
@@ -174,34 +177,70 @@ export default function AreaPageClient({ area, nearbyAreas, childAreas, allDesce
         </div>
       </section>
 
-      {/* Properties in this area — listings mode */}
-      {showProperties && (
+      {/* Properties in this area — manual + scraper rows only (Resales
+          bulk inventory is excluded by getPropertiesForArea). */}
+      {showProperties && properties.length > 0 && (
         <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-display text-[24px] md:text-[28px] text-ink">
-              Properties in {area.name}
-            </h2>
-            {properties.length > 0 && (
-              <p className="text-[13px] font-medium text-ink/40">
-                {`${properties.length} available`}
+          <div className="flex items-end justify-between mb-8 pb-3 border-b border-line">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-gold mb-2">
+                Curated for {area.name}
               </p>
-            )}
+              <h2 className="font-display text-[28px] md:text-[36px] text-ink leading-tight">
+                Properties <em className="italic text-gold">we&rsquo;ve handpicked</em>
+              </h2>
+            </div>
+            <p className="text-[12px] tracking-[0.12em] uppercase text-ink/40 font-medium">
+              {properties.length} {properties.length === 1 ? 'listing' : 'listings'}
+            </p>
           </div>
           <PropertyGrid properties={properties} loading={false} />
-          {properties.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-lg border border-ink/[0.06]">
-              <Home className="w-10 h-10 text-gold/40 mx-auto mb-3" />
-              <p className="text-ink/60 mb-4">
-                No properties currently listed in {area.name}.
+        </section>
+      )}
+
+      {/* New developments in this area — investment-angle surface. Shows
+          when at least one development is published in / near the area. */}
+      {developments.length > 0 && (
+        <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
+          <div className="flex items-end justify-between mb-8 pb-3 border-b border-line">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-gold mb-2">
+                Off-plan opportunities
               </p>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-[13px] font-semibold text-gold hover:text-gold-deep transition-colors"
-              >
-                Browse all properties <ArrowRight className="w-4 h-4" />
-              </Link>
+              <h2 className="font-display text-[28px] md:text-[36px] text-ink leading-tight">
+                New developments <em className="italic text-gold">in {area.name}</em>
+              </h2>
             </div>
-          )}
+            <p className="text-[12px] tracking-[0.12em] uppercase text-ink/40 font-medium">
+              {developments.length} {developments.length === 1 ? 'project' : 'projects'}
+            </p>
+          </div>
+          <div className="sm-cards">
+            {developments.map((d) => (
+              <DevelopmentCard key={d.id} development={d} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Empty state — neither curated properties nor developments available. */}
+      {showProperties && properties.length === 0 && developments.length === 0 && (
+        <section className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
+          <div className="text-center py-16 bg-white rounded-lg border border-line">
+            <Home className="w-10 h-10 text-gold/40 mx-auto mb-4" />
+            <p className="text-ink/60 mb-2 text-[15px]">
+              We don&rsquo;t have curated listings or new developments in {area.name} right now.
+            </p>
+            <p className="text-ink/40 text-[13px] mb-6">
+              Speak to our team — we often have off-market options available.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.12em] uppercase text-gold hover:text-gold-deep transition-colors"
+            >
+              Browse all properties <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </section>
       )}
 

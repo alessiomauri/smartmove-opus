@@ -44,22 +44,58 @@ export const getCachedPublishedProperties = unstable_cache(
 
 /**
  * Filter the cached property list for an area page (server-side, in-memory).
- * Uses the same logic as the old `useProperties` filter so area pages render
- * the same set without a second Supabase round-trip.
+ *
+ * Area pages are an EDITORIAL surface — Smartmove's curated picks for that
+ * neighbourhood. They show our own listings (`source='manual'`) and any
+ * scraper-imported curated rows (`source='scraper'`). Resales bulk inventory
+ * is intentionally excluded: it'd dilute the area page with hundreds of
+ * unsorted MLS rows of varying quality. Bulk inventory has its own home
+ * (the broader listings index, when that surface lands).
+ *
+ * If `includeResales: true` is passed, the filter is dropped — useful when
+ * the same helper drives a non-editorial surface in the future.
  */
 export async function getPropertiesForArea(opts: {
   areaName?: string;
   childAreaNames?: string[];
   microLocationSlugs?: string[];
+  includeResales?: boolean;
 }): Promise<Property[]> {
   const all = await getCachedPublishedProperties();
   const { areaName, childAreaNames = [], microLocationSlugs = [] } = opts;
 
   return all.filter((p) => {
+    // Source gate — editorial-only by default.
+    if (!opts.includeResales && p.source === 'resales_online') return false;
+
     if (areaName && p.area === areaName) return true;
     if (childAreaNames.length && childAreaNames.includes(p.area)) return true;
     if (microLocationSlugs.length && p.micro_location) {
       return microLocationSlugs.includes(p.micro_location);
+    }
+    return false;
+  });
+}
+
+/**
+ * Same shape as getPropertiesForArea but for new developments. Always
+ * includes Resales-sourced developments because new developments are
+ * editorial-class even when sourced — they carry investment context
+ * (developer, completion phases, payment terms) the user wants visible.
+ */
+export async function getDevelopmentsForArea(opts: {
+  areaName?: string;
+  childAreaNames?: string[];
+  microLocationSlugs?: string[];
+}): Promise<Development[]> {
+  const all = await getCachedPublishedDevelopments();
+  const { areaName, childAreaNames = [], microLocationSlugs = [] } = opts;
+
+  return all.filter((d) => {
+    if (areaName && d.area === areaName) return true;
+    if (childAreaNames.length && d.area && childAreaNames.includes(d.area)) return true;
+    if (microLocationSlugs.length && d.micro_location) {
+      return microLocationSlugs.includes(d.micro_location);
     }
     return false;
   });
