@@ -18,9 +18,15 @@ const PRICE_RANGES: Record<Exclude<QuickPrice, null>, { min?: number; max?: numb
 interface HomeClientProps {
   initialProperties: Property[];
   defaultSort: SortOption;
+  /**
+   * When false, the embedded sticky header + hero band is hidden — used when
+   * this component is composed below the new HomeHero (which has its own topbar).
+   * Defaults to true to preserve the standalone listings page behaviour.
+   */
+  showHeader?: boolean;
 }
 
-export default function HomeClient({ initialProperties, defaultSort }: HomeClientProps) {
+export default function HomeClient({ initialProperties, defaultSort, showHeader = true }: HomeClientProps) {
   const [filters, setFilters] = useState<PropertyFilters>({});
   const [quickPrice, setQuickPrice] = useState<QuickPrice>(null);
   const [quickType, setQuickType] = useState<PropertyType | null>(null);
@@ -157,7 +163,9 @@ export default function HomeClient({ initialProperties, defaultSort }: HomeClien
   }, [initialProperties, filters, activeSort]);
 
   return (
-    <div className="min-h-screen bg-[#faf9f8]">
+    <div className={showHeader ? "min-h-screen" : ""} style={{ background: 'var(--sm-paper)' }}>
+      {showHeader && (
+      <>
       {/* Premium Header - Ultra Modern Glass Design */}
       <header className="sticky top-0 z-50 header-glass">
         {/* Animated gradient border at top */}
@@ -254,6 +262,8 @@ export default function HomeClient({ initialProperties, defaultSort }: HomeClien
 
       {/* Sleek divider line */}
       <div className="header-divider" />
+      </>
+      )}
 
       {/* Quick Filter Buttons */}
       <div className="max-w-[1600px] mx-auto px-6 lg:px-10 pt-4 lg:pt-6">
