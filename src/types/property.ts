@@ -1,11 +1,20 @@
 export type PropertyStatus = 'available' | 'sold' | 'reserved' | 'under_offer' | 'coming_soon';
-export type PropertyType = 'villa' | 'apartment' | 'plot_with_project';
+export type PropertyType =
+  | 'villa'
+  | 'apartment'
+  | 'townhouse'
+  | 'penthouse'
+  | 'plot_with_project';
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   villa: 'Villa',
   apartment: 'Apartment',
+  townhouse: 'Townhouse',
+  penthouse: 'Penthouse',
   plot_with_project: 'Plot with Project',
 };
+
+export type PropertySource = 'manual' | 'resales_online' | 'scraper';
 
 export interface Property {
   id: string;
