@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist, Gloock, Jost } from "next/font/google";
+import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "sonner";
 import { notFound } from "next/navigation";
@@ -12,25 +12,20 @@ import Analytics from "@/components/Analytics";
 import CookieBanner from "@/components/CookieBanner";
 import { routing } from "@/i18n/routing";
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-
-const inter = Inter({
+// Smartmove brand fonts (locked direction: Costa Editorial × Editorial Slate v1.1).
+// Consumed via --sm-font-display / --sm-font-body in docs/design/tokens.css.
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
   display: "swap",
 });
 
-const gloock = Gloock({
-  weight: "400",
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-gloock",
-  display: "swap",
-});
-
-const jost = Jost({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-jost",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -191,7 +186,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={cn("font-sans", geist.variable, gloock.variable, jost.variable)}
+      className={cn(cormorant.variable, manrope.variable)}
     >
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -207,7 +202,7 @@ export default async function LocaleLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className="antialiased">
         <NextIntlClientProvider>
           <FavouritesProvider>{children}</FavouritesProvider>
         </NextIntlClientProvider>

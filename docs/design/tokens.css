@@ -1,128 +1,243 @@
-/**
- * Smartmove Marbella — design tokens.
- *
- * THIS FILE IS OWNED BY CLAUDE DESIGN. The dev side imports it from
- * `src/app/globals.css` and uses these variables exclusively for color, type,
- * spacing, radius, shadow, and motion. To change anything visual: regenerate
- * this file with Claude Design and replace it. The application code does not
- * change.
- *
- * Naming convention: every token is `--sm-<category>-<name>` so they cannot
- * collide with shadcn / tailwind defaults.
- *
- * Status: PLACEHOLDER. These are sensible defaults derived from the brand
- * starting points in CLAUDE_DESIGN_BRIEF §9 (white background + near-black
- * + warm gold accent from the Luxury Lifestyle Awards badge). Will be
- * replaced when the brand foundation conversation lands.
- */
+/* ============================================================
+   Smartmove Marbella — Brand Tokens
+   v1.1 · Locked direction: Costa Editorial × Editorial Slate
+   ------------------------------------------------------------
+   Changelog
+   v1.1 — Unified gold family (#cbaa65 / #b89653 / #e8d4a2 / #f3e8cc).
+          Removed gradient CTAs in favour of solid gold buttons
+          that deepen on hover. Awards row consolidated to a
+          two-up layout with editorial pull-quote citations.
+   v1.0 — Initial token release.
+   ------------------------------------------------------------
+   Palette sampled from the reference (Costa Editorial.html).
+   Typography pairs editorial display serif with humanist body
+   sans. Fonts loaded via next/font in src/app/[locale]/layout.tsx
+   (faster than @import, inlined CSS, no FOIT). The font CSS
+   variables (--font-cormorant, --font-manrope) are set on the
+   <html> element by next/font and consumed below.
+   ============================================================ */
 
+/* ---------- ROOT TOKENS ---------- */
 :root {
-  /* ─── Color ─── */
+  /* ============================================================
+     COLOR — primaries
+     ============================================================ */
+  --sm-ink:           #1C1A17;   /* primary text, near-black, warm */
+  --sm-ink-soft:      #2A2723;   /* hover / softened ink */
+  --sm-paper:         #F7F3EC;   /* page background, warm off-white */
+  --sm-cream:         #EFE9DF;   /* secondary surface, cards on paper */
+  --sm-canvas:        #FFFFFF;   /* pure white, photo containers */
 
-  /* Brand */
-  --sm-color-bg:        #ffffff;
-  --sm-color-fg:        #1a1a1a;
-  --sm-color-accent:    #b08d4a;        /* warm gold from award badge */
-  --sm-color-accent-fg: #ffffff;
+  /* ============================================================
+     COLOR — accent (editorial gold/ochre, sampled from reference)
+     ============================================================ */
+  /* Unified gold family — single source of truth, used for
+     location labels, title underlines, eyebrows, awards accents,
+     CTA fills (solid, no gradient), and dividers on dark surfaces. */
+  --sm-gold:          #cbaa65;   /* primary accent — solid CTA fill, kickers, links */
+  --sm-gold-deep:     #b89653;   /* hover state on gold CTAs */
+  --sm-gold-soft:     #e8d4a2;   /* highlights on dark, italic emphasis, location labels */
+  --sm-gold-tint:     #f3e8cc;   /* tinted backgrounds, soft badges */
 
-  /* Neutral scale */
-  --sm-color-neutral-50:  #fafafa;
-  --sm-color-neutral-100: #f4f4f4;
-  --sm-color-neutral-200: #e5e5e5;
-  --sm-color-neutral-300: #d4d4d4;
-  --sm-color-neutral-400: #a3a3a3;
-  --sm-color-neutral-500: #737373;
-  --sm-color-neutral-600: #525252;
-  --sm-color-neutral-700: #404040;
-  --sm-color-neutral-800: #262626;
-  --sm-color-neutral-900: #171717;
+  /* ============================================================
+     COLOR — slate (brand original, supporting role)
+     ============================================================ */
+  --sm-slate:         #5C6770;   /* brand slate from logo guide */
+  --sm-slate-deep:    #3E464D;
+  --sm-slate-soft:    #8A949D;
 
-  /* Semantic */
-  --sm-color-text:           var(--sm-color-fg);
-  --sm-color-text-muted:     var(--sm-color-neutral-500);
-  --sm-color-border:         var(--sm-color-neutral-200);
-  --sm-color-surface:        var(--sm-color-bg);
-  --sm-color-surface-muted:  var(--sm-color-neutral-50);
+  /* ============================================================
+     COLOR — neutrals (5-step warm scale)
+     ============================================================ */
+  --sm-n-50:          #FAF7F1;   /* near-paper */
+  --sm-n-100:         #EFE9DF;   /* cream */
+  --sm-n-200:         #DFD6C4;   /* line, hairlines */
+  --sm-n-300:         #B8AE9B;   /* disabled text, dividers */
+  --sm-n-400:         #6E6A60;   /* muted text */
+  --sm-n-500:         #1C1A17;   /* ink */
 
-  /* Status */
-  --sm-color-status-available:   #2f6f4f;
-  --sm-color-status-sold:        #8a8a8a;
-  --sm-color-status-reserved:    #b08d4a;
-  --sm-color-status-under-offer: #c87d2c;
-  --sm-color-status-coming-soon: #4a6da3;
+  /* ============================================================
+     COLOR — semantic
+     ============================================================ */
+  --sm-text:          var(--sm-ink);
+  --sm-text-muted:    var(--sm-n-400);
+  --sm-text-subtle:   var(--sm-n-300);
+  --sm-text-on-dark:  #FBF8F2;
+  --sm-bg:            var(--sm-paper);
+  --sm-bg-elevated:   var(--sm-canvas);
+  --sm-bg-sunk:       var(--sm-cream);
+  --sm-line:          var(--sm-n-200);
+  --sm-line-strong:   var(--sm-n-300);
+  --sm-accent:        var(--sm-gold);
+  --sm-accent-hover:  var(--sm-gold-deep);
 
-  /* ─── Typography ─── */
+  /* status (used sparingly) */
+  --sm-success:       #5B7A4E;
+  --sm-warning:       #B5811C;
+  --sm-error:         #A33B2A;
 
-  /* Family — placeholder. Claude Design will pick the final pairing
-     (likely a display serif for headings + a humanist sans for body). */
-  --sm-font-display: 'Gloock', Georgia, serif;
-  --sm-font-body:    'Jost', system-ui, sans-serif;
-  --sm-font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
+  /* ============================================================
+     TYPOGRAPHY — families
+     Loaded by next/font in [locale]/layout.tsx; the variables
+     --font-cormorant and --font-manrope are attached to <html>.
+     ============================================================ */
+  --sm-font-display:  var(--font-cormorant), "Cormorant Garamond", "Times New Roman", Georgia, serif;
+  --sm-font-body:     var(--font-manrope), "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --sm-font-mono:     "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Type scale */
-  --sm-text-xs:   0.75rem;   /* 12px */
-  --sm-text-sm:   0.875rem;  /* 14px */
-  --sm-text-base: 1rem;      /* 16px */
-  --sm-text-lg:   1.125rem;  /* 18px */
-  --sm-text-xl:   1.25rem;   /* 20px */
-  --sm-text-2xl:  1.5rem;    /* 24px */
-  --sm-text-3xl:  2rem;      /* 32px */
-  --sm-text-4xl:  2.5rem;    /* 40px */
-  --sm-text-5xl:  3.25rem;   /* 52px */
-  --sm-text-6xl:  4rem;      /* 64px */
+  /* ============================================================
+     TYPOGRAPHY — type scale (modular, ratio ≈ 1.333 perfect 4th)
+     Values in rem; 1rem = 16px.
+     ============================================================ */
+  --sm-text-xs:       0.75rem;     /* 12px — micro labels, captions */
+  --sm-text-sm:       0.875rem;    /* 14px — small body, meta */
+  --sm-text-base:     1rem;        /* 16px — body default */
+  --sm-text-md:       1.125rem;    /* 18px — lead paragraphs */
+  --sm-text-lg:       1.25rem;     /* 20px — large body */
+  --sm-text-xl:       1.5rem;      /* 24px — h5 */
+  --sm-text-2xl:      1.875rem;    /* 30px — h4 */
+  --sm-text-3xl:      2.5rem;      /* 40px — h3 */
+  --sm-text-4xl:      3.5rem;      /* 56px — h2 */
+  --sm-text-5xl:      4.75rem;     /* 76px — h1 hero */
+  --sm-text-6xl:      6rem;        /* 96px — display, oversized hero */
 
-  --sm-leading-tight:  1.15;
-  --sm-leading-normal: 1.5;
-  --sm-leading-loose:  1.75;
+  /* ============================================================
+     TYPOGRAPHY — weights, line-heights, tracking
+     ============================================================ */
+  --sm-weight-light:    300;
+  --sm-weight-regular:  400;
+  --sm-weight-medium:   500;
+  --sm-weight-semibold: 600;
+  --sm-weight-bold:     700;
 
-  --sm-tracking-tight:  -0.015em;
-  --sm-tracking-normal: 0;
-  --sm-tracking-wide:   0.05em;
+  --sm-leading-tight:   1.05;     /* display headings */
+  --sm-leading-snug:    1.2;      /* sub-headings */
+  --sm-leading-normal:  1.5;      /* body */
+  --sm-leading-relaxed: 1.65;     /* long-form / lede */
+  --sm-leading-loose:   1.85;
 
-  /* ─── Spacing ─── */
+  --sm-tracking-tight:   -0.015em;  /* large display */
+  --sm-tracking-normal:   0;
+  --sm-tracking-wide:     0.04em;   /* light caps */
+  --sm-tracking-wider:    0.12em;   /* eyebrows */
+  --sm-tracking-widest:   0.22em;   /* nav, kickers, all-caps labels */
 
-  --sm-space-1:  0.25rem;   /*  4px */
-  --sm-space-2:  0.5rem;    /*  8px */
-  --sm-space-3:  0.75rem;   /* 12px */
-  --sm-space-4:  1rem;      /* 16px */
-  --sm-space-5:  1.5rem;    /* 24px */
-  --sm-space-6:  2rem;      /* 32px */
-  --sm-space-7:  3rem;      /* 48px */
-  --sm-space-8:  4rem;      /* 64px */
-  --sm-space-9:  6rem;      /* 96px */
-  --sm-space-10: 8rem;      /* 128px */
+  /* ============================================================
+     SPACING SCALE (8-point base, with 4 for fine work)
+     ============================================================ */
+  --sm-space-0:    0;
+  --sm-space-1:    0.25rem;   /*   4px */
+  --sm-space-2:    0.5rem;    /*   8px */
+  --sm-space-3:    0.75rem;   /*  12px */
+  --sm-space-4:    1rem;      /*  16px */
+  --sm-space-5:    1.5rem;    /*  24px */
+  --sm-space-6:    2rem;      /*  32px */
+  --sm-space-7:    3rem;      /*  48px */
+  --sm-space-8:    4rem;      /*  64px */
+  --sm-space-9:    6rem;      /*  96px */
+  --sm-space-10:   8rem;      /* 128px */
+  --sm-space-11:   12rem;     /* 192px — section breathers */
 
-  /* ─── Radius ─── */
+  /* ============================================================
+     RADIUS SCALE (restrained — editorial/architectural feel)
+     ============================================================ */
+  --sm-radius-none:  0;
+  --sm-radius-xs:    2px;
+  --sm-radius-sm:    4px;
+  --sm-radius-md:    8px;
+  --sm-radius-lg:    12px;
+  --sm-radius-pill:  999px;
 
-  --sm-radius-none: 0;
-  --sm-radius-sm:   4px;
-  --sm-radius-md:   8px;
-  --sm-radius-lg:   12px;
-  --sm-radius-xl:   16px;
-  --sm-radius-full: 999px;
+  /* ============================================================
+     SHADOWS (low-blur, restrained — let lines do the work)
+     ============================================================ */
+  --sm-shadow-xs:    0 1px 2px rgba(28, 26, 23, 0.04);
+  --sm-shadow-sm:    0 1px 3px rgba(28, 26, 23, 0.06),
+                     0 1px 2px rgba(28, 26, 23, 0.04);
+  --sm-shadow-md:    0 4px 12px rgba(28, 26, 23, 0.06),
+                     0 2px 4px rgba(28, 26, 23, 0.04);
+  --sm-shadow-lg:    0 12px 32px rgba(28, 26, 23, 0.08),
+                     0 4px 8px rgba(28, 26, 23, 0.04);
+  --sm-shadow-xl:    0 24px 64px rgba(28, 26, 23, 0.10),
+                     0 8px 16px rgba(28, 26, 23, 0.06);
+  --sm-shadow-focus: 0 0 0 3px rgba(139, 111, 58, 0.25);
 
-  /* ─── Shadow ─── */
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  --sm-container:        1400px;     /* max content width */
+  --sm-container-narrow:  960px;     /* long-form articles */
+  --sm-container-wide:   1760px;     /* gallery / map layouts */
+  --sm-gutter:           clamp(1rem, 4vw, 2.5rem);
 
-  --sm-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
-  --sm-shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-  --sm-shadow-lg: 0 10px 24px -4px rgb(0 0 0 / 0.08), 0 4px 8px -2px rgb(0 0 0 / 0.04);
-  --sm-shadow-xl: 0 24px 48px -8px rgb(0 0 0 / 0.10), 0 8px 16px -4px rgb(0 0 0 / 0.06);
+  /* ============================================================
+     MOTION
+     ============================================================ */
+  --sm-ease:           cubic-bezier(0.4, 0, 0.2, 1);
+  --sm-ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
+  --sm-ease-in:        cubic-bezier(0.4, 0, 1, 1);
+  --sm-duration-fast:  150ms;
+  --sm-duration-base:  220ms;
+  --sm-duration-slow:  450ms;
 
-  /* ─── Motion ─── */
+  /* ============================================================
+     Z-INDEX SCALE
+     ============================================================ */
+  --sm-z-base:     1;
+  --sm-z-dropdown: 100;
+  --sm-z-sticky:   200;
+  --sm-z-overlay:  300;
+  --sm-z-modal:    400;
+  --sm-z-toast:    500;
+}
 
-  --sm-duration-fast: 150ms;
-  --sm-duration-base: 220ms;
-  --sm-duration-slow: 360ms;
+/* ============================================================
+   Optional dark surface tokens (for awards block, footer, etc.)
+   Apply with .sm-on-dark wrapper class.
+   ============================================================ */
+.sm-on-dark {
+  --sm-bg:           var(--sm-ink);
+  --sm-bg-elevated:  var(--sm-ink-soft);
+  --sm-text:         var(--sm-text-on-dark);
+  --sm-text-muted:   rgba(251, 248, 242, 0.65);
+  --sm-text-subtle:  rgba(251, 248, 242, 0.4);
+  --sm-line:         rgba(251, 248, 242, 0.12);
+  --sm-line-strong:  rgba(251, 248, 242, 0.24);
+}
 
-  --sm-easing-out:  cubic-bezier(0.22, 1, 0.36, 1);
-  --sm-easing-in:   cubic-bezier(0.55, 0, 1, 0.45);
-  --sm-easing-soft: cubic-bezier(0.4, 0, 0.2, 1);
+/* ============================================================
+   Minimum element defaults — apply once globally.
+   ============================================================ */
+html {
+  font-family: var(--sm-font-body);
+  font-size: 16px;
+  color: var(--sm-text);
+  background: var(--sm-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
 
-  /* ─── Layout ─── */
+h1, h2, h3, h4, h5 {
+  font-family: var(--sm-font-display);
+  font-weight: var(--sm-weight-light);
+  line-height: var(--sm-leading-tight);
+  letter-spacing: var(--sm-tracking-tight);
+  color: var(--sm-ink);
+  margin: 0;
+}
 
-  --sm-max-width-prose:    65ch;
-  --sm-max-width-content:  72rem;   /* 1152px */
-  --sm-max-width-wide:     90rem;   /* 1440px */
+h1 { font-size: var(--sm-text-5xl); }
+h2 { font-size: var(--sm-text-4xl); }
+h3 { font-size: var(--sm-text-3xl); }
+h4 { font-size: var(--sm-text-2xl); font-weight: var(--sm-weight-regular); }
+h5 { font-size: var(--sm-text-xl);  font-weight: var(--sm-weight-regular); }
 
-  --sm-header-height:      72px;
+/* Eyebrow / kicker label utility — used above titles throughout the site */
+.sm-kicker {
+  font-family: var(--sm-font-body);
+  font-size: var(--sm-text-xs);
+  font-weight: var(--sm-weight-semibold);
+  letter-spacing: var(--sm-tracking-widest);
+  text-transform: uppercase;
+  color: var(--sm-gold);
 }
