@@ -124,8 +124,33 @@ Beyond golf, Nueva Andalucia boasts a lively dining scene centred around the pop
     priceRange: 'From €400,000 to €15,000,000+',
     nearbyAreas: ['puerto-banus', 'golden-mile', 'la-quinta', 'san-pedro', 'sierra-blanca'],
     keywords: ['Nueva Andalucia property for sale', 'Golf Valley Marbella', 'villas Nueva Andalucia', 'apartments Nueva Andalucia', 'golf property Marbella', 'Nueva Andalucia real estate'],
-    isMicroLocation: true,
+    // Nueva Andalucia is technically nested under Marbella (parent_area = 'marbella')
+    // but treated as a MAIN area for map display + listings page treatment. Anything
+    // located here also propagates up to Marbella's listings via the descendant walk.
+    isMicroLocation: false,
     parentArea: 'marbella',
+  },
+  {
+    name: 'Aloha',
+    slug: 'aloha',
+    region: 'Marbella',
+    title: 'Aloha Property for Sale | Apartments & Villas in Nueva Andalucía',
+    metaDescription: 'Discover apartments and villas for sale in Aloha, Nueva Andalucía — alongside the Aloha Golf Club, with mountain views, mature gardens, and easy access to Puerto Banús.',
+    heading: 'Properties in Aloha',
+    subheading: 'Mature golf living at the heart of Nueva Andalucía',
+    description: `Aloha sits at the centre of Nueva Andalucía's Golf Valley, anchored around the Aloha Golf Club founded in 1975. The neighbourhood is known for its mature gardens, low-rise developments, and the calm, residential rhythm that comes with decades of established community.
+
+Property here ranges from elegant low-density apartments in classic urbanisations to renovated villas overlooking the fairways. Many homes enjoy striking views of La Concha mountain, and the location offers a balance most Costa del Sol buyers prize: minutes from Puerto Banús, ten minutes from the beach, but tucked away from the noise.
+
+Aloha is particularly popular with golf-focused buyers, families seeking international schools nearby, and those drawn to Nueva Andalucía's lively dining scene around Centro Plaza without sacrificing quiet at home.`,
+    propertyTypes: ['Golf Apartments', 'Townhouses', 'Villas'],
+    highlights: ['Aloha Golf Club', 'La Concha views', 'Mature urbanisations', 'Close to Puerto Banús', 'International schools', 'Family-friendly'],
+    coordinates: { lat: 36.4940, lng: -4.9700 },
+    priceRange: 'From €450,000 to €8,000,000+',
+    nearbyAreas: ['nueva-andalucia', 'puerto-banus', 'la-quinta', 'sierra-blanca', 'san-pedro'],
+    keywords: ['Aloha property for sale', 'Aloha Golf Marbella', 'apartments Aloha', 'villas Aloha', 'Nueva Andalucia property', 'Golf Valley Marbella'],
+    isMicroLocation: true,
+    parentArea: 'nueva-andalucia',
   },
   {
     name: 'Puerto Banus',
