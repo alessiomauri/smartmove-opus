@@ -1,302 +1,738 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { MapPin, ArrowRight } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { Area, AreaRegion } from '@/types/area';
+
+/**
+ * Areas index — Areas v3 design (Brand Foundation, May 2026).
+ *
+ * Composition, top to bottom:
+ *   1. Editorial hero with 4-stat strip + coastline glyph (SVG placeholder
+ *      per user direction — to be swapped for a real map illustration later)
+ *   2. Sticky region-pill filter
+ *   3. Full-bleed map section (dark ink bg) — the real AreasLeafletMap from
+ *      Marbella Live, rendered against the design's dark canvas, with a
+ *      detail rail on the right showing the active region
+ *   4. Featured 6 cards (curated hero areas)
+ *   5. Directory grouped by region cluster — every area, 4-col grid per cluster
+ *   6. Final dark CTA (orientation call + area-guide PDF)
+ *
+ * Counts are computed server-side from manual + scraper properties only
+ * (excludes Resales bulk per the user's editorial filter).
+ */
 
 function MapPlaceholder() {
   return (
-    <div className="bg-white rounded-xl border border-ink/[0.06] h-[600px] flex items-center justify-center">
-      <p className="text-[13px] text-ink/50">Loading map…</p>
+    <div className="flex items-center justify-center h-full text-[13px] text-ink/50">
+      Loading map…
     </div>
   );
 }
 
-// Browser-only: leaflet uses `window`, so SSR is disabled. Using `next/dynamic`
-// (rather than React.lazy) plays nicer with Turbopack's HMR chunk graph and
-// removes the need for a mount-state hack.
 const AreasLeafletMap = dynamic(
   () => import('@/components/areas/AreasLeafletMap'),
   { ssr: false, loading: () => <MapPlaceholder /> }
 );
 
+interface Cluster {
+  key: string;
+  label: string;
+  italic?: string;           // italicised portion of the label
+  blurb: string;
+  regions: AreaRegion[];
+  slugs?: string[];          // optional explicit slug allowlist (overrides regions)
+  fromMin?: number;          // human "from €X" anchor used in the cluster head
+}
+
+const CLUSTERS: Cluster[] = [
+  {
+    key: 'marbella',
+    label: 'Marbella',
+    blurb:
+      "The core market. Fourteen distinct sub-areas, from the polished hush of Sierra Blanca to the marina noise of Banús. The majority of every cycle's transactions happens here.",
+    regions: ['Marbella'],
+  },
+  {
+    key: 'benahavis',
+    label: 'Benahavís',
+    italic: 'Benahavís',
+    blurb:
+      "Inland from Banús, framed by mountains and the Guadalmina river. Trades nightlife for nature reserves and very large plots. Includes the coast's two most-policed gated estates.",
+    regions: ['Benahavis'],
+  },
+  {
+    key: 'estepona',
+    label: 'Estepona',
+    blurb:
+      'Twenty-five minutes west of Marbella, with a continuous beachfront promenade now stretching most of its length. Newer buildings, fewer dynastic estates, the strongest gold-standard new-build pipeline on the coast.',
+    regions: ['Estepona'],
+  },
+  {
+    key: 'western',
+    label: 'Western Coast',
+    italic: 'Coast',
+    blurb:
+      'Beyond Estepona, into Manilva, Casares, San Roque. Larger plots, lower prices, and the polo capital of Europe at the far end. Forty-five minutes from Marbella, a different demographic from the moment you cross the Guadiaro.',
+    regions: ['Casares', 'Manilva', 'San Roque'],
+  },
+  {
+    key: 'mijas-east',
+    label: 'Mijas & East',
+    italic: '& East',
+    blurb:
+      'East of Marbella, into Mijas, Fuengirola, Benalmádena, all the way to Málaga centro. Higher density, better value per square metre, the strongest short-let yields on the coast. Buyer profile is younger, more domestic.',
+    regions: ['Mijas', 'Fuengirola', 'Torremolinos', 'Malaga'],
+  },
+];
+
+/** The six curated hero areas surfaced in the "most of the demand" block. */
+const FEATURED: Array<{
+  slug: string;
+  fallbackName: string;
+  italic: string;
+  municip: string;
+  blurb: string;
+  badges: Array<{ label: string; gold?: boolean }>;
+  num: string;
+}> = [
+  {
+    slug: 'la-zagaleta',
+    fallbackName: 'La Zagaleta',
+    italic: 'Zagaleta',
+    municip: 'Benahavís · West',
+    blurb:
+      "Spain's most-policed gated estate. 230 villas across 900 hectares; new-build land is gone, so every transaction is a re-trade. Helipad and two private golf courses included in the HOA.",
+    badges: [{ label: 'Resort', gold: true }, { label: 'Trophy' }],
+    num: 'i.',
+  },
+  {
+    slug: 'golden-mile',
+    fallbackName: 'Golden Mile',
+    italic: 'Mile',
+    municip: 'Marbella · Centre',
+    blurb:
+      'The four kilometres between Marbella town and Puerto Banús. Beachfront penthouses, art-deco palacios, the Marbella Club. Limited supply, predictable buyers.',
+    badges: [{ label: 'Beachfront' }],
+    num: 'ii.',
+  },
+  {
+    slug: 'nueva-andalucia',
+    fallbackName: 'Nueva Andalucía',
+    italic: 'Andalucía',
+    municip: 'Marbella · West',
+    blurb:
+      'The valley behind Banús, framed by Las Brisas, Aloha, and Los Naranjos. Families optimising for international schools and a 6-iron from clubhouse to terrace.',
+    badges: [{ label: 'Family · Golf' }],
+    num: 'iii.',
+  },
+  {
+    slug: 'sierra-blanca',
+    fallbackName: 'Sierra Blanca',
+    italic: 'Blanca',
+    municip: 'Marbella · Hillside',
+    blurb:
+      "The amphitheatre above Marbella town. Twenty-four-hour security, terraced plots stepping up the mountain, the city's best sea views from a southerly aspect.",
+    badges: [{ label: 'Resort', gold: true }, { label: 'Trophy' }],
+    num: 'iv.',
+  },
+  {
+    slug: 'puerto-banus',
+    fallbackName: 'Puerto Banús',
+    italic: 'Banús',
+    municip: 'Marbella · Marina',
+    blurb:
+      'The marina itself plus the apartments and townhouses surrounding it. Short-let yields outperform the rest of the coast; expect strong-season pricing on every transaction.',
+    badges: [{ label: 'Marina · Holiday' }],
+    num: 'v.',
+  },
+  {
+    slug: 'sotogrande',
+    fallbackName: 'Sotogrande',
+    italic: '',
+    municip: 'San Roque · West',
+    blurb:
+      'Forty-five minutes west, the polo capital and Valderrama golf. Larger plots, calmer streets, and a buyer profile that skews equestrian.',
+    badges: [{ label: 'Resort', gold: true }, { label: 'Polo' }],
+    num: 'vi.',
+  },
+];
+
+function formatFrom(n: number | undefined): string | null {
+  if (!n) return null;
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return `€${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+  }
+  return `€${Math.round(n / 1000)}K`;
+}
+
+/** Inject italic emphasis into an area name at the second word. */
+function nameWithItalic(name: string, italic?: string) {
+  if (!italic) return name;
+  const i = name.toLowerCase().indexOf(italic.toLowerCase());
+  if (i === -1) return name;
+  const before = name.slice(0, i);
+  const part = name.slice(i, i + italic.length);
+  const after = name.slice(i + italic.length);
+  return (
+    <>
+      {before}
+      <em>{part}</em>
+      {after}
+    </>
+  );
+}
+
 interface Props {
   areas: Area[];
+  listingCounts: Record<string, number>;
+  minPrices: Record<string, number>;
 }
 
-// Same Estepona / Marbella / Mijas order as the homepage podium row,
-// so the brand's "three regional anchors" reads consistently across pages.
-const FEATURED_SLUGS = ['estepona', 'marbella', 'mijas'];
+export default function AreasIndexClient({
+  areas,
+  listingCounts,
+  minPrices,
+}: Props) {
+  const [activeCluster, setActiveCluster] = useState<string>('all');
+  const [sortMode, setSortMode] = useState<'region' | 'alpha' | 'price'>('region');
 
-/**
- * Macro regions for the map filter bar.
- * Each button filters pins to one or more DB regions, and the map zooms to fit.
- */
-const MACRO_REGIONS: { label: string; regions: AreaRegion[] }[] = [
-  { label: 'Marbella', regions: ['Marbella'] },
-  { label: 'Benahav\u00eds', regions: ['Benahavis'] },
-  { label: 'Estepona', regions: ['Estepona'] },
-  { label: 'Western Coast', regions: ['Casares', 'Manilva', 'San Roque'] },
-  { label: 'Mijas & East', regions: ['Mijas', 'Fuengirola', 'Torremolinos', 'Malaga'] },
-];
-
-export default function AreasIndexClient({ areas }: Props) {
-  const [activeMacro, setActiveMacro] = useState<string | null>(null);
-
-  const featured = useMemo(
-    () => FEATURED_SLUGS.map(s => areas.find(a => a.slug === s)).filter(Boolean) as Area[],
-    [areas]
-  );
-
-  // All non-airport areas (grid + map pins).
+  // Drop the airport — it's a transit pin on the map, not an area to browse.
   const propertyAreas = useMemo(
-    () => areas.filter(a => a.pin_category !== 'airport'),
+    () => areas.filter((a) => a.pin_category !== 'airport'),
     [areas]
   );
 
-  const airports = useMemo(() => areas.filter(a => a.pin_category === 'airport'), [areas]);
+  // Map cluster key → list of areas in that cluster.
+  const clusterAreas = useMemo(() => {
+    const m: Record<string, Area[]> = {};
+    for (const c of CLUSTERS) {
+      m[c.key] = propertyAreas.filter((a) => c.regions.includes(a.region));
+    }
+    return m;
+  }, [propertyAreas]);
 
-  // Active macro region set for filtering.
-  const activeRegionSet = useMemo(() => {
-    if (!activeMacro) return null;
-    const macro = MACRO_REGIONS.find(m => m.label === activeMacro);
-    return macro ? new Set(macro.regions) : null;
-  }, [activeMacro]);
+  // Areas visible on the map, given the current filter.
+  const mappedAreas = useMemo(() => {
+    if (activeCluster === 'all') return areas;
+    const c = CLUSTERS.find((x) => x.key === activeCluster);
+    if (!c) return areas;
+    return areas.filter(
+      (a) => c.regions.includes(a.region) || a.pin_category === 'airport'
+    );
+  }, [areas, activeCluster]);
 
-  // Filtered areas for the map — when a macro is active only those regions show (plus airports always).
-  const mapAreas = useMemo(() => {
-    const filtered = activeRegionSet
-      ? propertyAreas.filter(a => activeRegionSet.has(a.region))
-      : propertyAreas;
-    return [...filtered, ...airports];
-  }, [propertyAreas, airports, activeRegionSet]);
+  // Pick a representative area for the detail rail. Defaults to Sierra Blanca
+  // if present; otherwise first main-pin area in the active cluster; else first.
+  const railArea = useMemo(() => {
+    if (activeCluster !== 'all') {
+      const c = CLUSTERS.find((x) => x.key === activeCluster);
+      const cluster = c ? clusterAreas[c.key] : [];
+      const mainFirst = cluster.find((a) => a.pin_category === 'main');
+      return mainFirst ?? cluster[0] ?? propertyAreas[0];
+    }
+    return (
+      propertyAreas.find((a) => a.slug === 'sierra-blanca') ??
+      propertyAreas.find((a) => a.slug === 'marbella') ??
+      propertyAreas[0]
+    );
+  }, [activeCluster, clusterAreas, propertyAreas]);
 
+  const railCount = railArea ? listingCounts[railArea.slug] ?? 0 : 0;
+  const railFrom = railArea ? formatFrom(minPrices[railArea.slug]) : null;
+
+  // Resolve featured area data from the live areas list.
+  const featuredResolved = useMemo(
+    () =>
+      FEATURED.map((f) => {
+        const area = propertyAreas.find((a) => a.slug === f.slug);
+        return { spec: f, area };
+      }).filter((x) => x.area),
+    [propertyAreas]
+  );
+
+  // Directory rendering helper: sort within a cluster.
+  function sortedCluster(c: Cluster): Area[] {
+    const list = [...(clusterAreas[c.key] ?? [])];
+    if (sortMode === 'alpha') {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortMode === 'price') {
+      list.sort((a, b) => {
+        const pa = minPrices[a.slug] ?? Number.POSITIVE_INFINITY;
+        const pb = minPrices[b.slug] ?? Number.POSITIVE_INFINITY;
+        return pa - pb;
+      });
+    } else {
+      // "region" order: main pins first, then resorts, then micros, alpha within
+      list.sort((a, b) => {
+        const order = { main: 0, resort: 1, micro: 2, airport: 3 } as const;
+        const ra = order[a.pin_category] ?? 9;
+        const rb = order[b.pin_category] ?? 9;
+        if (ra !== rb) return ra - rb;
+        return a.name.localeCompare(b.name);
+      });
+    }
+    return list;
+  }
+
+  const totalAreas = propertyAreas.length;
 
   return (
-    <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
-      {/* Featured Trio */}
-      <section className="pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featured.map((area) => (
-            <FeaturedCard key={area.slug} area={area} />
+    <div className="sm-areas">
+      {/* ──────────── HERO ──────────── */}
+      <section className="sm-areas-hero">
+        <div>
+          <div className="crumb">
+            <Link href="/">Home</Link>
+            <span className="sep">/</span>
+            <span>Costa del Sol</span>
+            <span className="sep">/</span>Areas
+          </div>
+          <span className="eyebrow">Coast guide</span>
+          <h1>
+            The coast, broken into <em>specifics.</em>
+          </h1>
+          <p className="lede">
+            <strong>Marbella isn&rsquo;t one market.</strong> It&rsquo;s a
+            string of distinct towns, gated estates, and resort enclaves
+            running from Sotogrande to Málaga, each with its own buyer,
+            register, and price-per-square-metre. We cover{' '}
+            <strong>{totalAreas}</strong> of them. Pick a place to start.
+          </p>
+          <div className="stats">
+            <div>
+              <div className="num">
+                <em>{totalAreas}</em>
+              </div>
+              <div className="lbl">Locations covered</div>
+            </div>
+            <div>
+              <div className="num">5</div>
+              <div className="lbl">Region clusters</div>
+            </div>
+            <div>
+              <div className="num">
+                120<em>km</em>
+              </div>
+              <div className="lbl">Of coastline</div>
+            </div>
+            <div>
+              <div className="num">11</div>
+              <div className="lbl">Local advisors</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Placeholder coastline glyph per Claude Design.
+            User direction: keep this placeholder for now — to be swapped
+            for a real map illustration or photograph later. */}
+        <div className="coast">
+          <div className="scale">120 km of coast</div>
+          <svg
+            className="coastline"
+            viewBox="0 0 400 240"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M0,120 C40,110 70,135 110,128 C150,120 175,100 210,108 C250,116 280,140 320,132 C355,124 380,135 400,130 L400,240 L0,240 Z"
+              fill="rgba(74,108,128,.7)"
+              stroke="rgba(255,255,255,.55)"
+              strokeWidth="1"
+            />
+            <circle cx="32" cy="118" r="3" fill="#e8d4a2" />
+            <circle cx="84" cy="129" r="3" fill="#e8d4a2" />
+            <circle cx="142" cy="118" r="4" fill="#fff" />
+            <circle cx="190" cy="106" r="3" fill="#e8d4a2" />
+            <circle cx="238" cy="115" r="3" fill="#e8d4a2" />
+            <circle cx="286" cy="138" r="3" fill="#e8d4a2" />
+            <circle cx="334" cy="129" r="3" fill="#e8d4a2" />
+            <circle cx="380" cy="131" r="3" fill="#e8d4a2" />
+          </svg>
+          <div className="label">
+            <div className="ttl">
+              Sotogrande
+              <br />
+              to Málaga
+            </div>
+            <div className="meta">
+              36.51° N
+              <br />
+              4.88° W
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────── STICKY FILTER ──────────── */}
+      <section className="sm-areas-filter">
+        <div className="label">Filter by region</div>
+        <div className="pills">
+          <button
+            type="button"
+            className={`pill${activeCluster === 'all' ? ' on' : ''}`}
+            onClick={() => setActiveCluster('all')}
+          >
+            All <span className="ct">{totalAreas}</span>
+          </button>
+          {CLUSTERS.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              className={`pill${activeCluster === c.key ? ' on' : ''}`}
+              onClick={() => setActiveCluster(c.key)}
+            >
+              {c.label}{' '}
+              <span className="ct">{(clusterAreas[c.key] ?? []).length}</span>
+            </button>
           ))}
         </div>
+        <div className="secondary">
+          <button
+            type="button"
+            className={sortMode === 'region' ? 'on' : ''}
+            onClick={() => setSortMode('region')}
+          >
+            By region
+          </button>
+          <button
+            type="button"
+            className={sortMode === 'alpha' ? 'on' : ''}
+            onClick={() => setSortMode('alpha')}
+          >
+            A → Z
+          </button>
+          <button
+            type="button"
+            className={sortMode === 'price' ? 'on' : ''}
+            onClick={() => setSortMode('price')}
+          >
+            By price
+          </button>
+        </div>
       </section>
 
-      {/* Map + macro region filter */}
-      <section className="pb-12">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h2 className="font-display text-[22px] md:text-[26px] text-ink">
-            Explore the Costa del Sol
-          </h2>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              onClick={() => setActiveMacro(null)}
-              className={`px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase rounded-full border transition-all ${
-                !activeMacro
-                  ? 'bg-gold text-white border-gold'
-                  : 'bg-white text-ink/60 border-ink/[0.08] hover:border-gold/30 hover:text-gold'
-              }`}
-            >
-              All
-            </button>
-            {MACRO_REGIONS.map(m => (
-              <button
-                key={m.label}
-                onClick={() => setActiveMacro(activeMacro === m.label ? null : m.label)}
-                className={`px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase rounded-full border transition-all ${
-                  activeMacro === m.label
-                    ? 'bg-gold text-white border-gold'
-                    : 'bg-white text-ink/60 border-ink/[0.08] hover:border-gold/30 hover:text-gold'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+      {/* ──────────── MAP SECTION ──────────── */}
+      <section className="sm-areas-mapsec">
+        <div className="head">
+          <div>
+            <span className="eyebrow">The coast at a glance</span>
+            <h2>
+              One coastline, <em>five distinct markets.</em>
+            </h2>
+          </div>
+          <p>
+            Hover a pin to see what&rsquo;s available there. The region filter at the top
+            of the page drives this map. The detail panel updates as you explore.
+          </p>
+          <div className="meta-callout">
+            <span className="num">
+              <em>{totalAreas}</em> areas
+            </span>
+            Plotted, named, ready
           </div>
         </div>
 
-        <AreasLeafletMap areas={mapAreas} />
-      </section>
-
-      {/* Compact directory — minimal text links grouped by region */}
-      <section className="pb-16">
-        <h3 className="font-display text-[18px] text-ink mb-4">
-          All Locations
-        </h3>
-        <CompactDirectory areas={propertyAreas} />
-      </section>
-    </div>
-  );
-}
-
-/* ───────── Featured card ───────── */
-
-function FeaturedCard({ area }: { area: Area }) {
-  return (
-    <Link
-      href={{ pathname: '/areas/[slug]', params: { slug: area.slug } }}
-      className="group relative bg-white rounded-xl overflow-hidden border border-ink/[0.06] hover:border-gold/20 hover:shadow-xl transition-all duration-500"
-    >
-      <div className="relative aspect-[4/3] bg-[#f0ede9] overflow-hidden">
-        {area.hero_image ? (
-          <Image
-            src={area.hero_image}
-            alt={area.hero_image_alt || area.name}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
-            <MapPin className="w-10 h-10 text-gold/40" />
+        <div className="stage">
+          <div className="sm-areas-map-wrap">
+            <AreasLeafletMap areas={mappedAreas} />
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-6">
-          <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/80 mb-1">
-            {area.region}
-          </p>
-          <h2 className="font-display text-[32px] text-white leading-tight mb-1">
-            {area.name}
-          </h2>
-          <p className="text-[13px] text-white/70 line-clamp-1">
-            {area.subheading}
-          </p>
-        </div>
-      </div>
-      <div className="p-5">
-        <p className="text-[12px] font-semibold text-ink/50 mb-3">
-          {area.price_range}
-        </p>
-        <span className="text-[12px] font-semibold tracking-[0.05em] uppercase text-gold flex items-center gap-1.5">
-          Explore <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-        </span>
-      </div>
-    </Link>
-  );
-}
 
-/* ───────── Directory (compact hierarchical text) ───────── */
+          {railArea && (
+            <aside className="sm-areas-rail">
+              <div className="r-eyebrow">{railArea.region} · Now showing</div>
+              <h3>{nameWithItalic(railArea.name)}</h3>
 
-const REGION_ORDER: AreaRegion[] = [
-  'Marbella', 'Benahavis', 'Estepona', 'Casares', 'Manilva',
-  'San Roque', 'Mijas', 'Fuengirola', 'Torremolinos', 'Malaga',
-];
-
-interface TreeNode {
-  area: Area;
-  children: Area[];
-}
-
-function CompactDirectory({ areas }: { areas: Area[] }) {
-  const grouped = useMemo(() => {
-    // Bucket by region
-    const bucket: Record<string, Area[]> = {};
-    for (const a of areas) {
-      if (!bucket[a.region]) bucket[a.region] = [];
-      bucket[a.region].push(a);
-    }
-
-    const order = { main: 0, resort: 1, micro: 2, airport: 3 };
-
-    return REGION_ORDER
-      .filter(r => bucket[r]?.length)
-      .map(r => {
-        const all = bucket[r];
-
-        // Find the main area that matches the region name (used as header link)
-        const mainArea = all.find(a => a.pin_category === 'main' && a.name === r) ?? null;
-
-        // Top-level items: direct children of the main area,
-        // or standalone roots if no main area exists for this region
-        const topLevel = mainArea
-          ? all.filter(a => a.parent_area === mainArea.slug)
-          : all.filter(a => !a.parent_area || !all.find(x => x.slug === a.parent_area));
-
-        const sorted = [...topLevel].sort((a, b) => {
-          const ra = order[a.pin_category] ?? 4;
-          const rb = order[b.pin_category] ?? 4;
-          return ra !== rb ? ra - rb : a.name.localeCompare(b.name);
-        });
-
-        // Each top-level node carries its own children (grandchildren of the main area)
-        const nodes: TreeNode[] = sorted.map(parent => ({
-          area: parent,
-          children: all
-            .filter(a => a.parent_area === parent.slug)
-            .sort((a, b) => a.name.localeCompare(b.name)),
-        }));
-
-        return { region: r, mainArea, nodes };
-      });
-  }, [areas]);
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-6">
-      {grouped.map(({ region, mainArea, nodes }) => (
-        <div key={region}>
-          {/* Region header — clickable if a matching main area exists */}
-          {mainArea ? (
-            <Link
-              href={{ pathname: '/areas/[slug]', params: { slug: mainArea.slug } }}
-              className="block text-[10px] font-semibold tracking-[0.12em] uppercase text-gold mb-2.5 pb-1.5 border-b border-ink/[0.06] hover:text-gold-deep transition-colors"
-            >
-              {region} →
-            </Link>
-          ) : (
-            <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-ink/40 mb-2.5 pb-1.5 border-b border-ink/[0.06]">
-              {region}
-            </p>
-          )}
-          <ul className="space-y-1.5">
-            {nodes.map(({ area: a, children }) => (
-              <li key={a.slug}>
-                <Link
-                  href={{ pathname: '/areas/[slug]', params: { slug: a.slug } }}
-                  className={`inline-flex items-center gap-1.5 underline decoration-transparent hover:decoration-current transition-all ${
-                    a.pin_category === 'main'
-                      ? 'text-[13px] font-semibold text-gold'
-                      : a.pin_category === 'resort'
-                        ? 'text-[13px] font-medium text-[#9a8568]'
-                        : 'text-[13px] font-medium text-ink/70 hover:text-ink'
-                  }`}
-                >
-                  {a.name}
-                  {a.pin_category === 'resort' && (
-                    <span className="text-[8px] font-bold tracking-[0.08em] uppercase opacity-60">Resort</span>
-                  )}
-                </Link>
-                {/* Nested children */}
-                {children.length > 0 && (
-                  <ul className="mt-1 ml-3 space-y-0.5 border-l border-ink/[0.06] pl-3">
-                    {children.map(c => (
-                      <li key={c.slug}>
-                        <Link
-                          href={{ pathname: '/areas/[slug]', params: { slug: c.slug } }}
-                          className={`text-[12px] underline decoration-transparent hover:decoration-current transition-all ${
-                            c.pin_category === 'resort'
-                              ? 'font-medium text-[#9a8568]'
-                              : 'text-ink/60 hover:text-ink'
-                          }`}
-                        >
-                          {c.name}
-                          {c.pin_category === 'resort' && (
-                            <span className="ml-1 text-[8px] font-bold tracking-[0.08em] uppercase opacity-60">Resort</span>
-                          )}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="r-tags">
+                {railArea.pin_category === 'resort' && (
+                  <span className="gold">Resort</span>
                 )}
-              </li>
-            ))}
-          </ul>
+                {railArea.pin_category === 'main' && railArea.parent_area && (
+                  <span className="gold">Main · nested</span>
+                )}
+                {(railArea.property_types ?? []).slice(0, 2).map((t) => (
+                  <span key={t}>{t}</span>
+                ))}
+              </div>
+
+              <p className="r-blurb">
+                {railArea.subheading || railArea.meta_description}
+              </p>
+
+              <div className="r-stats">
+                <div>
+                  <div className="lbl">Listings</div>
+                  <div className="val">
+                    <em>{railCount}</em>{' '}
+                    {railCount === 1 ? 'active' : 'active'}
+                  </div>
+                </div>
+                <div>
+                  <div className="lbl">From</div>
+                  <div className="val">
+                    {railFrom ?? <span className="txt">On request</span>}
+                  </div>
+                </div>
+                <div>
+                  <div className="lbl">Region</div>
+                  <div className="val txt">{railArea.region}</div>
+                </div>
+                <div>
+                  <div className="lbl">Type</div>
+                  <div className="val txt">
+                    {railArea.pin_category === 'resort'
+                      ? 'Gated resort'
+                      : railArea.pin_category === 'main'
+                        ? 'Main town'
+                        : 'Neighbourhood'}
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                href={{ pathname: '/areas/[slug]', params: { slug: railArea.slug } }}
+                className="r-cta"
+              >
+                <span>
+                  Explore{' '}
+                  <em>
+                    {railArea.name}
+                    {railCount > 0 ? ` (${railCount})` : ''}
+                  </em>
+                </span>
+                <span className="arrow">→</span>
+              </Link>
+              <div className="r-hint">Use the filter above to switch regions</div>
+            </aside>
+          )}
         </div>
-      ))}
+      </section>
+
+      {/* ──────────── FEATURED 6 ──────────── */}
+      <section className="sm-areas-featured">
+        <div className="head">
+          <div>
+            <span className="eyebrow muted">Where most of our buyers land</span>
+            <h2>
+              Six areas, <em>most of the demand.</em>
+            </h2>
+          </div>
+          <p>
+            The market isn&rsquo;t spread evenly. These six clusters absorb the
+            majority of every cycle&rsquo;s transactions and almost all of the
+            trophy stock. Start here, narrow later.
+          </p>
+        </div>
+
+        <div className="sm-areas-feat-grid">
+          {featuredResolved.map(({ spec, area }) => {
+            const a = area!;
+            const count = listingCounts[a.slug] ?? 0;
+            const from = formatFrom(minPrices[a.slug]);
+            return (
+              <Link
+                key={a.slug}
+                href={{ pathname: '/areas/[slug]', params: { slug: a.slug } }}
+                className="sm-areas-feat-card"
+              >
+                <div className="photo">
+                  {a.hero_image && (
+                    <Image
+                      src={a.hero_image}
+                      alt={a.hero_image_alt || a.name}
+                      fill
+                      sizes="(max-width: 1100px) 100vw, 33vw"
+                    />
+                  )}
+                  <div className="num">{spec.num}</div>
+                  <div className="badges">
+                    {spec.badges.map((b) => (
+                      <span
+                        key={b.label}
+                        className={`badge${b.gold ? ' gold' : ''}`}
+                      >
+                        {b.label}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="ct-pill">
+                    {count > 0 ? (
+                      <>
+                        <em>{count}</em> {count === 1 ? 'home' : 'homes'}
+                      </>
+                    ) : (
+                      'Inventory on request'
+                    )}
+                  </div>
+                </div>
+                <div className="body">
+                  <div className="municip">{spec.municip}</div>
+                  <h3>{nameWithItalic(a.name, spec.italic)}</h3>
+                  <p className="blurb">{spec.blurb}</p>
+                  <div className="stats">
+                    <div>
+                      <div className="lbl">From</div>
+                      <div className="val">
+                        {from ? (
+                          <em>{from}</em>
+                        ) : (
+                          a.price_range?.match(/€[\d,.]+[KMk]?/)?.[0] ?? '—'
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="lbl">Region</div>
+                      <div className="val">{a.region}</div>
+                    </div>
+                    <div>
+                      <div className="lbl">Type</div>
+                      <div className="val">
+                        {a.pin_category === 'resort' ? 'Resort' : 'Open'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <span />
+                    <span className="cta">Explore →</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ──────────── DIRECTORY ──────────── */}
+      <section className="sm-areas-dir">
+        <div className="head">
+          <div>
+            <span className="eyebrow muted">All {totalAreas} locations</span>
+            <h2>
+              The full <em>directory.</em>
+            </h2>
+          </div>
+          <p>
+            Every town, urbanisation, and resort enclave we cover. Resort-flagged
+            areas are private gated communities with their own access protocols.
+            Click any to see live inventory.
+          </p>
+        </div>
+
+        {CLUSTERS.filter((c) => {
+          if (activeCluster === 'all') return true;
+          return c.key === activeCluster;
+        }).map((c, i) => {
+          const list = sortedCluster(c);
+          if (list.length === 0) return null;
+          const totalInCluster = list.length;
+          const minP = list
+            .map((a) => minPrices[a.slug])
+            .filter((p): p is number => typeof p === 'number')
+            .sort((a, b) => a - b)[0];
+          return (
+            <div key={c.key} className="sm-areas-cluster">
+              <div className="sm-areas-cluster-head">
+                <div className="id">
+                  <span className="num">{['i.','ii.','iii.','iv.','v.'][i] ?? `${i+1}.`}</span>
+                  <h3>{c.italic ? nameWithItalic(c.label, c.italic) : c.label}</h3>
+                </div>
+                <p className="blurb">{c.blurb}</p>
+                <div className="meta">
+                  <span className="ct">
+                    <em>{totalInCluster}</em> areas
+                  </span>
+                  {minP ? `From ${formatFrom(minP)}` : ''}
+                </div>
+              </div>
+              <div className="sm-areas-cluster-grid">
+                {list.map((a) => {
+                  const count = listingCounts[a.slug] ?? 0;
+                  const from = formatFrom(minPrices[a.slug]);
+                  return (
+                    <Link
+                      key={a.slug}
+                      href={{ pathname: '/areas/[slug]', params: { slug: a.slug } }}
+                      className="sm-areas-area-row"
+                    >
+                      <div className="top">
+                        <div className="nm">{nameWithItalic(a.name)}</div>
+                        {a.pin_category === 'resort' && (
+                          <span className="resort">Resort</span>
+                        )}
+                      </div>
+                      <div className="stats">
+                        <span className="ct">
+                          {count > 0 ? (
+                            <>
+                              <em>{count}</em> {count === 1 ? 'home' : 'homes'}
+                            </>
+                          ) : (
+                            'On request'
+                          )}
+                        </span>
+                        {from && (
+                          <span className="pf">
+                            From <em>{from}</em>
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* ──────────── FINAL CTA ──────────── */}
+      <section className="sm-areas-cta">
+        <div>
+          <span className="eyebrow" style={{ color: 'var(--sm-gold-soft)' }}>
+            Next step
+          </span>
+          <h2>
+            {totalAreas} areas is a lot. Let us <em>narrow it.</em>
+          </h2>
+          <p>
+            Most buyers come in convinced they want one place and leave with the
+            keys to a different one. Both routes below shorten that journey. Pick
+            whichever fits how you like to start.
+          </p>
+        </div>
+        <div className="actions">
+          <Link href="/" className="action">
+            <div>
+              <div className="icon">→</div>
+              <div className="ttl">
+                Book a 30-minute <em>orientation</em> call
+              </div>
+              <div className="desc">
+                A short call with one of our regional leads. No listings shown.
+                We ask what you&rsquo;re optimising for, then narrow you to two
+                or three areas worth a longer look.
+              </div>
+            </div>
+            <div className="arrow">→</div>
+          </Link>
+          <Link href="/" className="action">
+            <div>
+              <div className="icon">↓</div>
+              <div className="ttl">
+                Download the <em>area guide</em> (PDF)
+              </div>
+              <div className="desc">
+                Market read on every area we cover: price-per-m² trends, typical
+                buyer profiles, schooling notes, transaction volume.
+              </div>
+            </div>
+            <div className="arrow">→</div>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
