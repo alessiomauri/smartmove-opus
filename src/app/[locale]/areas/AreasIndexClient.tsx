@@ -217,7 +217,7 @@ export default function AreasIndexClient({
     return m;
   }, [propertyAreas]);
 
-  // Areas visible on the map, given the current filter.
+  // Areas visible on the map, given the current region pill.
   const mappedAreas = useMemo(() => {
     if (activeCluster === 'all') return areas;
     const c = CLUSTERS.find((x) => x.key === activeCluster);
@@ -227,21 +227,12 @@ export default function AreasIndexClient({
     );
   }, [areas, activeCluster]);
 
-  // Rail is driven by a small precedence ladder:
-  //   1. selectedSlug (a pin was clicked) → render that area
-  //   2. activeCluster !== 'all' (a region pill is selected) → render cluster
-  //   3. neither → render the Costa del Sol overview
-  // This makes clicking a pill update both the map AND the rail, which is
-  // what users intuitively expect, while pin clicks override pill state.
+  // Rail is driven by pin clicks only:
+  //   - selectedSlug set → that area
+  //   - nothing selected → Costa del Sol overview
   const railArea = useMemo(
     () => (selectedSlug ? propertyAreas.find((a) => a.slug === selectedSlug) ?? null : null),
     [selectedSlug, propertyAreas]
-  );
-  const railCluster = useMemo(
-    () => (!selectedSlug && activeCluster !== 'all'
-      ? CLUSTERS.find((c) => c.key === activeCluster) ?? null
-      : null),
-    [selectedSlug, activeCluster]
   );
 
   // Aggregate stats for the default Costa del Sol view.
@@ -264,54 +255,20 @@ export default function AreasIndexClient({
     };
   }, [propertyAreas, listingCounts, minPrices]);
 
-  // Per-cluster aggregates used by the rail when a pill is active.
-  const clusterStats = useMemo(() => {
-    const m: Record<string, { totalAreas: number; totalListings: number; fromMin: number | null; photo: { src: string; alt: string } | null }> = {};
-    for (const c of CLUSTERS) {
-      const list = clusterAreas[c.key] ?? [];
-      const totalListings = list.reduce((s, a) => s + (listingCounts[a.slug] ?? 0), 0);
-      const mins = list
-        .map((a) => minPrices[a.slug])
-        .filter((p): p is number => typeof p === 'number');
-      const fromMin = mins.length ? Math.min(...mins) : null;
-      // Best representative photo for the cluster — prefer a main-pin
-      // hero, fall back to anything with an image.
-      const heroArea =
-        list.find((a) => a.pin_category === 'main' && a.hero_image) ??
-        list.find((a) => a.hero_image);
-      m[c.key] = {
-        totalAreas: list.length,
-        totalListings,
-        fromMin,
-        photo: heroArea?.hero_image
-          ? { src: heroArea.hero_image, alt: heroArea.hero_image_alt || c.label }
-          : null,
-      };
-    }
-    return m;
-  }, [clusterAreas, listingCounts, minPrices]);
-
-  // Hero photo for the rail. Precedence: clicked area → cluster
-  // representative → Marbella (default Costa del Sol overview).
+  // Hero photo for the rail. Clicked area → Marbella fallback for the
+  // Costa del Sol overview.
   const railPhoto = useMemo(() => {
     if (railArea?.hero_image)
       return { src: railArea.hero_image, alt: railArea.hero_image_alt || railArea.name };
-    if (railCluster) return clusterStats[railCluster.key]?.photo ?? null;
     const fallback = propertyAreas.find((a) => a.slug === 'marbella' && a.hero_image)
       ?? propertyAreas.find((a) => a.hero_image);
     return fallback ? { src: fallback.hero_image, alt: 'Costa del Sol' } : null;
-  }, [railArea, railCluster, clusterStats, propertyAreas]);
+  }, [railArea, propertyAreas]);
 
-  const railCount = railArea
-    ? listingCounts[railArea.slug] ?? 0
-    : railCluster
-      ? clusterStats[railCluster.key]?.totalListings ?? 0
-      : aggregate.totalListings;
+  const railCount = railArea ? listingCounts[railArea.slug] ?? 0 : aggregate.totalListings;
   const railFrom = railArea
     ? formatFrom(minPrices[railArea.slug])
-    : railCluster
-      ? formatFrom(clusterStats[railCluster.key]?.fromMin ?? undefined)
-      : formatFrom(aggregate.fromMin ?? undefined);
+    : formatFrom(aggregate.fromMin ?? undefined);
 
   // Resolve featured area data from the live areas list.
   const featuredResolved = useMemo(
@@ -436,54 +393,6 @@ export default function AreasIndexClient({
         </div>
       </section>
 
-      {/* ──────────── STICKY FILTER ──────────── */}
-      <section className="sm-areas-filter">
-        <div className="label">Filter by region</div>
-        <div className="pills">
-          <button
-            type="button"
-            className={`pill${activeCluster === 'all' ? ' on' : ''}`}
-            onClick={() => { setActiveCluster('all'); setSelectedSlug(null); }}
-          >
-            All <span className="ct">{totalAreas}</span>
-          </button>
-          {CLUSTERS.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              className={`pill${activeCluster === c.key ? ' on' : ''}`}
-              onClick={() => { setActiveCluster(c.key); setSelectedSlug(null); }}
-            >
-              {c.label}{' '}
-              <span className="ct">{(clusterAreas[c.key] ?? []).length}</span>
-            </button>
-          ))}
-        </div>
-        <div className="secondary">
-          <button
-            type="button"
-            className={sortMode === 'region' ? 'on' : ''}
-            onClick={() => setSortMode('region')}
-          >
-            By region
-          </button>
-          <button
-            type="button"
-            className={sortMode === 'alpha' ? 'on' : ''}
-            onClick={() => setSortMode('alpha')}
-          >
-            A → Z
-          </button>
-          <button
-            type="button"
-            className={sortMode === 'price' ? 'on' : ''}
-            onClick={() => setSortMode('price')}
-          >
-            By price
-          </button>
-        </div>
-      </section>
-
       {/* ──────────── MAP SECTION ──────────── */}
       <section className="sm-areas-mapsec">
         <div className="head">
@@ -494,14 +403,65 @@ export default function AreasIndexClient({
             </h2>
           </div>
           <p>
-            Click a pin to load it on the right. Region pills above filter the
-            map and the panel together; pin clicks override.
+            Use the region pills below to filter the map and the directory
+            together. Click any pin to load that area on the right.
           </p>
           <div className="meta-callout">
             <span className="num">
               <em>{totalAreas}</em> areas
             </span>
             Plotted, named, ready
+          </div>
+        </div>
+
+        {/* Filter row — sits inside the dark band, BETWEEN the head and
+            the map. Filters drive both the map (pin set) and the
+            directory below (cluster visibility). Sort affects the
+            directory only. */}
+        <div className="sm-areas-filter sm-areas-filter--mapsec">
+          <div className="label">Filter by region</div>
+          <div className="pills">
+            <button
+              type="button"
+              className={`pill${activeCluster === 'all' ? ' on' : ''}`}
+              onClick={() => { setActiveCluster('all'); setSelectedSlug(null); }}
+            >
+              All <span className="ct">{totalAreas}</span>
+            </button>
+            {CLUSTERS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className={`pill${activeCluster === c.key ? ' on' : ''}`}
+                onClick={() => { setActiveCluster(c.key); setSelectedSlug(null); }}
+              >
+                {c.label}{' '}
+                <span className="ct">{(clusterAreas[c.key] ?? []).length}</span>
+              </button>
+            ))}
+          </div>
+          <div className="secondary">
+            <button
+              type="button"
+              className={sortMode === 'region' ? 'on' : ''}
+              onClick={() => setSortMode('region')}
+            >
+              By region
+            </button>
+            <button
+              type="button"
+              className={sortMode === 'alpha' ? 'on' : ''}
+              onClick={() => setSortMode('alpha')}
+            >
+              A → Z
+            </button>
+            <button
+              type="button"
+              className={sortMode === 'price' ? 'on' : ''}
+              onClick={() => setSortMode('price')}
+            >
+              By price
+            </button>
           </div>
         </div>
 
@@ -599,65 +559,7 @@ export default function AreasIndexClient({
                   className="r-back"
                   onClick={() => setSelectedSlug(null)}
                 >
-                  ← Back to {activeCluster === 'all' ? 'overview' : CLUSTERS.find(c => c.key === activeCluster)?.label}
-                </button>
-              </>
-            ) : railCluster ? (
-              /* ─── CLUSTER mode — a region pill is active ─── */
-              <>
-                <div className="r-eyebrow">{railCluster.label} · Cluster</div>
-                <h3>
-                  {railCluster.italic
-                    ? nameWithItalic(railCluster.label, railCluster.italic)
-                    : railCluster.label}
-                </h3>
-
-                <div className="r-tags">
-                  <span className="gold">{clusterStats[railCluster.key]?.totalAreas ?? 0} areas</span>
-                  {railCluster.regions.map((r) => (
-                    <span key={r}>{r}</span>
-                  ))}
-                </div>
-
-                <p className="r-blurb">{railCluster.blurb}</p>
-
-                <div className="r-stats">
-                  <div>
-                    <div className="lbl">Listings</div>
-                    <div className="val">
-                      <em>{clusterStats[railCluster.key]?.totalListings ?? 0}</em> active
-                    </div>
-                  </div>
-                  <div>
-                    <div className="lbl">From</div>
-                    <div className="val">
-                      {railFrom ?? <span className="txt">On request</span>}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="lbl">Areas in cluster</div>
-                    <div className="val">
-                      <em>{clusterStats[railCluster.key]?.totalAreas ?? 0}</em>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="lbl">Municipalities</div>
-                    <div className="val txt">{railCluster.regions.join(' · ')}</div>
-                  </div>
-                </div>
-
-                <span className="r-cta r-cta--ghost">
-                  <span>
-                    Click a <em>pin</em> on the map
-                  </span>
-                  <span className="arrow">→</span>
-                </span>
-                <button
-                  type="button"
-                  className="r-back"
-                  onClick={() => setActiveCluster('all')}
-                >
-                  ← Back to Costa del Sol
+                  ← Back to overview
                 </button>
               </>
             ) : (
@@ -819,7 +721,11 @@ export default function AreasIndexClient({
       <section className="sm-areas-dir">
         <div className="head">
           <div>
-            <span className="eyebrow muted">All {totalAreas} locations</span>
+            <span className="eyebrow muted">
+              {activeCluster === 'all'
+                ? `All ${totalAreas} locations`
+                : `${(clusterAreas[activeCluster] ?? []).length} locations · ${CLUSTERS.find((c) => c.key === activeCluster)?.label}`}
+            </span>
             <h2>
               The full <em>directory.</em>
             </h2>
@@ -827,15 +733,15 @@ export default function AreasIndexClient({
           <p>
             Every town, urbanisation, and resort enclave we cover. Resort-flagged
             areas are private gated communities with their own access protocols.
-            Click any to see live inventory.
+            The region pills in the map section above filter what shows here.
           </p>
         </div>
 
-        {/* Directory shows ALL clusters regardless of the region filter
-            pill — the pill drives the map. "The full directory" header
-            implies exhaustive coverage; filtering it would surprise the
-            user. The sort toggle still affects order within each cluster. */}
-        {CLUSTERS.map((c, i) => {
+        {/* Visible clusters follow the region pill in the map section
+            above. "All" shows every cluster; any other pill narrows to
+            just that one. The sort toggle reorders areas within each
+            visible cluster. */}
+        {CLUSTERS.filter((c) => activeCluster === 'all' || c.key === activeCluster).map((c, i) => {
           const list = sortedCluster(c);
           if (list.length === 0) return null;
           const totalInCluster = list.length;

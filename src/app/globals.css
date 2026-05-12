@@ -2483,18 +2483,48 @@ select:focus {
   width: 100%; height: 60%; top: 28%;
 }
 
-/* ----- STICKY FILTER ----- */
+/* ----- FILTER ROW -----
+   The filter lives inside the dark map section (.sm-areas-mapsec)
+   between the head and the map stage. It drives both the map (pin set)
+   and the directory below (cluster visibility). Sort is directory-only.
+   Not sticky — so it never competes with the leaflet stacking context. */
 .sm-areas-filter {
-  background: rgba(247, 244, 239, 0.92);
-  backdrop-filter: blur(10px) saturate(160%);
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  border-bottom: 1px solid var(--sm-line);
+  background: transparent;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap; row-gap: 12px;
+  position: static;
+}
+.sm-areas-filter--mapsec {
+  /* Dark variant — sits on .sm-areas-mapsec (var(--sm-ink) bg). */
+  background: rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08);
   padding: 14px 64px;
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  /* Sits right under the SiteHeader (72px desktop). On mobile the
-     SiteHeader is 60px — small enough that we don't need a separate
-     breakpoint here since the filter wraps comfortably either way. */
-  position: sticky; top: 72px; z-index: 10;
+  color: rgba(255,255,255,.8);
+}
+.sm-areas-filter--mapsec .label { color: rgba(255,255,255,.55); }
+.sm-areas-filter--mapsec .pill {
+  background: transparent;
+  border-color: rgba(255,255,255,.18);
+  color: rgba(255,255,255,.7);
+}
+.sm-areas-filter--mapsec .pill .ct {
+  background: rgba(255,255,255,.10); color: rgba(255,255,255,.75);
+}
+.sm-areas-filter--mapsec .pill:hover {
+  border-color: rgba(255,255,255,.45); color: #fff;
+}
+.sm-areas-filter--mapsec .pill.on {
+  background: var(--sm-gold); color: var(--sm-ink); border-color: var(--sm-gold);
+}
+.sm-areas-filter--mapsec .pill.on .ct { background: rgba(28,26,23,.18); color: var(--sm-ink); }
+.sm-areas-filter--mapsec .secondary { color: rgba(255,255,255,.55); }
+.sm-areas-filter--mapsec .secondary button {
+  color: rgba(255,255,255,.55);
+  border-bottom-color: rgba(255,255,255,.18);
+}
+.sm-areas-filter--mapsec .secondary button.on {
+  color: #fff; border-bottom-color: var(--sm-gold);
 }
 .sm-areas-filter .label {
   font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
@@ -2586,10 +2616,14 @@ select:focus {
      rail's content height, so the map fills exactly the available space
      and there's no white gap below it. Min-height keeps the map usable
      even when the rail is short. */
-  min-height: 540px;
+  min-height: 460px;
   position: relative;
   background: var(--sm-paper);
   border-right: 1px solid rgba(255,255,255,.08);
+  /* Isolate leaflet's internal stacking (pane z-indexes 200–700) so it
+     can never bleed up through the sticky SiteHeader or any other
+     element above the map. */
+  isolation: isolate;
 }
 /* AreasLeafletMap renders an outer card div with the legend overlay
    and a "Scroll to zoom" footer below the MapContainer. We flatten its
@@ -2607,13 +2641,17 @@ select:focus {
   flex: 1 1 auto;
   height: auto !important;
   min-height: 0;
+  /* Belt-and-braces: keep the leaflet root in the same stacking context
+     as its parent. The wrap already isolates, but newer browsers honour
+     `z-index: 0` here as an extra guarantee. */
+  z-index: 0;
 }
 
 /* DETAIL RAIL */
 .sm-areas-rail {
   background: var(--sm-paper);
   color: var(--sm-ink);
-  padding: 28px 32px 24px;
+  padding: 24px 32px 22px;
   display: flex; flex-direction: column;
   position: relative;
 }
@@ -3041,8 +3079,10 @@ select:focus {
 .sm-areas-rail .r-photo {
   position: relative;
   width: calc(100% + 64px);       /* break out of the 32px L/R padding */
-  margin: -28px -32px 20px;       /* hug the top of the rail */
-  aspect-ratio: 16 / 10;
+  margin: -28px -32px 16px;       /* hug the top of the rail */
+  /* Wider crop than 16/10 — keeps the rail compact so the whole map +
+     rail row fits in roughly one screen on a typical laptop. */
+  aspect-ratio: 21 / 9;
   overflow: hidden;
   background: var(--sm-cream);
 }
