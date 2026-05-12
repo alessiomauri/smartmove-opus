@@ -2484,47 +2484,25 @@ select:focus {
 }
 
 /* ----- FILTER ROW -----
-   The filter lives inside the dark map section (.sm-areas-mapsec)
-   between the head and the map stage. It drives both the map (pin set)
-   and the directory below (cluster visibility). Sort is directory-only.
-   Not sticky — so it never competes with the leaflet stacking context. */
+   Sits BELOW the dark band head and ABOVE the map. Sticky so it stays
+   accessible while the user pans the map. Light paper background so
+   it reads as its own strip, distinct from the dark band above.
+
+   Stacking: SiteHeader is z-[1000], leaflet panes are scoped inside
+   `.sm-areas-map-wrap` (isolation: isolate). The sticky filter at z-40
+   sits cleanly above the map and below the header. */
 .sm-areas-filter {
-  background: transparent;
+  background: rgba(247, 244, 239, 0.94);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  border-top: 1px solid var(--sm-line);
+  border-bottom: 1px solid var(--sm-line);
+  padding: 12px 64px;
   display: flex; align-items: center; justify-content: space-between;
   gap: 24px; flex-wrap: wrap; row-gap: 12px;
-  position: static;
-}
-.sm-areas-filter--mapsec {
-  /* Dark variant — sits on .sm-areas-mapsec (var(--sm-ink) bg). */
-  background: rgba(255,255,255,0.04);
-  border-top: 1px solid rgba(255,255,255,.08);
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  padding: 14px 64px;
-  color: rgba(255,255,255,.8);
-}
-.sm-areas-filter--mapsec .label { color: rgba(255,255,255,.55); }
-.sm-areas-filter--mapsec .pill {
-  background: transparent;
-  border-color: rgba(255,255,255,.18);
-  color: rgba(255,255,255,.7);
-}
-.sm-areas-filter--mapsec .pill .ct {
-  background: rgba(255,255,255,.10); color: rgba(255,255,255,.75);
-}
-.sm-areas-filter--mapsec .pill:hover {
-  border-color: rgba(255,255,255,.45); color: #fff;
-}
-.sm-areas-filter--mapsec .pill.on {
-  background: var(--sm-gold); color: var(--sm-ink); border-color: var(--sm-gold);
-}
-.sm-areas-filter--mapsec .pill.on .ct { background: rgba(28,26,23,.18); color: var(--sm-ink); }
-.sm-areas-filter--mapsec .secondary { color: rgba(255,255,255,.55); }
-.sm-areas-filter--mapsec .secondary button {
-  color: rgba(255,255,255,.55);
-  border-bottom-color: rgba(255,255,255,.18);
-}
-.sm-areas-filter--mapsec .secondary button.on {
-  color: #fff; border-bottom-color: var(--sm-gold);
+  position: sticky;
+  top: 72px;            /* sits directly under the 72px SiteHeader */
+  z-index: 40;
 }
 .sm-areas-filter .label {
   font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
@@ -2569,7 +2547,10 @@ select:focus {
 
 /* ----- MAP SECTION ----- */
 .sm-areas-mapsec {
-  padding: 0; background: var(--sm-ink); color: #fff;
+  /* The section itself is just the editorial wrapper. Only the .head
+     keeps the dark ink background — the filter row and map stage sit
+     on the paper so the sticky filter reads cleanly on its own strip. */
+  padding: 0; background: var(--sm-paper); color: var(--sm-ink);
   border-top: 1px solid var(--sm-line); border-bottom: 1px solid var(--sm-line);
 }
 .sm-areas-mapsec .head {

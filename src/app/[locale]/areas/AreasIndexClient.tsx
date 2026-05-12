@@ -414,11 +414,12 @@ export default function AreasIndexClient({
           </div>
         </div>
 
-        {/* Filter row — sits inside the dark band, BETWEEN the head and
-            the map. Filters drive both the map (pin set) and the
-            directory below (cluster visibility). Sort affects the
-            directory only. */}
-        <div className="sm-areas-filter sm-areas-filter--mapsec">
+        {/* Filter row — sits BELOW the dark head and ABOVE the map.
+            Sticky (top: 72px) so it remains accessible while the user
+            interacts with the map. Filters drive both the map (pin
+            set) and the directory below (cluster visibility). Sort
+            affects the directory only. */}
+        <div className="sm-areas-filter">
           <div className="label">Filter by region</div>
           <div className="pills">
             <button
