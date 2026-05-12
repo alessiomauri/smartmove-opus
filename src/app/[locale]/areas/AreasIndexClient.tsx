@@ -249,7 +249,9 @@ export default function AreasIndexClient({
       totalAreas: propertyAreas.length,
       totalListings,
       fromMin,
-      regions: new Set(propertyAreas.map((a) => a.region)).size,
+      // Editorial region clusters (Marbella / Benahavís / Estepona /
+      // Western Coast / Mijas & East), not raw DB region count.
+      regions: CLUSTERS.length,
     };
   }, [propertyAreas, listingCounts, minPrices]);
 
@@ -723,10 +725,11 @@ export default function AreasIndexClient({
           </p>
         </div>
 
-        {CLUSTERS.filter((c) => {
-          if (activeCluster === 'all') return true;
-          return c.key === activeCluster;
-        }).map((c, i) => {
+        {/* Directory shows ALL clusters regardless of the region filter
+            pill — the pill drives the map. "The full directory" header
+            implies exhaustive coverage; filtering it would surprise the
+            user. The sort toggle still affects order within each cluster. */}
+        {CLUSTERS.map((c, i) => {
           const list = sortedCluster(c);
           if (list.length === 0) return null;
           const totalInCluster = list.length;

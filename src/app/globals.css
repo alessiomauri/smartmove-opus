@@ -2535,10 +2535,10 @@ select:focus {
   border-top: 1px solid var(--sm-line); border-bottom: 1px solid var(--sm-line);
 }
 .sm-areas-mapsec .head {
-  padding: 64px 64px 36px;
+  padding: 40px 64px 24px;
   display: grid;
   grid-template-columns: 1.3fr 1fr 260px;
-  align-items: end; gap: 64px;
+  align-items: center; gap: 56px;
   background: var(--sm-ink);
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
@@ -2546,24 +2546,24 @@ select:focus {
 .sm-areas-mapsec .head .eyebrow::before { background: var(--sm-gold); opacity: .6; }
 .sm-areas-mapsec h2 {
   font-family: var(--sm-font-display);
-  font-size: 64px; font-weight: 300; line-height: 1.0;
-  margin: 16px 0 0; letter-spacing: -0.02em;
+  font-size: 44px; font-weight: 300; line-height: 1.05;
+  margin: 10px 0 0; letter-spacing: -0.018em;
   color: #fff; text-wrap: balance;
 }
 .sm-areas-mapsec h2 em { font-style: italic; color: var(--sm-gold-soft); font-weight: 400; }
 .sm-areas-mapsec .head p {
-  font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.65); margin: 0;
+  font-size: 14px; line-height: 1.65; color: rgba(255,255,255,.65); margin: 0;
 }
 .sm-areas-mapsec .meta-callout {
   border-left: 1px solid rgba(255,255,255,.18);
-  padding-left: 28px;
+  padding-left: 24px;
   font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
   color: rgba(255,255,255,.55); font-weight: 600;
 }
 .sm-areas-mapsec .meta-callout .num {
   font-family: var(--sm-font-display); font-style: italic;
-  font-size: 44px; color: #fff; font-weight: 300;
-  letter-spacing: -0.018em; line-height: 1; margin-bottom: 8px;
+  font-size: 32px; color: #fff; font-weight: 300;
+  letter-spacing: -0.018em; line-height: 1; margin-bottom: 6px;
   display: block;
 }
 .sm-areas-mapsec .meta-callout .num em { color: var(--sm-gold-soft); }
@@ -2571,17 +2571,33 @@ select:focus {
 .sm-areas-mapsec .stage {
   display: grid;
   grid-template-columns: 1fr 380px;
-  align-items: stretch;
+  align-items: stretch;     /* default; both items match row height */
 }
 .sm-areas-mapsec .stage > .sm-areas-map-wrap {
-  height: 820px;
+  /* No fixed height — the grid row stretches both items to match the
+     rail's content height, so the map fills exactly the available space
+     and there's no white gap below it. */
+  min-height: 620px;
   position: relative;
   background: var(--sm-paper);
   border-right: 1px solid rgba(255,255,255,.08);
 }
+/* AreasLeafletMap renders an outer card div with the legend overlay
+   and a "Scroll to zoom" footer below the MapContainer. We flatten its
+   chrome inside the dark map section: the outer div becomes a flex
+   column that fills the wrap, the MapContainer flex-grows to consume
+   whatever space the rail leaves, and the footer keeps its natural
+   height at the bottom — so no white gap below the map. */
 .sm-areas-mapsec .stage > .sm-areas-map-wrap > * {
   height: 100% !important;
   border-radius: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+.sm-areas-mapsec .stage > .sm-areas-map-wrap .leaflet-container {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
 }
 
 /* DETAIL RAIL */
