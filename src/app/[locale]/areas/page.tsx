@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { Link } from '@/i18n/navigation';
 import { getPublishedAreas } from '@/lib/actions/areas';
 import { getCachedPublishedProperties } from '@/lib/cache';
+import SiteHeader from '@/components/SiteHeader';
 import AreasIndexClient from './AreasIndexClient';
 
 export const revalidate = 3600;
@@ -85,29 +85,7 @@ export default async function AreasIndexPage() {
       />
 
       <div className="min-h-screen bg-paper">
-        {/* Compact non-hero header — the v3 design assumes a real header
-            is slotted in elsewhere; this is the inherited Marbella Live
-            top bar, re-coloured. */}
-        <header className="sticky top-0 z-50 header-glass">
-          <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
-          <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
-            <div className="flex items-center justify-between h-[60px] lg:h-[72px]">
-              <Link href="/" className="group relative shrink-0 inline-block">
-                <span className="text-[24px] lg:text-[26px] tracking-[-0.02em] font-display text-gold transition-colors group-hover:text-gold-deep">
-                  Smartmove Marbella
-                </span>
-                <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gold transition-all duration-500 ease-out group-hover:w-full" />
-              </Link>
-              <Link
-                href="/blog"
-                className="text-[11px] font-semibold tracking-[0.08em] uppercase text-ink/60 hover:text-gold transition-colors"
-              >
-                Blog
-              </Link>
-            </div>
-          </div>
-        </header>
-        <div className="header-divider" />
+        <SiteHeader />
 
         <AreasIndexClient
           areas={areas}

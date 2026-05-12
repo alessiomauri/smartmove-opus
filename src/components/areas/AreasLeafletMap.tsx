@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
-import { Link } from '@/i18n/navigation';
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Marker,
+  Tooltip,
+  Popup,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Area, PinCategory } from '@/types/area';
@@ -19,11 +26,17 @@ const MICRO_REVEAL_ZOOM = 11;
 interface Props {
   areas: Area[];
   /**
-   * Optional click handler. Fired ONLY for macro pins (main + resort) so
-   * the editorial rail on /areas stays tied to towns and resorts — micro
-   * neighbourhoods and the airport stay popup-only.
+   * Fired when any browsable pin (main / resort / micro) is clicked.
+   * The parent uses this to drive the editorial rail to the right of
+   * the map. Airport pins do NOT call this — they're transit-only.
    */
   onAreaSelect?: (slug: string) => void;
+  /**
+   * Slug of the currently selected area. The matching pin gets a
+   * stronger visual treatment (larger radius, gold halo) so the
+   * click-to-rail connection reads at a glance.
+   */
+  selectedSlug?: string | null;
 }
 
 /* ───────── palette ───────── */
@@ -33,6 +46,14 @@ const PIN_PALETTE: Record<PinCategory, { fill: string; stroke: string; radius: n
   micro:   { fill: '#ffffff', stroke: 'var(--sm-gold)', radius: 4.5, weight: 1.75 },
   resort:  { fill: '#9a8568', stroke: '#ffffff', radius: 6.5, weight: 1.75 },
   airport: { fill: '#546d85', stroke: '#ffffff', radius: 7, weight: 2 },
+};
+
+/** Visual delta applied when a pin is the currently selected one. */
+const SELECTED_BOOST: Record<PinCategory, { radius: number; weight: number; stroke: string }> = {
+  main:    { radius: 14, weight: 3, stroke: 'var(--sm-gold-deep)' },
+  micro:   { radius: 7,  weight: 2.5, stroke: 'var(--sm-gold-deep)' },
+  resort:  { radius: 9.5, weight: 2.5, stroke: 'var(--sm-gold-deep)' },
+  airport: { radius: 7,  weight: 2, stroke: '#ffffff' }, // never highlights
 };
 
 function pinCategory(area: Area): PinCategory {
@@ -65,13 +86,15 @@ function airportIcon() {
 /* ───────── auto-fit ───────── */
 
 /**
- * Fit the map to non-airport pins whenever the list changes.
- * Airport pins are transit references — they shouldn't pull the viewport east.
+ * Fit the map to non-airport pins whenever the visible set changes.
+ * Airports are transit references and shouldn't drag the viewport east.
  */
 function FitBounds({ areas }: { areas: Area[] }) {
   const map = useMap();
-  // Serialise slugs so the effect only fires when the actual set of areas changes.
-  const key = useMemo(() => areas.filter(a => a.pin_category !== 'airport').map(a => a.slug).join(','), [areas]);
+  const key = useMemo(
+    () => areas.filter(a => a.pin_category !== 'airport').map(a => a.slug).join(','),
+    [areas]
+  );
   useEffect(() => {
     const pts = areas
       .filter(a => a.pin_category !== 'airport')
@@ -84,13 +107,31 @@ function FitBounds({ areas }: { areas: Area[] }) {
   return null;
 }
 
+/* ───────── flyToSelected ─────────
+   When the parent updates `selectedSlug`, gently pan (no zoom change
+   unless the pin is way off-screen) so the click-to-rail handoff has a
+   subtle physical confirmation. */
+
+function FlyToSelected({ areas, selectedSlug }: { areas: Area[]; selectedSlug?: string | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!selectedSlug) return;
+    const a = areas.find(x => x.slug === selectedSlug);
+    if (!a) return;
+    const ll: [number, number] = [a.coordinates_lat, a.coordinates_lng];
+    // Use panTo (cheap) — we keep the user's chosen zoom and just centre.
+    map.panTo(ll, { animate: true, duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSlug]);
+  return null;
+}
+
 /* ───────── component ───────── */
 
-export default function AreasLeafletMap({ areas, onAreaSelect }: Props) {
+export default function AreasLeafletMap({ areas, onAreaSelect, selectedSlug }: Props) {
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [36.55, -4.8];
   const defaultZoom = 10;
-  // Tracked separately from the map instance so the legend can re-render on zoom.
   const [zoom, setZoom] = useState<number>(defaultZoom);
   const showMicros = zoom >= MICRO_REVEAL_ZOOM;
 
@@ -99,6 +140,15 @@ export default function AreasLeafletMap({ areas, onAreaSelect }: Props) {
     for (const a of areas) g[pinCategory(a)].push(a);
     return g;
   }, [areas]);
+
+  // If a micro is selected but the user is below the reveal zoom, force
+  // micros visible so the highlight doesn't vanish.
+  const forceMicros = useMemo(() => {
+    if (!selectedSlug) return false;
+    const a = areas.find(x => x.slug === selectedSlug);
+    return a?.pin_category === 'micro';
+  }, [areas, selectedSlug]);
+  const microsVisible = showMicros || forceMicros;
 
   const microCount = grouped.micro.length;
 
@@ -138,53 +188,33 @@ export default function AreasLeafletMap({ areas, onAreaSelect }: Props) {
 
         <FitBounds areas={areas} />
         <ZoomTracker onZoomChange={setZoom} />
+        <FlyToSelected areas={areas} selectedSlug={selectedSlug} />
 
-        {/* Always-on: main towns + key resorts. Calm default view.
-            These are the macro pins — clicking one updates the rail. */}
+        {/* Macro pins (main + resort) — always on. Clicking selects in the rail. */}
         {(['main', 'resort'] as const).flatMap(cat =>
           grouped[cat].map(a => (
-            <CircleMarker
+            <BrowsablePin
               key={a.slug}
-              center={[a.coordinates_lat, a.coordinates_lng]}
-              radius={PIN_PALETTE[cat].radius}
-              pathOptions={{
-                color: PIN_PALETTE[cat].stroke,
-                weight: PIN_PALETTE[cat].weight,
-                fillColor: PIN_PALETTE[cat].fill,
-                fillOpacity: 1,
-              }}
-              eventHandlers={
-                onAreaSelect
-                  ? { click: () => onAreaSelect(a.slug) }
-                  : undefined
-              }
-            >
-              <Popup>
-                <AreaPopup area={a} category={cat} />
-              </Popup>
-            </CircleMarker>
+              area={a}
+              category={cat}
+              selected={selectedSlug === a.slug}
+              onSelect={onAreaSelect}
+            />
           ))
         )}
 
-        {/* Zoom-gated: micro-areas only appear once the user actively zooms in. */}
-        {showMicros && grouped.micro.map(a => (
-          <CircleMarker
+        {/* Micros — zoom-gated, except when one is currently selected */}
+        {microsVisible && grouped.micro.map(a => (
+          <BrowsablePin
             key={a.slug}
-            center={[a.coordinates_lat, a.coordinates_lng]}
-            radius={PIN_PALETTE.micro.radius}
-            pathOptions={{
-              color: PIN_PALETTE.micro.stroke,
-              weight: PIN_PALETTE.micro.weight,
-              fillColor: PIN_PALETTE.micro.fill,
-              fillOpacity: 1,
-            }}
-          >
-            <Popup>
-              <AreaPopup area={a} category="micro" />
-            </Popup>
-          </CircleMarker>
+            area={a}
+            category="micro"
+            selected={selectedSlug === a.slug}
+            onSelect={onAreaSelect}
+          />
         ))}
 
+        {/* Airport — transit only. Popup remains since it doesn't live in the rail. */}
         {grouped.airport.map(a => (
           <Marker
             key={a.slug}
@@ -192,26 +222,92 @@ export default function AreasLeafletMap({ areas, onAreaSelect }: Props) {
             icon={airportIcon()}
           >
             <Popup>
-              <AreaPopup area={a} category="airport" />
+              <AirportPopup area={a} />
             </Popup>
           </Marker>
         ))}
       </MapContainer>
 
       <div className="px-4 py-3 bg-paper border-t border-ink/[0.06] text-[11px] text-ink/50">
-        Scroll to zoom · Drag to pan · Click a pin for details
+        Click a pin to load it on the right · Scroll to zoom · Drag to pan
       </div>
     </div>
   );
 }
 
-/* ───────── zoom tracker ───────── */
+/* ───────── browsable pin ─────────
+   Shared marker for main + resort + micro. Uses a hover tooltip
+   (lightweight name label, no photo) and on click hands the slug back
+   to the parent so the rail can take over. The popup never opens —
+   we deliberately suppress it so the rail is the single source of
+   truth for "what am I looking at." */
 
-/**
- * Subscribes to map zoom changes and lifts the current zoom level to the
- * parent so it can decide whether to render micro-area pins. Kept tiny so
- * the parent owns the visibility logic.
- */
+function BrowsablePin({
+  area,
+  category,
+  selected,
+  onSelect,
+}: {
+  area: Area;
+  category: PinCategory;
+  selected: boolean;
+  onSelect?: (slug: string) => void;
+}) {
+  const base = PIN_PALETTE[category];
+  const boost = SELECTED_BOOST[category];
+  const radius = selected ? boost.radius : base.radius;
+  const weight = selected ? boost.weight : base.weight;
+  const stroke = selected ? boost.stroke : base.stroke;
+
+  return (
+    <CircleMarker
+      center={[area.coordinates_lat, area.coordinates_lng]}
+      radius={radius}
+      pathOptions={{
+        color: stroke,
+        weight,
+        fillColor: base.fill,
+        fillOpacity: 1,
+        className: selected ? 'sm-pin sm-pin--selected' : 'sm-pin',
+      }}
+      eventHandlers={{
+        click: () => onSelect?.(area.slug),
+        // Hovering a circle marker briefly grows it to telegraph it's clickable.
+      }}
+    >
+      <Tooltip direction="top" offset={[0, -2]} opacity={1} className="sm-pin-tooltip">
+        <div className="sm-pin-tooltip-eyebrow">
+          {category === 'resort' && 'Resort · '}
+          {category === 'micro' && area.parent_area && `Part of ${area.parent_area.replace(/-/g, ' ')} · `}
+          {area.region}
+        </div>
+        <div className="sm-pin-tooltip-name">{area.name}</div>
+        <div className="sm-pin-tooltip-cta">Click to view →</div>
+      </Tooltip>
+    </CircleMarker>
+  );
+}
+
+/* ───────── airport popup ───────── */
+
+function AirportPopup({ area }: { area: Area }) {
+  return (
+    <div className="min-w-[180px]">
+      <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-gold mb-0.5">
+        Airport · {area.region}
+      </p>
+      <p className="text-[15px] font-semibold text-ink mb-1">{area.name}</p>
+      {area.price_range && (
+        <p className="text-[12px] text-ink/60">{area.price_range}</p>
+      )}
+    </div>
+  );
+}
+
+/* ───────── zoom tracker ─────────
+   Lifts the current zoom level to the parent so the parent can decide
+   whether to render micro-area pins. */
+
 function ZoomTracker({ onZoomChange }: { onZoomChange: (z: number) => void }) {
   const map = useMap();
   useEffect(() => {
@@ -224,7 +320,7 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (z: number) => void }) {
   return null;
 }
 
-/* ───────── bits ───────── */
+/* ───────── legend dot ───────── */
 
 function LegendDot({
   color,
@@ -251,45 +347,5 @@ function LegendDot({
       />
       {label}
     </span>
-  );
-}
-
-function AreaPopup({ area, category }: { area: Area; category: PinCategory }) {
-  const isAirport = category === 'airport';
-  return (
-    <div className="min-w-[200px] max-w-[260px]">
-      {/* Hero thumbnail */}
-      {area.hero_image && (
-        <div className="relative w-full aspect-[16/10] rounded overflow-hidden mb-2 bg-[#f0ede9]">
-          <Image
-            src={area.hero_image}
-            alt={area.hero_image_alt || area.name}
-            fill
-            className="object-cover"
-            sizes="260px"
-          />
-        </div>
-      )}
-      <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-gold mb-0.5">
-        {category === 'resort' && 'Resort · '}
-        {category === 'airport' && 'Airport · '}
-        {area.region}
-        {category === 'micro' && area.parent_area && (
-          <span className="text-ink/40 normal-case font-normal"> · part of {area.parent_area.replace(/-/g, ' ')}</span>
-        )}
-      </p>
-      <p className="text-[15px] font-semibold text-ink mb-1">{area.name}</p>
-      {area.price_range && (
-        <p className="text-[12px] text-ink/60 mb-2">{area.price_range}</p>
-      )}
-      {!isAirport && (
-        <Link
-          href={{ pathname: '/areas/[slug]', params: { slug: area.slug } }}
-          className="inline-block text-[12px] font-semibold text-gold hover:text-gold-deep transition-colors"
-        >
-          View area →
-        </Link>
-      )}
-    </div>
   );
 }

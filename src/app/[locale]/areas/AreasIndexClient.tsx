@@ -227,12 +227,21 @@ export default function AreasIndexClient({
     );
   }, [areas, activeCluster]);
 
-  // Rail is driven by selectedSlug (set when user clicks a macro pin on the
-  // map). When nothing is selected, render the "Costa del Sol" overview —
-  // an aggregate across every area we cover.
+  // Rail is driven by a small precedence ladder:
+  //   1. selectedSlug (a pin was clicked) → render that area
+  //   2. activeCluster !== 'all' (a region pill is selected) → render cluster
+  //   3. neither → render the Costa del Sol overview
+  // This makes clicking a pill update both the map AND the rail, which is
+  // what users intuitively expect, while pin clicks override pill state.
   const railArea = useMemo(
     () => (selectedSlug ? propertyAreas.find((a) => a.slug === selectedSlug) ?? null : null),
     [selectedSlug, propertyAreas]
+  );
+  const railCluster = useMemo(
+    () => (!selectedSlug && activeCluster !== 'all'
+      ? CLUSTERS.find((c) => c.key === activeCluster) ?? null
+      : null),
+    [selectedSlug, activeCluster]
   );
 
   // Aggregate stats for the default Costa del Sol view.
@@ -255,19 +264,54 @@ export default function AreasIndexClient({
     };
   }, [propertyAreas, listingCounts, minPrices]);
 
-  // Hero photo for the rail. Falls back to Marbella's photo for the default
-  // Costa del Sol overview (best representative coastal image we have).
+  // Per-cluster aggregates used by the rail when a pill is active.
+  const clusterStats = useMemo(() => {
+    const m: Record<string, { totalAreas: number; totalListings: number; fromMin: number | null; photo: { src: string; alt: string } | null }> = {};
+    for (const c of CLUSTERS) {
+      const list = clusterAreas[c.key] ?? [];
+      const totalListings = list.reduce((s, a) => s + (listingCounts[a.slug] ?? 0), 0);
+      const mins = list
+        .map((a) => minPrices[a.slug])
+        .filter((p): p is number => typeof p === 'number');
+      const fromMin = mins.length ? Math.min(...mins) : null;
+      // Best representative photo for the cluster — prefer a main-pin
+      // hero, fall back to anything with an image.
+      const heroArea =
+        list.find((a) => a.pin_category === 'main' && a.hero_image) ??
+        list.find((a) => a.hero_image);
+      m[c.key] = {
+        totalAreas: list.length,
+        totalListings,
+        fromMin,
+        photo: heroArea?.hero_image
+          ? { src: heroArea.hero_image, alt: heroArea.hero_image_alt || c.label }
+          : null,
+      };
+    }
+    return m;
+  }, [clusterAreas, listingCounts, minPrices]);
+
+  // Hero photo for the rail. Precedence: clicked area → cluster
+  // representative → Marbella (default Costa del Sol overview).
   const railPhoto = useMemo(() => {
-    if (railArea?.hero_image) return { src: railArea.hero_image, alt: railArea.hero_image_alt || railArea.name };
+    if (railArea?.hero_image)
+      return { src: railArea.hero_image, alt: railArea.hero_image_alt || railArea.name };
+    if (railCluster) return clusterStats[railCluster.key]?.photo ?? null;
     const fallback = propertyAreas.find((a) => a.slug === 'marbella' && a.hero_image)
       ?? propertyAreas.find((a) => a.hero_image);
     return fallback ? { src: fallback.hero_image, alt: 'Costa del Sol' } : null;
-  }, [railArea, propertyAreas]);
+  }, [railArea, railCluster, clusterStats, propertyAreas]);
 
-  const railCount = railArea ? listingCounts[railArea.slug] ?? 0 : aggregate.totalListings;
+  const railCount = railArea
+    ? listingCounts[railArea.slug] ?? 0
+    : railCluster
+      ? clusterStats[railCluster.key]?.totalListings ?? 0
+      : aggregate.totalListings;
   const railFrom = railArea
     ? formatFrom(minPrices[railArea.slug])
-    : formatFrom(aggregate.fromMin ?? undefined);
+    : railCluster
+      ? formatFrom(clusterStats[railCluster.key]?.fromMin ?? undefined)
+      : formatFrom(aggregate.fromMin ?? undefined);
 
   // Resolve featured area data from the live areas list.
   const featuredResolved = useMemo(
@@ -399,7 +443,7 @@ export default function AreasIndexClient({
           <button
             type="button"
             className={`pill${activeCluster === 'all' ? ' on' : ''}`}
-            onClick={() => setActiveCluster('all')}
+            onClick={() => { setActiveCluster('all'); setSelectedSlug(null); }}
           >
             All <span className="ct">{totalAreas}</span>
           </button>
@@ -408,7 +452,7 @@ export default function AreasIndexClient({
               key={c.key}
               type="button"
               className={`pill${activeCluster === c.key ? ' on' : ''}`}
-              onClick={() => setActiveCluster(c.key)}
+              onClick={() => { setActiveCluster(c.key); setSelectedSlug(null); }}
             >
               {c.label}{' '}
               <span className="ct">{(clusterAreas[c.key] ?? []).length}</span>
@@ -450,8 +494,8 @@ export default function AreasIndexClient({
             </h2>
           </div>
           <p>
-            Hover a pin to see what&rsquo;s available there. The region filter at the top
-            of the page drives this map. The detail panel updates as you explore.
+            Click a pin to load it on the right. Region pills above filter the
+            map and the panel together; pin clicks override.
           </p>
           <div className="meta-callout">
             <span className="num">
@@ -465,6 +509,7 @@ export default function AreasIndexClient({
           <div className="sm-areas-map-wrap">
             <AreasLeafletMap
               areas={mappedAreas}
+              selectedSlug={selectedSlug}
               onAreaSelect={(slug) => setSelectedSlug(slug)}
             />
           </div>
@@ -483,6 +528,7 @@ export default function AreasIndexClient({
             )}
 
             {railArea ? (
+              /* ─── AREA mode — a pin was clicked ─── */
               <>
                 <div className="r-eyebrow">{railArea.region} · Now showing</div>
                 <h3>{nameWithItalic(railArea.name)}</h3>
@@ -493,6 +539,9 @@ export default function AreasIndexClient({
                   )}
                   {railArea.pin_category === 'main' && railArea.parent_area && (
                     <span className="gold">Main · nested</span>
+                  )}
+                  {railArea.pin_category === 'micro' && (
+                    <span>Neighbourhood</span>
                   )}
                   {(railArea.property_types ?? []).slice(0, 2).map((t) => (
                     <span key={t}>{t}</span>
@@ -550,12 +599,70 @@ export default function AreasIndexClient({
                   className="r-back"
                   onClick={() => setSelectedSlug(null)}
                 >
-                  ← Back to overview
+                  ← Back to {activeCluster === 'all' ? 'overview' : CLUSTERS.find(c => c.key === activeCluster)?.label}
+                </button>
+              </>
+            ) : railCluster ? (
+              /* ─── CLUSTER mode — a region pill is active ─── */
+              <>
+                <div className="r-eyebrow">{railCluster.label} · Cluster</div>
+                <h3>
+                  {railCluster.italic
+                    ? nameWithItalic(railCluster.label, railCluster.italic)
+                    : railCluster.label}
+                </h3>
+
+                <div className="r-tags">
+                  <span className="gold">{clusterStats[railCluster.key]?.totalAreas ?? 0} areas</span>
+                  {railCluster.regions.map((r) => (
+                    <span key={r}>{r}</span>
+                  ))}
+                </div>
+
+                <p className="r-blurb">{railCluster.blurb}</p>
+
+                <div className="r-stats">
+                  <div>
+                    <div className="lbl">Listings</div>
+                    <div className="val">
+                      <em>{clusterStats[railCluster.key]?.totalListings ?? 0}</em> active
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">From</div>
+                    <div className="val">
+                      {railFrom ?? <span className="txt">On request</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Areas in cluster</div>
+                    <div className="val">
+                      <em>{clusterStats[railCluster.key]?.totalAreas ?? 0}</em>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Municipalities</div>
+                    <div className="val txt">{railCluster.regions.join(' · ')}</div>
+                  </div>
+                </div>
+
+                <span className="r-cta r-cta--ghost">
+                  <span>
+                    Click a <em>pin</em> on the map
+                  </span>
+                  <span className="arrow">→</span>
+                </span>
+                <button
+                  type="button"
+                  className="r-back"
+                  onClick={() => setActiveCluster('all')}
+                >
+                  ← Back to Costa del Sol
                 </button>
               </>
             ) : (
+              /* ─── COAST mode — default, nothing selected ─── */
               <>
-                {/* Default state: the whole coast as one. */}
                 <div className="r-eyebrow">Overview · All areas</div>
                 <h3>
                   Costa del <em>Sol</em>
@@ -571,15 +678,14 @@ export default function AreasIndexClient({
                   A 120-kilometre stretch from Sotogrande in the west to Málaga
                   in the east, split into five distinct markets and{' '}
                   {aggregate.totalAreas} towns, urbanisations, and gated
-                  estates. Click any pin to see what we&rsquo;re covering there.
+                  estates. Pick a region pill above or click any pin to read on.
                 </p>
 
                 <div className="r-stats">
                   <div>
                     <div className="lbl">Listings</div>
                     <div className="val">
-                      <em>{aggregate.totalListings}</em>{' '}
-                      {aggregate.totalListings === 1 ? 'active' : 'active'}
+                      <em>{aggregate.totalListings}</em> active
                     </div>
                   </div>
                   <div>
@@ -608,7 +714,7 @@ export default function AreasIndexClient({
                   </span>
                   <span className="arrow">→</span>
                 </span>
-                <div className="r-hint">Towns and resorts only — micros stay popup-only</div>
+                <div className="r-hint">Hover for a name · click to load</div>
               </>
             )}
           </aside>

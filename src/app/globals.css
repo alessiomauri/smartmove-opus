@@ -2400,41 +2400,44 @@ select:focus {
 
 /* ----- HERO ----- */
 .sm-areas-hero {
-  padding: 72px 64px 56px;
+  /* Tightened — the page lives below a sticky SiteHeader and a sticky
+     region-pill bar, so we keep the hero close to the top so the user
+     can see filters + the top of the map without scrolling. */
+  padding: 44px 64px 36px;
   background: var(--sm-paper);
   border-bottom: 1px solid var(--sm-line);
   display: grid;
   grid-template-columns: 1.15fr .9fr;
-  gap: 96px;
+  gap: 72px;
 }
 .sm-areas-hero .crumb {
   font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
-  color: var(--sm-text-muted); font-weight: 600; margin-bottom: 28px;
+  color: var(--sm-text-muted); font-weight: 600; margin-bottom: 18px;
 }
 .sm-areas-hero .crumb a { color: var(--sm-text-muted); }
 .sm-areas-hero .crumb .sep { margin: 0 10px; opacity: .5; }
 .sm-areas-hero h1 {
   font-family: var(--sm-font-display);
-  font-size: 96px; font-weight: 300;
-  line-height: 0.96; letter-spacing: -0.025em;
-  margin: 16px 0 28px;
+  font-size: 64px; font-weight: 300;
+  line-height: 1.0; letter-spacing: -0.025em;
+  margin: 10px 0 20px;
   text-wrap: balance;
 }
 .sm-areas-hero h1 em { font-style: italic; color: var(--sm-gold-deep); font-weight: 400; }
 .sm-areas-hero .lede {
-  font-size: 17px; line-height: 1.7; color: var(--sm-ink-soft);
-  max-width: 560px; margin: 0 0 40px;
+  font-size: 15px; line-height: 1.65; color: var(--sm-ink-soft);
+  max-width: 560px; margin: 0 0 28px;
 }
 .sm-areas-hero .lede strong { color: var(--sm-ink); font-weight: 500; }
 .sm-areas-hero .stats {
   display: grid; grid-template-columns: repeat(4, auto); gap: 0;
-  border-top: 1px solid var(--sm-line); padding-top: 28px;
+  border-top: 1px solid var(--sm-line); padding-top: 20px;
 }
-.sm-areas-hero .stats > div { padding-right: 36px; }
-.sm-areas-hero .stats > div + div { padding-left: 36px; border-left: 1px solid var(--sm-line); }
+.sm-areas-hero .stats > div { padding-right: 28px; }
+.sm-areas-hero .stats > div + div { padding-left: 28px; border-left: 1px solid var(--sm-line); }
 .sm-areas-hero .stats .num {
   font-family: var(--sm-font-display);
-  font-size: 52px; font-weight: 300; line-height: 1;
+  font-size: 36px; font-weight: 300; line-height: 1;
   color: var(--sm-ink); letter-spacing: -0.015em;
 }
 .sm-areas-hero .stats .num em { font-style: italic; color: var(--sm-gold-deep); }
@@ -2482,11 +2485,16 @@ select:focus {
 
 /* ----- STICKY FILTER ----- */
 .sm-areas-filter {
-  background: var(--sm-canvas);
+  background: rgba(247, 244, 239, 0.92);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
   border-bottom: 1px solid var(--sm-line);
-  padding: 24px 64px;
+  padding: 14px 64px;
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  position: sticky; top: 0; z-index: 10;
+  /* Sits right under the SiteHeader (72px desktop). On mobile the
+     SiteHeader is 60px — small enough that we don't need a separate
+     breakpoint here since the filter wraps comfortably either way. */
+  position: sticky; top: 72px; z-index: 10;
 }
 .sm-areas-filter .label {
   font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
@@ -2535,10 +2543,10 @@ select:focus {
   border-top: 1px solid var(--sm-line); border-bottom: 1px solid var(--sm-line);
 }
 .sm-areas-mapsec .head {
-  padding: 40px 64px 24px;
+  padding: 28px 64px 20px;
   display: grid;
-  grid-template-columns: 1.3fr 1fr 260px;
-  align-items: center; gap: 56px;
+  grid-template-columns: 1.3fr 1fr 220px;
+  align-items: center; gap: 44px;
   background: var(--sm-ink);
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
@@ -2546,24 +2554,24 @@ select:focus {
 .sm-areas-mapsec .head .eyebrow::before { background: var(--sm-gold); opacity: .6; }
 .sm-areas-mapsec h2 {
   font-family: var(--sm-font-display);
-  font-size: 44px; font-weight: 300; line-height: 1.05;
-  margin: 10px 0 0; letter-spacing: -0.018em;
+  font-size: 34px; font-weight: 300; line-height: 1.06;
+  margin: 6px 0 0; letter-spacing: -0.018em;
   color: #fff; text-wrap: balance;
 }
 .sm-areas-mapsec h2 em { font-style: italic; color: var(--sm-gold-soft); font-weight: 400; }
 .sm-areas-mapsec .head p {
-  font-size: 14px; line-height: 1.65; color: rgba(255,255,255,.65); margin: 0;
+  font-size: 13px; line-height: 1.6; color: rgba(255,255,255,.62); margin: 0;
 }
 .sm-areas-mapsec .meta-callout {
   border-left: 1px solid rgba(255,255,255,.18);
-  padding-left: 24px;
-  font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
+  padding-left: 22px;
+  font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
   color: rgba(255,255,255,.55); font-weight: 600;
 }
 .sm-areas-mapsec .meta-callout .num {
   font-family: var(--sm-font-display); font-style: italic;
-  font-size: 32px; color: #fff; font-weight: 300;
-  letter-spacing: -0.018em; line-height: 1; margin-bottom: 6px;
+  font-size: 26px; color: #fff; font-weight: 300;
+  letter-spacing: -0.018em; line-height: 1; margin-bottom: 4px;
   display: block;
 }
 .sm-areas-mapsec .meta-callout .num em { color: var(--sm-gold-soft); }
@@ -2576,8 +2584,9 @@ select:focus {
 .sm-areas-mapsec .stage > .sm-areas-map-wrap {
   /* No fixed height — the grid row stretches both items to match the
      rail's content height, so the map fills exactly the available space
-     and there's no white gap below it. */
-  min-height: 620px;
+     and there's no white gap below it. Min-height keeps the map usable
+     even when the rail is short. */
+  min-height: 540px;
   position: relative;
   background: var(--sm-paper);
   border-right: 1px solid rgba(255,255,255,.08);
@@ -2604,7 +2613,7 @@ select:focus {
 .sm-areas-rail {
   background: var(--sm-paper);
   color: var(--sm-ink);
-  padding: 48px 40px 36px;
+  padding: 28px 32px 24px;
   display: flex; flex-direction: column;
   position: relative;
 }
@@ -2613,47 +2622,47 @@ select:focus {
   width: 3px; background: var(--sm-gold);
 }
 .sm-areas-rail .r-eyebrow {
-  font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase;
   font-weight: 600; color: var(--sm-gold-deep);
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 .sm-areas-rail h3 {
   font-family: var(--sm-font-display);
-  font-size: 48px; font-weight: 300; line-height: 1.0;
+  font-size: 32px; font-weight: 300; line-height: 1.02;
   letter-spacing: -0.022em;
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   color: var(--sm-ink); text-wrap: balance;
 }
 .sm-areas-rail h3 em { font-style: italic; color: var(--sm-gold-deep); font-weight: 400; }
 .sm-areas-rail .r-tags {
-  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px;
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
 }
 .sm-areas-rail .r-tags span {
-  font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
-  padding: 5px 10px; font-weight: 600;
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  padding: 4px 9px; font-weight: 600;
   background: var(--sm-cream); color: var(--sm-ink);
 }
 .sm-areas-rail .r-tags span.gold {
   background: var(--sm-gold); color: var(--sm-ink);
 }
 .sm-areas-rail .r-blurb {
-  font-size: 14px; line-height: 1.7; color: var(--sm-ink-soft);
-  margin: 0 0 24px;
-  border-top: 1px solid var(--sm-line); padding-top: 22px;
+  font-size: 13px; line-height: 1.65; color: var(--sm-ink-soft);
+  margin: 0 0 16px;
+  border-top: 1px solid var(--sm-line); padding-top: 14px;
 }
 .sm-areas-rail .r-stats {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 18px 22px;
+  gap: 12px 18px;
   border-top: 1px solid var(--sm-line);
-  padding-top: 22px; margin-bottom: 24px;
+  padding-top: 14px; margin-bottom: 16px;
 }
 .sm-areas-rail .r-stats .lbl {
   font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase;
-  color: var(--sm-text-muted); font-weight: 600; margin-bottom: 4px;
+  color: var(--sm-text-muted); font-weight: 600; margin-bottom: 3px;
 }
 .sm-areas-rail .r-stats .val {
   font-family: var(--sm-font-display);
-  font-size: 24px; font-weight: 400;
+  font-size: 19px; font-weight: 400;
   color: var(--sm-ink); letter-spacing: -0.012em; line-height: 1.1;
 }
 .sm-areas-rail .r-stats .val em { font-style: italic; color: var(--sm-gold-deep); }
@@ -2670,8 +2679,8 @@ select:focus {
 .sm-areas-rail .r-cta {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--sm-ink); color: #fff;
-  padding: 18px 22px;
-  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  padding: 14px 18px;
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
   font-weight: 600; margin-top: auto; cursor: pointer;
   text-decoration: none;
   transition: background 200ms ease;
@@ -2690,6 +2699,45 @@ select:focus {
   font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;
   color: var(--sm-text-muted); font-weight: 600;
   text-align: center; margin-top: 14px;
+}
+
+/* ----- MAP PIN: HOVER TOOLTIP + SELECTED STATE ----- */
+/* Leaflet tooltip is rebuilt to feel editorial — a hairline gold rule
+   on the left, eyebrow on top, name large, faint cta below. Sits on a
+   warm paper card so it reads against the light basemap. */
+.leaflet-tooltip.sm-pin-tooltip {
+  background: var(--sm-paper);
+  color: var(--sm-ink);
+  border: 1px solid var(--sm-line);
+  border-left: 2px solid var(--sm-gold);
+  border-radius: 0;
+  padding: 10px 14px 9px;
+  box-shadow: 0 6px 24px -8px rgba(28,26,23,0.22);
+  font-family: var(--sm-font-body);
+}
+.leaflet-tooltip.sm-pin-tooltip::before { display: none !important; }
+.sm-pin-tooltip-eyebrow {
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--sm-gold-deep); font-weight: 600; margin-bottom: 4px;
+  white-space: nowrap;
+}
+.sm-pin-tooltip-name {
+  font-family: var(--sm-font-display);
+  font-size: 18px; font-weight: 400;
+  color: var(--sm-ink); letter-spacing: -0.012em; line-height: 1.1;
+  white-space: nowrap;
+}
+.sm-pin-tooltip-cta {
+  margin-top: 6px;
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--sm-text-muted); font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Selected pin: subtle gold halo. Layered as an outline so the
+   circle marker fill stays clean. */
+.leaflet-interactive.sm-pin--selected {
+  filter: drop-shadow(0 0 6px rgba(180, 142, 73, 0.55));
 }
 
 /* ----- FEATURED 6 ----- */
@@ -2967,23 +3015,23 @@ select:focus {
 
 /* Mobile / tablet collapse — keep editorial feel but stack */
 @media (max-width: 1100px) {
-  .sm-areas-hero { grid-template-columns: 1fr; gap: 48px; padding: 56px 32px; }
-  .sm-areas-hero h1 { font-size: 64px; }
-  .sm-areas-hero .stats { grid-template-columns: repeat(2, auto); row-gap: 24px; }
+  .sm-areas-hero { grid-template-columns: 1fr; gap: 36px; padding: 36px 32px 32px; }
+  .sm-areas-hero h1 { font-size: 48px; }
+  .sm-areas-hero .stats { grid-template-columns: repeat(2, auto); row-gap: 18px; }
   .sm-areas-hero .stats > div + div:nth-child(odd) { border-left: 0; padding-left: 0; }
-  .sm-areas-filter { padding: 16px 24px; flex-direction: column; align-items: flex-start; }
-  .sm-areas-mapsec .head { grid-template-columns: 1fr; gap: 24px; padding: 48px 32px 24px; }
-  .sm-areas-mapsec h2 { font-size: 44px; }
+  .sm-areas-filter { padding: 12px 24px; flex-direction: column; align-items: flex-start; gap: 12px; top: 60px; }
+  .sm-areas-mapsec .head { grid-template-columns: 1fr; gap: 18px; padding: 28px 32px 20px; }
+  .sm-areas-mapsec h2 { font-size: 30px; }
   .sm-areas-mapsec .stage { grid-template-columns: 1fr; }
-  .sm-areas-mapsec .stage > .sm-areas-map-wrap { height: 480px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-  .sm-areas-featured { padding: 64px 32px; }
-  .sm-areas-featured .head { grid-template-columns: 1fr; gap: 24px; }
+  .sm-areas-mapsec .stage > .sm-areas-map-wrap { min-height: 440px; height: auto; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .sm-areas-featured { padding: 56px 32px; }
+  .sm-areas-featured .head { grid-template-columns: 1fr; gap: 20px; }
   .sm-areas-feat-grid { grid-template-columns: 1fr; }
-  .sm-areas-dir { padding: 64px 32px; }
-  .sm-areas-dir .head { grid-template-columns: 1fr; gap: 24px; }
+  .sm-areas-dir { padding: 56px 32px; }
+  .sm-areas-dir .head { grid-template-columns: 1fr; gap: 20px; }
   .sm-areas-cluster-head { grid-template-columns: 1fr; gap: 18px; }
   .sm-areas-cluster-grid { grid-template-columns: 1fr 1fr; }
-  .sm-areas-cta { grid-template-columns: 1fr; gap: 48px; padding: 64px 32px; }
+  .sm-areas-cta { grid-template-columns: 1fr; gap: 40px; padding: 56px 32px; }
 }
 @media (max-width: 600px) {
   .sm-areas-cluster-grid { grid-template-columns: 1fr; }
@@ -2992,9 +3040,9 @@ select:focus {
 /* Areas v3 rail — additions for click-driven detail panel */
 .sm-areas-rail .r-photo {
   position: relative;
-  width: calc(100% + 80px);       /* break out of the 40px L/R padding */
-  margin: -48px -40px 28px;       /* hug the top of the rail */
-  aspect-ratio: 4 / 3;
+  width: calc(100% + 64px);       /* break out of the 32px L/R padding */
+  margin: -28px -32px 20px;       /* hug the top of the rail */
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   background: var(--sm-cream);
 }
@@ -3002,9 +3050,8 @@ select:focus {
   object-fit: cover;
   transition: transform 600ms cubic-bezier(.2,.7,.2,1);
 }
-/* When the rail has a photo, lift the gold side rail down so it doesn't
-   bleed across the image edge. */
-.sm-areas-rail:has(.r-photo)::before { top: calc(48px + (100% - 48px) * 0); }
+/* When the rail has a photo, drop the gold side rail below the image. */
+.sm-areas-rail:has(.r-photo)::before { top: calc(28px + (100% - 28px) * 0); }
 
 /* Default-state ghost CTA — looks like the dark CTA but doesn't actually link.
    Stops people clicking through to nothing when no area is selected. */
