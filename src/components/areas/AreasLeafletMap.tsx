@@ -18,6 +18,12 @@ const MICRO_REVEAL_ZOOM = 11;
 
 interface Props {
   areas: Area[];
+  /**
+   * Optional click handler. Fired ONLY for macro pins (main + resort) so
+   * the editorial rail on /areas stays tied to towns and resorts — micro
+   * neighbourhoods and the airport stay popup-only.
+   */
+  onAreaSelect?: (slug: string) => void;
 }
 
 /* ───────── palette ───────── */
@@ -80,7 +86,7 @@ function FitBounds({ areas }: { areas: Area[] }) {
 
 /* ───────── component ───────── */
 
-export default function AreasLeafletMap({ areas }: Props) {
+export default function AreasLeafletMap({ areas, onAreaSelect }: Props) {
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [36.55, -4.8];
   const defaultZoom = 10;
@@ -133,7 +139,8 @@ export default function AreasLeafletMap({ areas }: Props) {
         <FitBounds areas={areas} />
         <ZoomTracker onZoomChange={setZoom} />
 
-        {/* Always-on: main towns + key resorts. Calm default view. */}
+        {/* Always-on: main towns + key resorts. Calm default view.
+            These are the macro pins — clicking one updates the rail. */}
         {(['main', 'resort'] as const).flatMap(cat =>
           grouped[cat].map(a => (
             <CircleMarker
@@ -146,6 +153,11 @@ export default function AreasLeafletMap({ areas }: Props) {
                 fillColor: PIN_PALETTE[cat].fill,
                 fillOpacity: 1,
               }}
+              eventHandlers={
+                onAreaSelect
+                  ? { click: () => onAreaSelect(a.slug) }
+                  : undefined
+              }
             >
               <Popup>
                 <AreaPopup area={a} category={cat} />

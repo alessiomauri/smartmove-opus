@@ -199,6 +199,8 @@ export default function AreasIndexClient({
 }: Props) {
   const [activeCluster, setActiveCluster] = useState<string>('all');
   const [sortMode, setSortMode] = useState<'region' | 'alpha' | 'price'>('region');
+  // Macro pin clicked? Drives the rail. null = "Costa del Sol" overview.
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
   // Drop the airport — it's a transit pin on the map, not an area to browse.
   const propertyAreas = useMemo(
@@ -225,24 +227,45 @@ export default function AreasIndexClient({
     );
   }, [areas, activeCluster]);
 
-  // Pick a representative area for the detail rail. Defaults to Sierra Blanca
-  // if present; otherwise first main-pin area in the active cluster; else first.
-  const railArea = useMemo(() => {
-    if (activeCluster !== 'all') {
-      const c = CLUSTERS.find((x) => x.key === activeCluster);
-      const cluster = c ? clusterAreas[c.key] : [];
-      const mainFirst = cluster.find((a) => a.pin_category === 'main');
-      return mainFirst ?? cluster[0] ?? propertyAreas[0];
-    }
-    return (
-      propertyAreas.find((a) => a.slug === 'sierra-blanca') ??
-      propertyAreas.find((a) => a.slug === 'marbella') ??
-      propertyAreas[0]
-    );
-  }, [activeCluster, clusterAreas, propertyAreas]);
+  // Rail is driven by selectedSlug (set when user clicks a macro pin on the
+  // map). When nothing is selected, render the "Costa del Sol" overview —
+  // an aggregate across every area we cover.
+  const railArea = useMemo(
+    () => (selectedSlug ? propertyAreas.find((a) => a.slug === selectedSlug) ?? null : null),
+    [selectedSlug, propertyAreas]
+  );
 
-  const railCount = railArea ? listingCounts[railArea.slug] ?? 0 : 0;
-  const railFrom = railArea ? formatFrom(minPrices[railArea.slug]) : null;
+  // Aggregate stats for the default Costa del Sol view.
+  const aggregate = useMemo(() => {
+    const totalListings = propertyAreas.reduce(
+      (sum, a) => sum + (listingCounts[a.slug] ?? 0),
+      0
+    );
+    const allMins = propertyAreas
+      .map((a) => minPrices[a.slug])
+      .filter((p): p is number => typeof p === 'number');
+    const fromMin = allMins.length ? Math.min(...allMins) : null;
+    return {
+      totalAreas: propertyAreas.length,
+      totalListings,
+      fromMin,
+      regions: new Set(propertyAreas.map((a) => a.region)).size,
+    };
+  }, [propertyAreas, listingCounts, minPrices]);
+
+  // Hero photo for the rail. Falls back to Marbella's photo for the default
+  // Costa del Sol overview (best representative coastal image we have).
+  const railPhoto = useMemo(() => {
+    if (railArea?.hero_image) return { src: railArea.hero_image, alt: railArea.hero_image_alt || railArea.name };
+    const fallback = propertyAreas.find((a) => a.slug === 'marbella' && a.hero_image)
+      ?? propertyAreas.find((a) => a.hero_image);
+    return fallback ? { src: fallback.hero_image, alt: 'Costa del Sol' } : null;
+  }, [railArea, propertyAreas]);
+
+  const railCount = railArea ? listingCounts[railArea.slug] ?? 0 : aggregate.totalListings;
+  const railFrom = railArea
+    ? formatFrom(minPrices[railArea.slug])
+    : formatFrom(aggregate.fromMin ?? undefined);
 
   // Resolve featured area data from the live areas list.
   const featuredResolved = useMemo(
@@ -438,76 +461,155 @@ export default function AreasIndexClient({
 
         <div className="stage">
           <div className="sm-areas-map-wrap">
-            <AreasLeafletMap areas={mappedAreas} />
+            <AreasLeafletMap
+              areas={mappedAreas}
+              onAreaSelect={(slug) => setSelectedSlug(slug)}
+            />
           </div>
 
-          {railArea && (
-            <aside className="sm-areas-rail">
-              <div className="r-eyebrow">{railArea.region} · Now showing</div>
-              <h3>{nameWithItalic(railArea.name)}</h3>
-
-              <div className="r-tags">
-                {railArea.pin_category === 'resort' && (
-                  <span className="gold">Resort</span>
-                )}
-                {railArea.pin_category === 'main' && railArea.parent_area && (
-                  <span className="gold">Main · nested</span>
-                )}
-                {(railArea.property_types ?? []).slice(0, 2).map((t) => (
-                  <span key={t}>{t}</span>
-                ))}
+          <aside className="sm-areas-rail">
+            {railPhoto && (
+              <div className="r-photo">
+                <Image
+                  src={railPhoto.src}
+                  alt={railPhoto.alt}
+                  fill
+                  sizes="380px"
+                  priority={false}
+                />
               </div>
+            )}
 
-              <p className="r-blurb">
-                {railArea.subheading || railArea.meta_description}
-              </p>
+            {railArea ? (
+              <>
+                <div className="r-eyebrow">{railArea.region} · Now showing</div>
+                <h3>{nameWithItalic(railArea.name)}</h3>
 
-              <div className="r-stats">
-                <div>
-                  <div className="lbl">Listings</div>
-                  <div className="val">
-                    <em>{railCount}</em>{' '}
-                    {railCount === 1 ? 'active' : 'active'}
+                <div className="r-tags">
+                  {railArea.pin_category === 'resort' && (
+                    <span className="gold">Resort</span>
+                  )}
+                  {railArea.pin_category === 'main' && railArea.parent_area && (
+                    <span className="gold">Main · nested</span>
+                  )}
+                  {(railArea.property_types ?? []).slice(0, 2).map((t) => (
+                    <span key={t}>{t}</span>
+                  ))}
+                </div>
+
+                <p className="r-blurb">
+                  {railArea.subheading || railArea.meta_description}
+                </p>
+
+                <div className="r-stats">
+                  <div>
+                    <div className="lbl">Listings</div>
+                    <div className="val">
+                      <em>{railCount}</em> active
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">From</div>
+                    <div className="val">
+                      {railFrom ?? <span className="txt">On request</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Region</div>
+                    <div className="val txt">{railArea.region}</div>
+                  </div>
+                  <div>
+                    <div className="lbl">Type</div>
+                    <div className="val txt">
+                      {railArea.pin_category === 'resort'
+                        ? 'Gated resort'
+                        : railArea.pin_category === 'main'
+                          ? 'Main town'
+                          : 'Neighbourhood'}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="lbl">From</div>
-                  <div className="val">
-                    {railFrom ?? <span className="txt">On request</span>}
-                  </div>
-                </div>
-                <div>
-                  <div className="lbl">Region</div>
-                  <div className="val txt">{railArea.region}</div>
-                </div>
-                <div>
-                  <div className="lbl">Type</div>
-                  <div className="val txt">
-                    {railArea.pin_category === 'resort'
-                      ? 'Gated resort'
-                      : railArea.pin_category === 'main'
-                        ? 'Main town'
-                        : 'Neighbourhood'}
-                  </div>
-                </div>
-              </div>
 
-              <Link
-                href={{ pathname: '/areas/[slug]', params: { slug: railArea.slug } }}
-                className="r-cta"
-              >
-                <span>
-                  Explore{' '}
-                  <em>
-                    {railArea.name}
-                    {railCount > 0 ? ` (${railCount})` : ''}
-                  </em>
+                <Link
+                  href={{ pathname: '/areas/[slug]', params: { slug: railArea.slug } }}
+                  className="r-cta"
+                >
+                  <span>
+                    Explore{' '}
+                    <em>
+                      {railArea.name}
+                      {railCount > 0 ? ` (${railCount})` : ''}
+                    </em>
+                  </span>
+                  <span className="arrow">→</span>
+                </Link>
+                <button
+                  type="button"
+                  className="r-back"
+                  onClick={() => setSelectedSlug(null)}
+                >
+                  ← Back to overview
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Default state: the whole coast as one. */}
+                <div className="r-eyebrow">Overview · All areas</div>
+                <h3>
+                  Costa del <em>Sol</em>
+                </h3>
+
+                <div className="r-tags">
+                  <span className="gold">5 regions</span>
+                  <span>{aggregate.totalAreas} locations</span>
+                  <span>120 km coast</span>
+                </div>
+
+                <p className="r-blurb">
+                  A 120-kilometre stretch from Sotogrande in the west to Málaga
+                  in the east, split into five distinct markets and{' '}
+                  {aggregate.totalAreas} towns, urbanisations, and gated
+                  estates. Click any pin to see what we&rsquo;re covering there.
+                </p>
+
+                <div className="r-stats">
+                  <div>
+                    <div className="lbl">Listings</div>
+                    <div className="val">
+                      <em>{aggregate.totalListings}</em>{' '}
+                      {aggregate.totalListings === 1 ? 'active' : 'active'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">From</div>
+                    <div className="val">
+                      {railFrom ?? <span className="txt">On request</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Areas covered</div>
+                    <div className="val">
+                      <em>{aggregate.totalAreas}</em>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Region clusters</div>
+                    <div className="val">
+                      <em>{aggregate.regions}</em>
+                    </div>
+                  </div>
+                </div>
+
+                <span className="r-cta r-cta--ghost">
+                  <span>
+                    Click a <em>pin</em> on the map
+                  </span>
+                  <span className="arrow">→</span>
                 </span>
-                <span className="arrow">→</span>
-              </Link>
-              <div className="r-hint">Use the filter above to switch regions</div>
-            </aside>
-          )}
+                <div className="r-hint">Towns and resorts only — micros stay popup-only</div>
+              </>
+            )}
+          </aside>
         </div>
       </section>
 

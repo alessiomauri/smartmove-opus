@@ -2972,3 +2972,48 @@ select:focus {
 @media (max-width: 600px) {
   .sm-areas-cluster-grid { grid-template-columns: 1fr; }
 }
+
+/* Areas v3 rail — additions for click-driven detail panel */
+.sm-areas-rail .r-photo {
+  position: relative;
+  width: calc(100% + 80px);       /* break out of the 40px L/R padding */
+  margin: -48px -40px 28px;       /* hug the top of the rail */
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--sm-cream);
+}
+.sm-areas-rail .r-photo img {
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(.2,.7,.2,1);
+}
+/* When the rail has a photo, lift the gold side rail down so it doesn't
+   bleed across the image edge. */
+.sm-areas-rail:has(.r-photo)::before { top: calc(48px + (100% - 48px) * 0); }
+
+/* Default-state ghost CTA — looks like the dark CTA but doesn't actually link.
+   Stops people clicking through to nothing when no area is selected. */
+.sm-areas-rail .r-cta--ghost {
+  background: transparent;
+  color: var(--sm-text-muted);
+  border: 1px dashed var(--sm-line-strong);
+  cursor: default;
+}
+.sm-areas-rail .r-cta--ghost:hover { background: transparent; }
+.sm-areas-rail .r-cta--ghost em { color: var(--sm-gold-deep); }
+
+/* "Back to overview" button under the dark CTA in selected state */
+.sm-areas-rail .r-back {
+  margin-top: 14px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--sm-text-muted);
+  padding: 4px 0;
+  text-align: left;
+  transition: color 180ms ease;
+}
+.sm-areas-rail .r-back:hover { color: var(--sm-ink); }
