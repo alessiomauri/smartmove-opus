@@ -130,20 +130,24 @@ export async function toggleAreaPublished(slug: string, published: boolean) {
 /**
  * Seed/refresh areas from the static TS data. Idempotent on slug.
  *
- * IMAGE-SAFE: existing rows are updated WITHOUT the image columns.
- * The old blind upsert carried `hero_image: ''` for every row, so one
- * click of the admin seed button wiped all 40+ uploaded area photos
- * site-wide (live regression, 2026-06-10). Images are owned by the
- * upload pipeline (scripts/upload-area-photos.mjs + the admin area
- * form), never by the seed. Also preserved on update: `published` —
- * an admin unpublish must survive a re-seed.
+ * ADMIN-SAFE (same principle as the sync's SYNC_PROTECTED_FIELDS):
+ * existing rows get a content-only UPDATE that never touches
+ * admin-managed columns — `hero_image`, `hero_image_alt`,
+ * `hero_image_blur`, `published`, `display_order`, `pin_category`
+ * (the last two are editable in AreaForm). The old blind upsert
+ * carried `hero_image: ''` for every row, so one click of the admin
+ * seed button wiped all 40+ uploaded area photos site-wide (live
+ * regression, 2026-06-10). Admin-managed values are set on INSERT
+ * only, as initial defaults.
  */
 export async function seedAreasFromStatic() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  const contentRow = (a: (typeof COSTA_DEL_SOL_AREAS)[number], i: number) => ({
+  // Static-content columns ONLY — everything admin-manageable is
+  // excluded here and applied on INSERT below as initial defaults.
+  const contentRow = (a: (typeof COSTA_DEL_SOL_AREAS)[number]) => ({
     slug: a.slug,
     name: a.name,
     region: a.region,
@@ -161,8 +165,6 @@ export async function seedAreasFromStatic() {
     keywords: a.keywords,
     is_micro_location: a.isMicroLocation,
     parent_area: a.parentArea ?? null,
-    display_order: i,
-    pin_category: PIN_CATEGORY_BY_SLUG[a.slug] ?? 'micro',
   });
 
   const { data: existing, error: exErr } = await supabase.from('areas').select('slug');
@@ -175,10 +177,13 @@ export async function seedAreasFromStatic() {
     .map((a, i) => ({ a, i }))
     .filter(({ a }) => !existingSlugs.has(a.slug))
     .map(({ a, i }) => ({
-      ...contentRow(a, i),
+      ...contentRow(a),
+      // Initial defaults for admin-managed fields — INSERT only.
       hero_image: '',
       hero_image_alt: `${a.name} property for sale on the Costa del Sol`,
       published: true,
+      display_order: i,
+      pin_category: PIN_CATEGORY_BY_SLUG[a.slug] ?? 'micro',
     }));
   if (newRows.length > 0) {
     const { error } = await supabase.from('areas').insert(newRows);
@@ -187,9 +192,9 @@ export async function seedAreasFromStatic() {
 
   // Existing areas: content-only update — images + published untouched.
   let updated = 0;
-  for (const [i, a] of COSTA_DEL_SOL_AREAS.entries()) {
+  for (const a of COSTA_DEL_SOL_AREAS) {
     if (!existingSlugs.has(a.slug)) continue;
-    const { error } = await supabase.from('areas').update(contentRow(a, i)).eq('slug', a.slug);
+    const { error } = await supabase.from('areas').update(contentRow(a)).eq('slug', a.slug);
     if (error) throw new Error(`Seed update failed for ${a.slug}: ${error.message}`);
     updated += 1;
   }

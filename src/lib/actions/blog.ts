@@ -125,14 +125,21 @@ export async function toggleBlogPublished(slug: string, published: boolean) {
 }
 
 /**
- * One-time seed from the static TS data. Idempotent via upsert on slug.
+ * Seed/refresh blog posts from the static TS data. Idempotent on slug.
+ *
+ * ADMIN-SAFE (same pattern as seedAreasFromStatic / the sync's
+ * protected fields): existing rows get a content-only UPDATE that never
+ * touches admin-managed columns — `published` (admin unpublish),
+ * `featured` (admin curation), `hero_image` / `hero_image_alt` (admin
+ * may swap images). Those land on INSERT only, as initial defaults.
+ * The old blind upsert reset all of them on every seed click.
  */
 export async function seedBlogPostsFromStatic() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  const rows = STATIC_BLOG_POSTS.map(p => ({
+  const contentRow = (p: (typeof STATIC_BLOG_POSTS)[number]) => ({
     slug: p.slug,
     title: p.title,
     meta_description: p.metaDescription,
@@ -143,22 +150,34 @@ export async function seedBlogPostsFromStatic() {
     published_at: p.publishedAt,
     updated_at_date: p.updatedAt,
     reading_time: p.readingTime,
+  });
+
+  const { data: existing, error: exErr } = await supabase.from('blog_posts').select('slug');
+  if (exErr) throw new Error(`Seed failed reading existing posts: ${exErr.message}`);
+  const existingSlugs = new Set((existing ?? []).map((r) => r.slug));
+
+  const newRows = STATIC_BLOG_POSTS.filter((p) => !existingSlugs.has(p.slug)).map((p) => ({
+    ...contentRow(p),
+    // Initial defaults for admin-managed fields — INSERT only.
     featured: !!p.featured,
     hero_image: p.heroImage,
     hero_image_alt: p.heroImageAlt,
     published: true,
   }));
+  if (newRows.length > 0) {
+    const { error } = await supabase.from('blog_posts').insert(newRows);
+    if (error) throw new Error(`Seed insert failed: ${error.message}`);
+  }
 
-  const { error } = await supabase
-    .from('blog_posts')
-    .upsert(rows, { onConflict: 'slug' });
-
-  if (error) {
-    console.error('Seed error:', error);
-    throw new Error(`Seed failed: ${error.message}`);
+  let updated = 0;
+  for (const p of STATIC_BLOG_POSTS) {
+    if (!existingSlugs.has(p.slug)) continue;
+    const { error } = await supabase.from('blog_posts').update(contentRow(p)).eq('slug', p.slug);
+    if (error) throw new Error(`Seed update failed for ${p.slug}: ${error.message}`);
+    updated += 1;
   }
 
   revalidatePath('/admin/blog');
   updateTag(BLOG_TAG);
-  return { count: rows.length };
+  return { count: newRows.length + updated, inserted: newRows.length, updated };
 }
