@@ -7,8 +7,10 @@ import {
   BLOG_TAG,
   COLLECTIONS_TAG,
   DEVELOPMENTS_TAG,
+  SITE_SETTINGS_TAG,
 } from '@/lib/cache';
 import { PROPERTY_LIST_COLUMNS, BLOG_LIST_COLUMNS } from '@/lib/list-columns';
+import { isPriceDropVisible } from '@/lib/price-drop';
 import { Property } from '@/types/property';
 import { Area } from '@/types/area';
 import { BlogPost } from '@/types/blog';
@@ -45,20 +47,30 @@ export const getPropertyBySlugCached = dedupePerRequest(
   unstable_cache(
     async (slug: string): Promise<Property | null> => {
       const supabase = createStaticSupabaseClient();
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('slug', slug)
-        .eq('published', true)
-        .single();
+      const [{ data, error }, { data: settings }] = await Promise.all([
+        supabase
+          .from('properties')
+          .select('*')
+          .eq('slug', slug)
+          .eq('published', true)
+          .single(),
+        supabase
+          .from('site_settings')
+          .select('show_price_drop_badges')
+          .eq('id', 1)
+          .single(),
+      ]);
       if (error) {
         if (error.code !== 'PGRST116') console.error('getPropertyBySlugCached:', error);
         return null;
       }
-      return data as Property;
+      const row = data as Property;
+      // Computed, double-gated badge flag — see src/lib/price-drop.ts.
+      row.price_drop = isPriceDropVisible(row, settings?.show_price_drop_badges ?? false);
+      return row;
     },
     ['property-by-slug'],
-    { tags: [PROPERTIES_TAG], revalidate: REVALIDATE }
+    { tags: [PROPERTIES_TAG, SITE_SETTINGS_TAG], revalidate: REVALIDATE }
   )
 );
 

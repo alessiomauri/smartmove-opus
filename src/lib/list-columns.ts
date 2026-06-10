@@ -12,7 +12,7 @@
  * against it; if search ever moves server-side, drop it here.
  */
 export const PROPERTY_LIST_COLUMNS =
-  'id,slug,name,status,property_type,price,price_on_request,location,area,micro_location,bedrooms,bathrooms,interior_size,plot_size,hero_image,hero_image_blur,is_featured,featured_order,features,description,created_at,source,source_id';
+  'id,slug,name,status,property_type,price,price_on_request,location,area,micro_location,bedrooms,bathrooms,interior_size,plot_size,hero_image,hero_image_blur,is_featured,featured_order,features,description,created_at,source,source_id,price_drop_at,hide_price_drop';
 
 /** Blog list view — everything except `content` (the full article body). */
 export const BLOG_LIST_COLUMNS =

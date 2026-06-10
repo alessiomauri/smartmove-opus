@@ -3,6 +3,7 @@ import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { Property, SortOption } from '@/types/property';
 import { Development } from '@/types/development';
 import { PROPERTY_LIST_COLUMNS } from '@/lib/list-columns';
+import { withPriceDropFlag } from '@/lib/price-drop';
 
 /**
  * Cache tags used across the app. When admin mutations occur, call
@@ -25,25 +26,40 @@ const LIST_COLUMNS = PROPERTY_LIST_COLUMNS;
 /**
  * Cached fetch for every published property — the grid source of truth
  * for `/` and `/areas/[slug]`. Deduplicated per build/revalidate window
- * (10 min) AND invalidated instantly when admin edits via `revalidateTag`.
+ * (10 min) AND invalidated instantly when admin edits via `updateTag`.
+ *
+ * Rows carry the computed `price_drop` flag, double-gated by the
+ * site-wide toggle and the per-listing opt-out (src/lib/price-drop.ts).
+ * Tagged with SITE_SETTINGS_TAG too, so flipping the toggle in admin
+ * re-gates every cached card immediately.
  */
 export const getCachedPublishedProperties = unstable_cache(
   async (): Promise<Property[]> => {
     const supabase = createStaticSupabaseClient();
-    const { data, error } = await supabase
-      .from('properties')
-      .select(LIST_COLUMNS)
-      .eq('published', true)
-      .order('created_at', { ascending: false });
+    const [{ data, error }, { data: settings }] = await Promise.all([
+      supabase
+        .from('properties')
+        .select(LIST_COLUMNS)
+        .eq('published', true)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('site_settings')
+        .select('show_price_drop_badges')
+        .eq('id', 1)
+        .single(),
+    ]);
 
     if (error) {
       console.error('getCachedPublishedProperties error:', error);
       return [];
     }
-    return (data as Property[]) ?? [];
+    return withPriceDropFlag(
+      ((data as unknown as Property[]) ?? []),
+      settings?.show_price_drop_badges ?? false
+    );
   },
   ['published-properties'],
-  { tags: [PROPERTIES_TAG], revalidate: 600 }
+  { tags: [PROPERTIES_TAG, SITE_SETTINGS_TAG], revalidate: 600 }
 );
 
 /**

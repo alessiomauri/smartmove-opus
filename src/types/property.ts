@@ -64,6 +64,16 @@ export interface Property {
   source_id?: string | null;
   source_image_urls?: string[];
 
+  // Price-drop tracking (maintained by the Resales sync).
+  // price_drop_at: timestamp of the most recent price decrease.
+  // hide_price_drop: ADMIN-OWNED per-listing badge opt-out.
+  // price_drop: computed server-side (src/lib/price-drop.ts) — true only
+  // when the site-wide toggle is on, the listing isn't hidden, and the
+  // drop is within the 30-day window. Never persisted.
+  price_drop_at?: string | null;
+  hide_price_drop?: boolean;
+  price_drop?: boolean;
+
   // Metadata
   created_at: string;
   updated_at: string;
