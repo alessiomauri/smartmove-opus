@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { propertyDetails, RESALES_LANG } from '@/lib/integrations/resales';
 import { runResalesSync, type ResalesPage } from '@/lib/integrations/resales-sync';
+import { fetchOwnReferenceSet } from '@/lib/integrations/resales-own';
 
 /**
  * Single-reference sync. One PropertyDetails call → one upsert.
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
   const report = await runResalesSync({
     supabase,
     trigger: 'single-ref',
+    fetchOwnRefs: fetchOwnReferenceSet,
     fetchPage,
     reference,
     triggeredBy: user.id,

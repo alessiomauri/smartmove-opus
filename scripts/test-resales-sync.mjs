@@ -197,7 +197,46 @@ console.log('\n— planBatch acceptance —');
   assert(manifested.updates[0].imagesChanged === true, 'manifest difference flags an image purge');
 }
 
-// ───────────────────────────── 6. reconciliation diff
+// ───────────────────────────── 6. own-vs-MLS split (filter membership)
+console.log('\n— own-property detection (filter membership) —');
+{
+  const ownRefs = new Set([raw.Reference]);
+
+  // Membership → auto-publish on insert.
+  const own = mapToRow(raw, { autoApprove: ownRefs.has(raw.Reference) });
+  assert(own.row.pending_review === false, 'own listing inserts with pending_review=false');
+  assert(own.row.published === true, 'own listing inserts published (available status)');
+
+  // Non-membership → MLS, pending review, unpublished.
+  const mls = mapToRow(raw, { autoApprove: ownRefs.has('R-NOT-OURS') });
+  assert(mls.row.pending_review === true, 'MLS listing inserts with pending_review=true');
+  assert(mls.row.published === false, 'MLS listing inserts unpublished');
+
+  // Membership overrides the per-row OwnProperty flag (untrusted).
+  const flaggedOwn = structuredClone(raw);
+  flaggedOwn.OwnProperty = '1';
+  const overridden = mapToRow(flaggedOwn, { autoApprove: false });
+  assert(overridden.row.pending_review === true,
+    'filter membership OVERRIDES the OwnProperty field');
+
+  // The split survives planBatch inserts (flags land on the insert rows).
+  const splitPlan = planBatch(
+    [
+      { kind: 'p', reference: raw.Reference, currency: 'EUR', entry: own },
+      { kind: 'p', reference: 'R-NOT-OURS', currency: 'EUR', entry: { kind: mls.kind, row: { ...mls.row, source_id: 'R-NOT-OURS', slug: 'mls-test' } } },
+    ],
+    new Map(),
+    new Date().toISOString()
+  );
+  const ownInsert = splitPlan.inserts.find((i) => i.reference === raw.Reference);
+  const mlsInsert = splitPlan.inserts.find((i) => i.reference === 'R-NOT-OURS');
+  assert(ownInsert?.row.published === true && ownInsert?.row.pending_review === false,
+    'planBatch insert carries own auto-publish flags');
+  assert(mlsInsert?.row.published === false && mlsInsert?.row.pending_review === true,
+    'planBatch insert carries MLS pending flags');
+}
+
+// ───────────────────────────── 7. reconciliation diff
 console.log('\n— reconcile diff —');
 {
   const now = new Date('2026-06-10T03:00:00Z');

@@ -32,6 +32,7 @@ import { mapToRow, type ResalesPropertyRaw } from './resales-mapping';
 import { hashContent } from './resales-hash';
 import { createThrottle, type Throttle } from './resales-throttle';
 import { getSyncState, setSyncState, RECONCILE_KEY } from './sync-state';
+import { fetchOwnReferenceSet } from './resales-own';
 import { purgeImages } from './cloudflare-images';
 import { revalidateTag } from 'next/cache';
 import { PROPERTIES_TAG, DEVELOPMENTS_TAG } from '@/lib/cache';
@@ -263,6 +264,16 @@ export async function runReconcileChunk(opts: {
   // Ingest missing references (capped; remainder caught next run or by
   // the nightly incremental once Resales touches them).
   const toIngestNow = diff.toIngest.slice(0, ingestCap);
+  // Own-vs-MLS membership for the inserts (conservative on failure).
+  let ownRefs: Set<string> | null = null;
+  if (toIngestNow.length > 0) {
+    try {
+      ownRefs = await fetchOwnReferenceSet(throttle);
+    } catch (e) {
+      ownRefs = new Set();
+      errors.push(`own-refs fetch failed (ingests default to pending): ${e instanceof Error ? e.message : e}`);
+    }
+  }
   for (const ref of toIngestNow) {
     try {
       const env = await throttle.run(`details ${ref}`, () =>
@@ -277,7 +288,7 @@ export async function runReconcileChunk(opts: {
         | ResalesPropertyRaw
         | undefined;
       if (!raw) continue;
-      const entry = mapToRow(raw);
+      const entry = mapToRow(raw, ownRefs ? { autoApprove: ownRefs.has(ref) } : {});
       const table = entry.kind === 'development' ? 'developments' : 'properties';
       const row = entry.row as unknown as Record<string, unknown>;
       const { error } = await supabase

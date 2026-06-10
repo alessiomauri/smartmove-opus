@@ -5,6 +5,7 @@ import { searchProperties, type ResalesEnvelope, type ResalesProperty } from '@/
 import { runResalesSync, type ResalesPage, type SyncTrigger } from '@/lib/integrations/resales-sync';
 import { getSyncState, setSyncState, FULL_IMPORT_KEY } from '@/lib/integrations/sync-state';
 import { purgeImages } from '@/lib/integrations/cloudflare-images';
+import { fetchOwnReferenceSet } from '@/lib/integrations/resales-own';
 
 // A paced chunk (≤60 pages at ~2.5 req/s) finishes well inside this.
 export const maxDuration = 300;
@@ -246,6 +247,7 @@ async function executeIncremental(
     useWatermark: opts.modifiedSince ? false : true,
     triggeredBy: opts.triggeredBy,
     purgeImages,
+    fetchOwnRefs: fetchOwnReferenceSet,
   });
 
   return NextResponse.json({ ok: report.status !== 'failed', report });
@@ -296,6 +298,7 @@ async function executeFullImportChunk(
     startPage: state.page,
     initialQueryId: state.query_id,
     purgeImages,
+    fetchOwnRefs: fetchOwnReferenceSet,
     onPageComplete: async (cursor) => {
       state = {
         ...state,

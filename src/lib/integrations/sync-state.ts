@@ -22,6 +22,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const WATERMARK_KEY = 'resales_watermark';
 export const FULL_IMPORT_KEY = 'resales_full_import';
 export const RECONCILE_KEY = 'resales_reconcile';
+/** Snapshot of the own-properties reference set from the last run. */
+export const OWN_REFS_KEY = 'resales_own_refs';
 
 export async function getSyncState<T extends Record<string, unknown>>(
   supabase: SupabaseClient,

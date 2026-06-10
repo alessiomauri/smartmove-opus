@@ -65,7 +65,7 @@ import {
   isValidWatermark,
 } from './resales-hash';
 import { createThrottle, type Throttle } from './resales-throttle';
-import { getSyncState, setSyncState, WATERMARK_KEY } from './sync-state';
+import { getSyncState, setSyncState, WATERMARK_KEY, OWN_REFS_KEY } from './sync-state';
 import { revalidateTag } from 'next/cache';
 import { PROPERTIES_TAG, DEVELOPMENTS_TAG } from '@/lib/cache';
 import { pingIndexNow, entityUrls } from '@/lib/indexnow';
@@ -156,6 +156,14 @@ interface SyncOpts {
   }) => Promise<void>;
   /** R2 purge hook; return true when the purge succeeded. */
   purgeImages?: (kind: 'p' | 'd', reference: string) => Promise<boolean>;
+  /**
+   * Own-property reference fetcher (filter-membership detection — see
+   * resales-own.ts). Shares the run's throttle. When absent (samples /
+   * offline modes) the mapper falls back to the per-row OwnProperty
+   * flag; when present but failing, inserts default to MLS/pending and
+   * the error is recorded.
+   */
+  fetchOwnRefs?: (throttle: Throttle) => Promise<Set<string>>;
   /** Injectable for tests; defaults to env-tuned throttle. */
   throttle?: Throttle;
   /**
@@ -357,6 +365,30 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
     .single();
   const runId = runRow?.id ?? null;
 
+  // ── Own-property set: filter membership decides own vs MLS on INSERT ──
+  let ownRefs: Set<string> | null = null;
+  if (opts.fetchOwnRefs) {
+    try {
+      ownRefs = await opts.fetchOwnRefs(throttle);
+      if (!opts.dryRun) {
+        await setSyncState(opts.supabase, OWN_REFS_KEY, {
+          refs: [...ownRefs],
+          count: ownRefs.size,
+          run_id: runId,
+        });
+      }
+    } catch (ownErr) {
+      // Conservative: unknown ownership ⇒ everything inserts as
+      // MLS/pending. Loud in the run row; nothing auto-publishes.
+      ownRefs = new Set();
+      errors.push(
+        `own-refs fetch failed (inserts default to pending): ${
+          ownErr instanceof Error ? ownErr.message : ownErr
+        }`
+      );
+    }
+  }
+
   let queryId: string | null = opts.initialQueryId ?? null;
   let page = opts.startPage ?? 1;
   let done = false;
@@ -417,7 +449,10 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
         }
 
         try {
-          const entry = mapToRow(raw);
+          const entry = mapToRow(
+            raw,
+            ownRefs ? { autoApprove: ownRefs.has(raw.Reference) } : {}
+          );
           mapped.push({
             kind: entry.kind === 'development' ? 'd' : 'p',
             reference: raw.Reference,
