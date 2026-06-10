@@ -4,15 +4,19 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-export default function SyncControls() {
+type Busy = 'samples' | 'live' | 'ref' | 'import' | 'reconcile' | null;
+
+export default function SyncControls({
+  fullImportStatus = 'idle',
+}: {
+  /** sync_state.resales_full_import.status — drives the import button label. */
+  fullImportStatus?: string;
+}) {
   const router = useRouter();
-  const [busy, setBusy] = useState<'samples' | 'live' | 'ref' | null>(null);
+  const [busy, setBusy] = useState<Busy>(null);
   const [reference, setReference] = useState('');
 
-  async function trigger(endpoint: string, label: string, body?: object) {
-    const which =
-      endpoint.includes('seed-samples') ? 'samples' :
-      endpoint.includes('sync-reference') ? 'ref' : 'live';
+  async function trigger(endpoint: string, label: string, body?: object, which: Busy = 'live') {
     setBusy(which);
     try {
       const res = await fetch(endpoint, {
@@ -27,8 +31,11 @@ export default function SyncControls() {
           duration: 8000,
         });
       } else {
-        toast.success(`${label} complete`, {
-          description: json.report?.message || `Upserted ${json.report?.upserted ?? 0}`,
+        toast.success(`${label} ${json.done === false ? 'chunk done — continuing in background' : 'complete'}`, {
+          description: json.report?.message || json.summary
+            ? json.report?.message ?? `Removed ${json.summary?.removed ?? 0}, ingested ${json.summary?.ingested ?? 0}`
+            : undefined,
+          duration: 6000,
         });
         router.refresh();
       }
@@ -41,45 +48,92 @@ export default function SyncControls() {
     }
   }
 
+  const importRunning = fullImportStatus === 'running';
+
   return (
-    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-      <button
-        type="button"
-        disabled={busy !== null}
-        onClick={() => trigger('/api/admin/resales/seed-samples', 'Seed from samples')}
-        style={btnSecondary}
-      >
-        {busy === 'samples' ? 'Seeding…' : 'Seed from samples (dev)'}
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => trigger('/api/admin/resales/sync', 'Sync', undefined, 'live')}
+          style={btnPrimary}
+        >
+          {busy === 'live' ? 'Syncing…' : 'Sync now (incremental)'}
+        </button>
 
-      <button
-        type="button"
-        disabled={busy !== null}
-        onClick={() => trigger('/api/admin/resales/sync', 'Sync')}
-        style={btnPrimary}
-      >
-        {busy === 'live' ? 'Syncing…' : 'Sync now (live)'}
-      </button>
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => trigger('/api/admin/resales/seed-samples', 'Seed from samples', undefined, 'samples')}
+          style={btnSecondary}
+        >
+          {busy === 'samples' ? 'Seeding…' : 'Seed from samples (dev)'}
+        </button>
 
-      <span style={{ width: 16 }} />
+        <span style={{ width: 8 }} />
 
-      <input
-        type="text"
-        placeholder="Reference (e.g. R3479851)"
-        value={reference}
-        onChange={(e) => setReference(e.target.value.trim())}
-        style={inputStyle}
-      />
-      <button
-        type="button"
-        disabled={busy !== null || !reference}
-        onClick={() =>
-          trigger('/api/admin/resales/sync-reference', 'Sync reference', { reference })
-        }
-        style={btnSecondary}
-      >
-        {busy === 'ref' ? 'Fetching…' : 'Sync reference'}
-      </button>
+        <input
+          type="text"
+          placeholder="Reference (e.g. R3479851)"
+          value={reference}
+          onChange={(e) => setReference(e.target.value.trim())}
+          style={inputStyle}
+        />
+        <button
+          type="button"
+          disabled={busy !== null || !reference}
+          onClick={() =>
+            trigger('/api/admin/resales/sync-reference', 'Sync reference', { reference }, 'ref')
+          }
+          style={btnSecondary}
+        >
+          {busy === 'ref' ? 'Fetching…' : 'Sync reference'}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => {
+            if (
+              !importRunning &&
+              !window.confirm(
+                'Start a FULL import? It walks the entire Resales feed in paced chunks (self-continuing in the background) and can take a while. Existing rows are hash-skipped.'
+              )
+            ) {
+              return;
+            }
+            trigger(
+              '/api/admin/resales/sync',
+              importRunning ? 'Resume full import' : 'Full import',
+              { mode: 'full-import', restart: !importRunning },
+              'import'
+            );
+          }}
+          style={importRunning ? btnPrimary : btnSecondary}
+        >
+          {busy === 'import'
+            ? 'Importing…'
+            : importRunning
+              ? 'Resume full import'
+              : 'Start full import'}
+        </button>
+
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => trigger('/api/admin/resales/reconcile', 'Reconciliation', { restart: true }, 'reconcile')}
+          style={btnSecondary}
+        >
+          {busy === 'reconcile' ? 'Reconciling…' : 'Run reconciliation'}
+        </button>
+
+        <span style={{ fontSize: 12, color: '#888' }}>
+          Full import + reconciliation run in self-continuing chunks — leave the page, they keep going.
+        </span>
+      </div>
     </div>
   );
 }
