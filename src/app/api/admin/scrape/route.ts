@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { validateExternalUrl } from '@/lib/server/url-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -902,10 +904,24 @@ function scrapeProperty($: cheerio.CheerioAPI, url: string): Partial<ScrapedProp
 
 export async function POST(request: NextRequest) {
   try {
+    // Admin-only. The middleware matcher skips /api, so the route must
+    // enforce auth itself — without this, the endpoint is an open SSRF
+    // proxy (fetch any URL server-side and return its parsed content).
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { url } = await request.json();
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    }
+
+    const urlError = validateExternalUrl(url);
+    if (urlError) {
+      return NextResponse.json({ error: urlError }, { status: 400 });
     }
 
     // Fetch the page

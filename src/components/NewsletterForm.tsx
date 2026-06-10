@@ -12,11 +12,12 @@ interface NewsletterFormProps {
 }
 
 /**
- * Single-field email subscribe form. UI only — no backend wired yet.
+ * Single-field email subscribe form.
  *
- * On submit, validates the email and shows a "Thank you" state. The email
- * is NOT stored anywhere. When you choose an ESP (Resend, Mailchimp, Beehiiv,
- * etc.), wire the submit handler to send to that provider.
+ * On submit, validates the email and posts it to /api/leads with
+ * source 'newsletter' — the lead lands in the `leads` table (and Monday,
+ * when that integration is switched on). When an ESP (Resend, Mailchimp,
+ * Beehiiv…) is chosen, add the ESP call next to the lead write.
  */
 export default function NewsletterForm({
   label = 'Subscribe to the quarterly Marbella property report',
@@ -34,8 +35,22 @@ export default function NewsletterForm({
       setError('Please enter a valid email address');
       return;
     }
-    // TODO: wire to chosen ESP when picked
+    // Optimistic UI: flip to the thank-you state immediately; the lead
+    // write is fire-and-forget (durable in the leads table server-side).
     setSubmitted(true);
+    void fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: 'newsletter',
+        source_detail: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        name: 'Newsletter subscriber',
+        email,
+      }),
+    }).catch(() => {
+      // Swallow — the thank-you state already showed; a retry path can
+      // come with the ESP integration.
+    });
   };
 
   if (variant === 'card') {

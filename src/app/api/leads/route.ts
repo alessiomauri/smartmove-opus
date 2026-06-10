@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { createLead as createMondayLead } from '@/lib/integrations/monday';
@@ -136,51 +136,53 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Fire-and-forget Monday push. The wrapper no-ops cleanly when
-  // MONDAY_API_TOKEN / MONDAY_BOARD_ID aren't set, which is the
-  // launch-day default. When activated, it'll push and stash the
-  // returned itemId; if it fails, we log and the lead is queued for
-  // retry by a background job (Phase 4 work).
-  const mondayResult = await createMondayLead({
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    bedrooms: data.bedrooms,
-    budgetTier: data.budget_tier,
-    purchaseTimeline: data.purchase_timeline,
-    contactMethod: data.contact_method,
-    message: data.message,
-    source: data.source_detail || data.source,
-    propertyReference: data.property_reference,
-    utm: {
-      source: data.utm_source,
-      medium: data.utm_medium,
-      campaign: data.utm_campaign,
-      id: data.utm_id,
-    },
-    language: data.language ?? 'en',
-    submittedAt: new Date().toISOString(),
+  // 2. Monday push runs AFTER the response is sent (`after()`), so the
+  // public form never waits on the Monday API. The lead is already
+  // durably saved above; the push just enriches the row with the item
+  // id (or marks it skipped when MONDAY_API_TOKEN isn't set). If the
+  // push fails, the lead stays queued for the retry job via the
+  // monday_pending index.
+  after(async () => {
+    try {
+      const mondayResult = await createMondayLead({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        bedrooms: data.bedrooms,
+        budgetTier: data.budget_tier,
+        purchaseTimeline: data.purchase_timeline,
+        contactMethod: data.contact_method,
+        message: data.message,
+        source: data.source_detail || data.source,
+        propertyReference: data.property_reference,
+        utm: {
+          source: data.utm_source,
+          medium: data.utm_medium,
+          campaign: data.utm_campaign,
+          id: data.utm_id,
+        },
+        language: data.language ?? 'en',
+        submittedAt: new Date().toISOString(),
+      });
+
+      if (mondayResult.skipped) {
+        await supabase
+          .from('leads')
+          .update({ monday_sync_skipped: true })
+          .eq('id', row.id);
+      } else if (mondayResult.ok && mondayResult.data?.itemId) {
+        await supabase
+          .from('leads')
+          .update({
+            monday_item_id: mondayResult.data.itemId,
+            monday_synced_at: new Date().toISOString(),
+          })
+          .eq('id', row.id);
+      }
+    } catch (e) {
+      console.error('Monday push failed for lead', row.id, e);
+    }
   });
 
-  // Mark the lead as "Monday-skipped" or stash the returned item id.
-  if (mondayResult.skipped) {
-    await supabase
-      .from('leads')
-      .update({ monday_sync_skipped: true })
-      .eq('id', row.id);
-  } else if (mondayResult.ok && mondayResult.data?.itemId) {
-    await supabase
-      .from('leads')
-      .update({
-        monday_item_id: mondayResult.data.itemId,
-        monday_synced_at: new Date().toISOString(),
-      })
-      .eq('id', row.id);
-  }
-
-  return NextResponse.json({
-    ok: true,
-    leadId: row.id,
-    monday: mondayResult.skipped ? 'skipped' : mondayResult.ok ? 'synced' : 'pending-retry',
-  });
+  return NextResponse.json({ ok: true, leadId: row.id });
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { validateExternalUrl } from '@/lib/server/url-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,14 +72,25 @@ async function downloadAndUpload(imageUrl: string): Promise<string | null> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Admin-only. The middleware matcher skips /api, so this route must
+    // gate itself — otherwise anyone can make the server download
+    // arbitrary URLs and write them into the storage bucket.
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { urls } = await request.json();
 
     if (!Array.isArray(urls) || urls.length === 0) {
       return NextResponse.json({ error: 'urls array is required' }, { status: 400 });
     }
 
-    // Cap at 50 images
-    const imageUrls = urls.slice(0, 50);
+    // Cap at 50 images; drop anything that isn't a safe public http(s) URL.
+    const imageUrls = urls
+      .slice(0, 50)
+      .filter((u: unknown): u is string => typeof u === 'string' && validateExternalUrl(u) === null);
 
     // Process in batches of 5 for concurrency control
     const batchSize = 5;
