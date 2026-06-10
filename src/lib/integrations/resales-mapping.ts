@@ -220,6 +220,12 @@ export function parseRange(value: StringOrNumber | undefined): { from: number | 
   return { from: Number.isFinite(n) ? n : null, to: Number.isFinite(n) ? n : null };
 }
 
+/** Round to integer, preserving null — for columns that are int in the
+ * DB (bedrooms): fractional values in MLS feeds are noise, not signal. */
+function intOrNull(value: number | null): number | null {
+  return value == null ? null : Math.round(value);
+}
+
 /** Coerce a Resales numeric (string|number) to number or null. */
 function num(value: StringOrNumber | undefined | null): number | null {
   if (value == null) return null;
@@ -454,8 +460,8 @@ export function mapToPropertyRow(
     // Numerics
     price: num(p.Price),
     price_on_request: p.Price == null || p.Price === '' || p.Price === 0,
-    bedrooms: num(p.Bedrooms),
-    bathrooms: num(p.Bathrooms),
+    bedrooms: intOrNull(num(p.Bedrooms)),
+    bathrooms: num(p.Bathrooms), // numeric column — 2.5 baths is real data
     interior_size: num(p.Built),
     terrace_size: num(p.Terrace),
     plot_size: num(p.GardenPlot),
@@ -534,8 +540,8 @@ export function mapToDevelopmentRow(
     price_from: price.from,
     price_to: price.to,
     price_on_request: price.from == null,
-    bedrooms_from: beds.from,
-    bedrooms_to: beds.to,
+    bedrooms_from: intOrNull(beds.from),
+    bedrooms_to: intOrNull(beds.to),
     bathrooms_from: baths.from,
     bathrooms_to: baths.to,
     size_from: built.from,

@@ -134,6 +134,35 @@ probe section in RESALES_API_GAPS.md): watermark seeding (samples carry
 no `LastUpdated`) and the P_QueryId TTL probe. `scripts/probe-resales.mjs`
 re-run completes both automatically once credentials work.
 
+## Known-good run — LIVE sandbox through the relay (2026-06-10)
+
+First full live exercise of the pipeline (sandbox `P_sandbox=true`,
+8,660-row dataset, via the fixed-IP relay):
+
+| Run | status | pages | seen | skipped | updated | inserted | own/MLS split | watermark |
+|---|---|---|---|---|---|---|---|---|
+| 1 — first full walk | success | 217 | 8,658 | 991¹ | 0 | 7,667 | 15 approved / 7,652 pending | **seeded → `2026-06-10 14:57:32`** |
+| 2 — immediate rerun | success | 1 | 7² | 6 | **0** | **0** | — | unchanged |
+
+¹ 991 = rows inserted by an earlier partial walk (killed mid-run by a
+fractional-bathrooms schema bug, since fixed) — hash-skipped on resume,
+proving kill-and-rerun convergence on live data.
+² seen = 6 overlap-window rows (all hash-skipped) + 1 stop-boundary row
+(fetched, inspected, walk stops — counted as seen by design). Zero
+writes, zero cache invalidations.
+
+Also verified live: own-detection via filter-5 membership (own rows
+published, MLS rows pending_review — spot-checked both); image pipeline
+end-to-end (published own listing → image-proxy → R2 lazy fill →
+**1600×960 actual pixels** served with etag + edge cache; all 11,894
+synced source URLs carry the w1600 marker). Run 1's paced walk: 218 API
+calls in ~95s ≈ 2.5 req/s on the nose.
+
+Caveat discovered: the image worker resolves source URLs with the anon
+key, so UNPUBLISHED rows 404 through the proxy (RLS hides them). No
+public surface shows unpublished rows, so this is correct behaviour —
+but admin review UIs should use the raw source URLs for thumbnails.
+
 ## Acceptance criteria → where they're enforced
 
 | Criterion | Enforcement |
