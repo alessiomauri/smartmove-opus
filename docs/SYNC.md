@@ -36,12 +36,16 @@ removals and missed references.
    with zero errors that reached its stop boundary. A failed night ⇒
    the next run re-covers the same window. (The old `now − 25h` window
    silently lost any update in a failed night's window.)
-2. **The sync never writes admin-owned fields on UPDATE**:
+2. **The sync never overrides admin decisions on UPDATE**:
    `pending_review`, `published`, `rejected`, `hide_price_drop`, `slug`
    (`SYNC_PROTECTED_FIELDS`). Approving/unpublishing/rejecting a
    listing, hiding its badge, or its public URL all survive any number
    of upstream edits. These fields are also excluded from the hash, so
-   admin actions don't make rows look "changed".
+   admin actions don't make rows look "changed". The ONE deliberate
+   exception is the publish gate (below): on rows **no admin has
+   touched** (pending ∧ unpublished ∧ not rejected/removed) it may flip
+   published/pending_review forward — it can never override an admin
+   decision and never unpublishes.
 3. **R2 image keys are index-based** (`p/<ref>/<n>.jpg`), so a manifest
    change purges the whole prefix and lets the proxy lazily refill —
    never diff individual indices.
@@ -112,6 +116,52 @@ writes ≈ real-world changes, watermark advanced.
 | Cron run `success` with `rows_seen: 0` for days | Nothing changed — or auth/filter quietly broke | Spot-check with **Sync reference** on a known ref |
 | Watermark not advancing | Runs ending `partial` (cap hit or errors) | Raise `maxPages` / fix errors; until then each night safely re-covers the window |
 | Import paused with error banner | Chunk failed; cursor intact | **Resume full import** or wait for the nightly cron |
+
+## Publish gate (review-by-exception)
+
+At ~8k+ MLS rows, per-row review inverts: rows passing a rule-driven
+gate AUTO-PUBLISH into the full-search inventory; only failures wait in
+the queue, each carrying its failing rule keys
+(`properties.publish_gate_failures`) so the queue shows WHY. Engine:
+`src/lib/integrations/resales-publish-gate.ts` — one small function per
+rule in `GATE_RULES`; add future rules there.
+
+Config: `site_settings.publish_gate` (JSONB, editable without deploy —
+missing keys fall back to code defaults):
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | true | Master switch; off ⇒ MLS inserts stay pending (pre-gate behaviour) |
+| `min_photos` | 4 | Source-manifest photo floor (0 disables) |
+| `min_price` | 150000 | EUR floor; POA rows fail (0 disables) |
+| `require_description` | true | Non-empty canonical description |
+| `min_reference_number` | 4000000 | Staleness floor on the R-ref's numeric part (0 disables; unparseable refs are held) |
+| `require_location` | true | Non-empty location |
+
+Where it applies:
+- **Sync INSERT** (MLS property rows; own rows bypass — filter-5
+  membership already publishes them): pass ⇒ published immediately
+  (sold rows clear review but stay unpublished), fail ⇒ pending with
+  rules recorded.
+- **Sync UPDATE**, only for untouched-held rows (pending ∧ unpublished
+  ∧ not rejected/removed): upstream fixing the data publishes the row;
+  still-failing rows get their failure record refreshed. The gate never
+  unpublishes and never touches admin-reviewed rows.
+- **Bulk pass**: `POST /api/admin/resales/publish-gate` (admin session
+  or cron secret; `{dryRun:true}` to preview) or the "Run publish gate"
+  button — re-evaluates everything still held. Run it after editing
+  thresholds. Developments (446 rows) stay manual-review.
+
+Hard rules: admin **reject is permanent** (rejected rows are skipped
+before the gate sees them); the gate **never touches
+is_featured/featured_order** — auto-published rows appear in
+full-search inventory only, never curated surfaces; ingestion is never
+filtered (held rows keep feeding history + reconciliation).
+
+First bulk pass (2026-06-10, production backlog): scanned 8,200 held →
+**published 7,628 / held 572** (min_reference_number 281, min_price
+193, min_photos 142; description/location 0). R-number distribution at
+the time: p10 = 4.69M, only 287 of 8,215 rows below the 4M floor.
 
 ## Price-drop badges
 

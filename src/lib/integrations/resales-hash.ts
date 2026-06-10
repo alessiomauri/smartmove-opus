@@ -35,6 +35,10 @@ export const HASH_EXCLUDED_FIELDS: ReadonlySet<string> = new Set([
   // must not make it look "changed" to the next sync.
   'is_featured',
   'featured_order',
+  // Publish-gate bookkeeping (sync-owned, but derived — recording WHY a
+  // row is held must not make its feed content look "changed").
+  'publish_gate_failures',
+  'publish_gate_checked_at',
 ]);
 
 /**

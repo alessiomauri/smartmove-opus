@@ -34,7 +34,7 @@ export default async function ResalesAdminPage() {
 
   await failStaleRuns(supabase);
 
-  const [runs, propsAgg, devsAgg, pendingAgg, syncState, settings] = await Promise.all([
+  const [runs, propsAgg, devsAgg, pendingAgg, syncState, settings, gateBreakdown] = await Promise.all([
     supabase
       .from('resales_sync_runs')
       .select(
@@ -55,7 +55,8 @@ export default async function ResalesAdminPage() {
       .select('id', { count: 'exact', head: true })
       .eq('pending_review', true),
     supabase.from('sync_state').select('key, value, updated_at'),
-    supabase.from('site_settings').select('show_price_drop_badges').eq('id', 1).single(),
+    supabase.from('site_settings').select('show_price_drop_badges, publish_gate').eq('id', 1).single(),
+    supabase.rpc('publish_gate_breakdown'),
   ]);
 
   const stateByKey = new Map((syncState.data ?? []).map((r) => [r.key, r.value as Record<string, unknown>]));
@@ -144,6 +145,53 @@ export default async function ResalesAdminPage() {
       <section style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 18, marginBottom: 12 }}>Run a sync</h2>
         <SyncControls fullImportStatus={fullImport?.status ?? 'idle'} />
+      </section>
+
+      {/* ── Publish gate ── */}
+      <section style={{ marginBottom: 40 }}>
+        <h2 style={{ fontSize: 18, marginBottom: 12 }}>Publish gate</h2>
+        <p style={{ color: '#666', fontSize: 13, marginBottom: 12 }}>
+          Review-by-exception: MLS rows passing every rule auto-publish into
+          the full-search inventory (never curated surfaces); failures stay in
+          the queue with their failing rules recorded. Thresholds live in{' '}
+          <code>site_settings.publish_gate</code> — edit, then click
+          &ldquo;Run publish gate&rdquo; above to re-apply to everything held.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+          {Object.entries((settings.data?.publish_gate as Record<string, unknown> | null) ?? {}).map(
+            ([key, value]) => (
+              <span
+                key={key}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                  background: key === 'enabled' && value === false ? '#fbe2dd' : '#f1ede3',
+                  border: '1px solid #e0d9c8',
+                }}
+              >
+                {key}: {String(value)}
+              </span>
+            )
+          )}
+        </div>
+        {(gateBreakdown.data?.length ?? 0) > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {(gateBreakdown.data as Array<{ rule: string; held: number }>).map((b) => (
+              <div key={b.rule} style={{ padding: 14, border: '1px solid #e5e5e5', borderRadius: 8, background: '#fff' }}>
+                <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#666' }}>
+                  held by {b.rule}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 600, marginTop: 6 }}>{b.held}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: '#888', fontSize: 13 }}>
+            No held rows with recorded failures yet — run the gate to populate the queue breakdown.
+          </p>
+        )}
       </section>
 
       {/* ── Price-drop badges ── */}

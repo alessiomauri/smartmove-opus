@@ -278,5 +278,172 @@ console.log('\n— reconcile diff —');
   assert(diff.toIngest.length === 1 && diff.toIngest[0] === 'R9', 'live-but-unknown reference → ingest');
 }
 
+// ───────────────────────────── 9. publish gate (review-by-exception)
+console.log('\n— publish gate —');
+{
+  const { evaluatePublishGate, mergeGateConfig, referenceNumber, DEFAULT_PUBLISH_GATE } =
+    await import('../src/lib/integrations/resales-publish-gate.ts');
+
+  const cfg = { ...DEFAULT_PUBLISH_GATE }; // 4 photos / 150k / desc / 4M ref / location
+  const goodRow = {
+    source_id: 'R5361961',
+    price: 425_000,
+    description: 'A lovely frontline-golf apartment.',
+    location: 'Estepona',
+    source_image_urls: ['1', '2', '3', '4'],
+  };
+
+  // Rule units — pass/fail boundaries.
+  assert(evaluatePublishGate(goodRow, cfg).pass === true, 'clean row passes every rule');
+  assert(evaluatePublishGate({ ...goodRow, source_image_urls: ['1', '2', '3'] }, cfg)
+    .failures.includes('min_photos'), '3 photos < 4 → min_photos fails');
+  assert(evaluatePublishGate({ ...goodRow, price: 149_999 }, cfg)
+    .failures.includes('min_price'), '149,999 < 150k → min_price fails');
+  assert(evaluatePublishGate({ ...goodRow, price: 150_000 }, cfg).pass === true,
+    'exactly 150k passes (inclusive floor)');
+  assert(evaluatePublishGate({ ...goodRow, price: null }, cfg)
+    .failures.includes('min_price'), 'POA (null price) → min_price fails');
+  assert(evaluatePublishGate({ ...goodRow, description: '  ' }, cfg)
+    .failures.includes('require_description'), 'whitespace description fails');
+  assert(evaluatePublishGate({ ...goodRow, location: '' }, cfg)
+    .failures.includes('require_location'), 'empty location fails');
+  assert(evaluatePublishGate({ ...goodRow, source_id: 'R3999999' }, cfg)
+    .failures.includes('min_reference_number'), 'R3999999 < 4M floor → stale ref fails');
+  assert(evaluatePublishGate({ ...goodRow, source_id: 'R4000000' }, cfg).pass === true,
+    'R4000000 passes (inclusive floor)');
+  assert(evaluatePublishGate({ ...goodRow, source_id: 'NO-DIGITS' }, cfg)
+    .failures.includes('min_reference_number'), 'unparseable reference is held for review');
+  assert(referenceNumber('R5361961') === 5361961 && referenceNumber('r123x') === 123,
+    'referenceNumber parses the numeric part');
+  const multi = evaluatePublishGate({ ...goodRow, price: 1000, source_image_urls: [] }, cfg);
+  assert(multi.failures.length === 2 && multi.failures.includes('min_price') && multi.failures.includes('min_photos'),
+    'multiple failures all recorded');
+
+  // Config: partial JSONB merges over defaults; bad types/unknown keys ignored;
+  // 0 disables a threshold rule.
+  const merged = mergeGateConfig({ min_price: 200_000, bogus_key: true, min_photos: 'nope' });
+  assert(merged.min_price === 200_000 && merged.min_photos === 4 && !('bogus_key' in merged),
+    'mergeGateConfig: partial override, wrong types + unknown keys ignored');
+  assert(evaluatePublishGate({ ...goodRow, source_id: 'R1' }, { ...cfg, min_reference_number: 0 }).pass === true,
+    'threshold 0 disables a rule');
+
+  // planBatch INSERT path: MLS passers publish, failers hold with reasons,
+  // own rows bypass the gate entirely.
+  const now = new Date().toISOString();
+  const mlsPass = mapToRow(structuredClone(raw), { autoApprove: false });
+  mlsPass.row.price = 425_000;
+  mlsPass.row.source_id = 'R5361961';
+  mlsPass.row.source_image_urls = ['1', '2', '3', '4'];
+  mlsPass.row.description = 'desc';
+  mlsPass.row.location = 'Estepona';
+
+  const mlsFail = { kind: mlsPass.kind, row: { ...mlsPass.row, source_id: 'R5361962', slug: 'fail-row', price: 90_000, source_image_urls: ['1'] } };
+  const ownRow = mapToRow(structuredClone(raw), { autoApprove: true });
+  ownRow.row.source_id = 'R5361963';
+  ownRow.row.price = 1000; // would fail the gate — but own rows never see it
+  ownRow.row.source_image_urls = [];
+
+  const gatedPlan = planBatch(
+    [
+      { kind: 'p', reference: 'R5361961', currency: 'EUR', entry: mlsPass },
+      { kind: 'p', reference: 'R5361962', currency: 'EUR', entry: mlsFail },
+      { kind: 'p', reference: 'R5361963', currency: 'EUR', entry: ownRow },
+    ],
+    new Map(),
+    now,
+    cfg
+  );
+  const passIns = gatedPlan.inserts.find((i) => i.reference === 'R5361961');
+  const failIns = gatedPlan.inserts.find((i) => i.reference === 'R5361962');
+  const ownIns = gatedPlan.inserts.find((i) => i.reference === 'R5361963');
+  assert(passIns.row.published === true && passIns.row.pending_review === false &&
+         passIns.row.publish_gate_failures === null,
+    'gate-passing MLS insert auto-publishes');
+  assert(failIns.row.published === false && failIns.row.pending_review === true,
+    'gate-failing MLS insert stays pending');
+  assert(Array.isArray(failIns.row.publish_gate_failures) &&
+         failIns.row.publish_gate_failures.includes('min_price') &&
+         failIns.row.publish_gate_failures.includes('min_photos'),
+    'failing rules recorded on the held row');
+  assert(ownIns.row.published === true && !('publish_gate_failures' in ownIns.row),
+    'own rows bypass the gate (no evaluation, still published)');
+  assert(gatedPlan.gatePublished === 1 && gatedPlan.gateHeld === 1, 'gate counters track outcomes');
+  assert(!('is_featured' in passIns.row) && !('featured_order' in passIns.row),
+    'gate publish never touches curation flags');
+
+  // Gate inactive (null cfg) → pre-gate behaviour: MLS inserts stay pending.
+  const ungatedPlan = planBatch(
+    [{ kind: 'p', reference: 'R5361961', currency: 'EUR', entry: mlsPass }],
+    new Map(),
+    now,
+    null
+  );
+  assert(ungatedPlan.inserts[0].row.published === false &&
+         !('publish_gate_failures' in ungatedPlan.inserts[0].row),
+    'gate disabled → MLS inserts stay pending, nothing recorded');
+
+  // planBatch UPDATE path: untouched-held rows re-evaluate; admin-touched
+  // rows never do.
+  const heldExisting = {
+    id: 'row-h', source_id: 'R5361961', slug: 'held', content_hash: 'stale', rejected: false,
+    price: 425_000, status: 'available', source_image_urls: mlsPass.row.source_image_urls,
+    pending_review: true, published: false, removed_at: null,
+  };
+  const promoted = planBatch(
+    [{ kind: 'p', reference: 'R5361961', currency: 'EUR', entry: mlsPass }],
+    new Map([['p:R5361961', heldExisting]]),
+    now,
+    cfg
+  );
+  assert(promoted.updates[0].payload.published === true &&
+         promoted.updates[0].payload.pending_review === false,
+    'untouched held row that now passes → published on update');
+
+  const stillBad = planBatch(
+    [{ kind: 'p', reference: 'R5361962', currency: 'EUR', entry: mlsFail }],
+    new Map([['p:R5361962', { ...heldExisting, id: 'row-f', source_id: 'R5361962', price: 90_000 }]]),
+    now,
+    cfg
+  );
+  assert(!('published' in stillBad.updates[0].payload) &&
+         Array.isArray(stillBad.updates[0].payload.publish_gate_failures),
+    'still-failing held row → failure record refreshed, stays unpublished');
+
+  const adminUnpublished = planBatch(
+    [{ kind: 'p', reference: 'R5361961', currency: 'EUR', entry: mlsPass }],
+    new Map([['p:R5361961', { ...heldExisting, pending_review: false }]]),
+    now,
+    cfg
+  );
+  assert(!('published' in adminUnpublished.updates[0].payload) &&
+         !('publish_gate_failures' in adminUnpublished.updates[0].payload),
+    'admin-reviewed row (pending=false) is never touched by the gate');
+
+  const removedRow = planBatch(
+    [{ kind: 'p', reference: 'R5361961', currency: 'EUR', entry: mlsPass }],
+    new Map([['p:R5361961', { ...heldExisting, removed_at: '2026-06-01T00:00:00Z' }]]),
+    now,
+    cfg
+  );
+  assert(!('published' in removedRow.updates[0].payload),
+    'reconciliation-removed row is never gate-published');
+
+  // Rejected rows: planBatch skips them before the gate can ever see them
+  // (re-asserted here as the gate spec's "reject overrides everything").
+  const rejectedPlan = planBatch(
+    [{ kind: 'p', reference: 'R5361961', currency: 'EUR', entry: mlsPass }],
+    new Map([['p:R5361961', { ...heldExisting, rejected: true }]]),
+    now,
+    cfg
+  );
+  assert(rejectedPlan.updates.length === 0 && rejectedPlan.skippedRejected === 1,
+    'rejected row: gate never evaluates it');
+
+  // Gate bookkeeping never dirties the hash (no phantom updates next night).
+  const gateStamped = { ...mlsPass.row, publish_gate_failures: ['min_price'], publish_gate_checked_at: now };
+  assert(hashContent(gateStamped) === hashContent(mlsPass.row),
+    'gate fields excluded from the content hash');
+}
+
 console.log(failures === 0 ? '\nAll sync tests passed ✓' : `\n${failures} FAILURE(S)`);
 process.exit(failures === 0 ? 0 : 1);

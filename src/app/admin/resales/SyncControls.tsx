@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-type Busy = 'samples' | 'live' | 'ref' | 'import' | 'reconcile' | null;
+type Busy = 'samples' | 'live' | 'ref' | 'import' | 'reconcile' | 'gate' | null;
 
 export default function SyncControls({
   fullImportStatus = 'idle',
@@ -138,6 +138,24 @@ export default function SyncControls({
           style={btnSecondary}
         >
           {busy === 'reconcile' ? 'Reconciling…' : 'Run reconciliation'}
+        </button>
+
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => {
+            if (
+              !window.confirm(
+                'Re-run the publish gate over every held listing? Passers publish into the full-search inventory; failers stay in the queue with their failing rules recorded. Run this after editing thresholds.'
+              )
+            ) {
+              return;
+            }
+            trigger('/api/admin/resales/publish-gate', 'Publish gate', {}, 'gate');
+          }}
+          style={btnSecondary}
+        >
+          {busy === 'gate' ? 'Gating…' : 'Run publish gate'}
         </button>
 
         <span style={{ fontSize: 12, color: '#888' }}>

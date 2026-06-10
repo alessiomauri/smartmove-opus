@@ -65,6 +65,12 @@ import {
   isValidWatermark,
 } from './resales-hash';
 import { createThrottle, type Throttle } from './resales-throttle';
+import {
+  evaluatePublishGate,
+  loadPublishGateConfig,
+  type PublishGateConfig,
+  type GateRow,
+} from './resales-publish-gate';
 import { getSyncState, setSyncState, WATERMARK_KEY, OWN_REFS_KEY } from './sync-state';
 import { revalidateTag } from 'next/cache';
 import { PROPERTIES_TAG, DEVELOPMENTS_TAG } from '@/lib/cache';
@@ -97,6 +103,9 @@ export interface SyncReport {
   /** URLs submitted to IndexNow (0 when INDEXNOW_KEY unset or no writes). */
   indexnowPinged: number;
   soldTailHits: number;
+  /** Publish-gate outcomes (MLS property rows evaluated this run). */
+  gatePublished: number;
+  gateHeld: number;
   watermarkBefore: string | null;
   watermarkAfter: string | null;
   errorsCount: number;
@@ -172,6 +181,14 @@ interface SyncOpts {
    * the error is recorded.
    */
   fetchOwnRefs?: (throttle: Throttle) => Promise<Set<string>>;
+  /**
+   * Publish gate for MLS property rows. `undefined` (default) loads the
+   * live config from site_settings.publish_gate; `null` disables the
+   * gate for this run; tests inject a config directly. A failed config
+   * load runs with the gate inactive (rows stay pending — safe) and the
+   * error lands in the run row.
+   */
+  publishGate?: PublishGateConfig | null;
   /** Injectable for tests; defaults to env-tuned throttle. */
   throttle?: Throttle;
   /**
@@ -194,6 +211,10 @@ export interface ExistingRow {
   price: number | null;
   status: string | null;
   source_image_urls: string[] | null;
+  /** Properties only — drive the publish-gate re-check on update. */
+  pending_review?: boolean | null;
+  published?: boolean | null;
+  removed_at?: string | null;
 }
 
 export interface PlannedUpdate {
@@ -215,6 +236,9 @@ export interface BatchPlan {
   touchIds: { properties: string[]; developments: string[] };
   skippedUnchanged: number;
   skippedRejected: number;
+  /** Publish-gate outcomes this batch (MLS property rows only). */
+  gatePublished: number;
+  gateHeld: number;
 }
 
 function arraysEqual(a: string[] | null | undefined, b: string[] | null | undefined): boolean {
@@ -230,11 +254,20 @@ function arraysEqual(a: string[] | null | undefined, b: string[] | null | undefi
  * the existing DB rows. Pure — this is the function the acceptance
  * tests drive: no upstream change ⇒ zero inserts/updates; one price
  * change ⇒ exactly one update with exactly one priceChange.
+ *
+ * `gateCfg` (when non-null) applies the publish gate to MLS property
+ * rows: passing INSERTS auto-publish; failing inserts stay pending with
+ * the failing rule keys recorded. Changed rows still in the
+ * untouched-held state (pending ∧ unpublished ∧ not rejected/removed)
+ * are RE-evaluated — upstream fixing the data publishes the row, and a
+ * still-failing row gets its failure record refreshed. The gate never
+ * unpublishes and never sees admin-touched rows.
  */
 export function planBatch(
   mapped: Array<{ kind: 'p' | 'd'; reference: string; currency: string; entry: AnyInsertRow }>,
   existingBySourceId: Map<string, ExistingRow>,
-  nowIso: string
+  nowIso: string,
+  gateCfg: PublishGateConfig | null = null
 ): BatchPlan {
   const plan: BatchPlan = {
     inserts: [],
@@ -242,6 +275,8 @@ export function planBatch(
     touchIds: { properties: [], developments: [] },
     skippedUnchanged: 0,
     skippedRejected: 0,
+    gatePublished: 0,
+    gateHeld: 0,
   };
 
   // Dedupe within the batch — the same reference can appear twice with
@@ -258,11 +293,25 @@ export function planBatch(
     const existing = existingBySourceId.get(`${m.kind}:${m.reference}`);
 
     if (!existing) {
-      plan.inserts.push({
-        kind: m.kind,
-        reference: m.reference,
-        row: { ...row, content_hash: hash },
-      });
+      const insertRow: Record<string, unknown> = { ...row, content_hash: hash };
+      // Publish gate — MLS property inserts only (own rows arrive with
+      // pending_review=false from the mapper and bypass the gate).
+      if (gateCfg && m.kind === 'p' && row.pending_review === true) {
+        const verdict = evaluatePublishGate(row as unknown as GateRow, gateCfg);
+        insertRow.publish_gate_checked_at = nowIso;
+        if (verdict.pass) {
+          // Mirror the own-row auto-publish guard: sold rows clear
+          // review but stay unpublished.
+          insertRow.published = row.status !== 'sold';
+          insertRow.pending_review = false;
+          insertRow.publish_gate_failures = null;
+          plan.gatePublished += 1;
+        } else {
+          insertRow.publish_gate_failures = verdict.failures;
+          plan.gateHeld += 1;
+        }
+      }
+      plan.inserts.push({ kind: m.kind, reference: m.reference, row: insertRow });
       continue;
     }
 
@@ -283,6 +332,32 @@ export function planBatch(
       content_hash: hash,
       last_synced_at: nowIso,
     };
+
+    // Publish-gate re-check, ONLY for rows no admin has touched
+    // (pending ∧ unpublished; rejected rows never reach here, removed
+    // rows wait for reconciliation). This is the single deliberate
+    // exception to "updates never write published/pending_review":
+    // it can only ever move an untouched row forward, never override
+    // an admin decision and never unpublish.
+    if (
+      gateCfg &&
+      m.kind === 'p' &&
+      existing.pending_review === true &&
+      existing.published === false &&
+      !existing.removed_at
+    ) {
+      const verdict = evaluatePublishGate(row as unknown as GateRow, gateCfg);
+      payload.publish_gate_checked_at = nowIso;
+      if (verdict.pass) {
+        payload.published = row.status !== 'sold';
+        payload.pending_review = false;
+        payload.publish_gate_failures = null;
+        plan.gatePublished += 1;
+      } else {
+        payload.publish_gate_failures = verdict.failures;
+        plan.gateHeld += 1;
+      }
+    }
 
     let priceChange: PlannedUpdate['priceChange'] = null;
     let statusChange: PlannedUpdate['statusChange'] = null;
@@ -341,6 +416,8 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
   let imagesPurged = 0;
   let indexnowPinged = 0;
   let soldTailHits = 0;
+  let gatePublished = 0;
+  let gateHeld = 0;
   // Public URLs of rows actually written this run — fed to IndexNow.
   const changedUrls: string[] = [];
   let pendingCount = 0;
@@ -392,6 +469,24 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       errors.push(
         `own-refs fetch failed (inserts default to pending): ${
           ownErr instanceof Error ? ownErr.message : ownErr
+        }`
+      );
+    }
+  }
+
+  // ── Publish gate: resolve once per run (injected by tests, loaded
+  // from site_settings otherwise). Load failure ⇒ gate inactive (MLS
+  // inserts stay pending — the safe pre-gate behaviour), error recorded.
+  let gateCfg: PublishGateConfig | null = null;
+  if (opts.publishGate !== undefined) {
+    gateCfg = opts.publishGate;
+  } else {
+    try {
+      gateCfg = await loadPublishGateConfig(opts.supabase);
+    } catch (gateErr) {
+      errors.push(
+        `publish-gate config load failed (gate inactive this run): ${
+          gateErr instanceof Error ? gateErr.message : gateErr
         }`
       );
     }
@@ -489,9 +584,11 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
         if (refs.length === 0) continue;
         // developments carry price ranges, not a single price/status —
         // the planner only consults price/status for property rows.
+        // pending_review/published/removed_at drive the publish-gate
+        // re-check (properties only).
         const cols =
           kind === 'p'
-            ? 'id, source_id, slug, content_hash, rejected, price, status, source_image_urls'
+            ? 'id, source_id, slug, content_hash, rejected, price, status, source_image_urls, pending_review, published, removed_at'
             : 'id, source_id, slug, content_hash, rejected, source_image_urls';
         const { data: existingRows, error: exErr } = await opts.supabase
           .from(table)
@@ -514,8 +611,10 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
 
       // ── Plan + execute ──
       const stamp = nowIso();
-      const plan = planBatch(mapped, existingBySourceId, stamp);
+      const plan = planBatch(mapped, existingBySourceId, stamp, gateCfg);
       rowsSkippedUnchanged += plan.skippedUnchanged;
+      gatePublished += plan.gatePublished;
+      gateHeld += plan.gateHeld;
 
       // Inserts (upsert for race safety across concurrent runs)
       for (const [kind, table] of [
@@ -542,7 +641,11 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           for (const r of rows) {
             if (r.pending_review) pendingCount += 1;
             else approvedCount += 1;
-            if (typeof r.slug === 'string') changedUrls.push(...entityUrls(kind, r.slug));
+            // Only published rows have a public URL worth pinging —
+            // pending inserts would 404 at the search engine.
+            if (r.published === true && typeof r.slug === 'string') {
+              changedUrls.push(...entityUrls(kind, r.slug));
+            }
           }
         }
       }
@@ -764,14 +867,19 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       apiCalls: throttle.apiCalls,
       indexnowPinged,
       soldTailHits,
+      gatePublished,
+      gateHeld,
       watermarkBefore,
       watermarkAfter,
       errorsCount: errors.length,
       errors: errors.slice(0, 10),
       message:
-        finalStatus === 'success'
+        (finalStatus === 'success'
           ? `Seen ${rowsSeen}, skipped ${rowsSkippedUnchanged} unchanged, updated ${rowsUpdated}, inserted ${rowsInserted} across ${pagesWalked} page(s).`
-          : `Sync ${finalStatus} — ${rowsUpdated + rowsInserted} written, ${rowsSkippedUnchanged} skipped, ${errors.length} error(s).`,
+          : `Sync ${finalStatus} — ${rowsUpdated + rowsInserted} written, ${rowsSkippedUnchanged} skipped, ${errors.length} error(s).`) +
+        (gatePublished + gateHeld > 0
+          ? ` Gate: ${gatePublished} published, ${gateHeld} held.`
+          : ''),
       cursor: { nextPage: page, queryId, done: done || stopReached },
       upserted: rowsInserted + rowsUpdated,
       pending: pendingCount,
@@ -819,6 +927,8 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       apiCalls: throttle.apiCalls,
       indexnowPinged,
       soldTailHits,
+      gatePublished,
+      gateHeld,
       watermarkBefore,
       watermarkAfter: watermarkBefore,
       errorsCount: errors.length + 1,
