@@ -1,3 +1,10 @@
+'use client';
+
+// Client component on purpose: as a server component, the next-intl
+// <Link> here reads request-scoped locale context, which silently
+// opted the ENTIRE /property/[slug] segment out of static generation
+// (every property page rendered per-request). As a client boundary it
+// resolves locale on the client and the segment stays prerenderable.
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft } from 'lucide-react';
 

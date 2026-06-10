@@ -22,36 +22,7 @@ export async function getAllDevelopments(): Promise<Development[]> {
   return (data || []) as Development[];
 }
 
-export async function getPublishedDevelopments(): Promise<Development[]> {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from('developments')
-    .select('*')
-    .eq('published', true)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching developments:', error);
-    return [];
-  }
-  return (data || []) as Development[];
-}
-
-export async function getDevelopmentBySlug(slug: string): Promise<Development | null> {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from('developments')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    console.error('Error fetching development:', error);
-    return null;
-  }
-  return data as Development;
-}
+// Public reads live in src/lib/queries.ts (static client + DEVELOPMENTS_TAG).
 
 export async function getDevelopmentById(id: string): Promise<Development | null> {
   const supabase = await createServerSupabaseClient();

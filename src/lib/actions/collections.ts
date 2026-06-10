@@ -3,7 +3,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { Collection, CollectionWithProperties } from '@/types/collection';
 import { Property } from '@/types/property';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
+import { COLLECTIONS_TAG } from '@/lib/cache';
 
 // Fetch all collections (admin)
 export async function getAllCollections() {
@@ -19,19 +20,21 @@ export async function getAllCollections() {
     throw new Error('Failed to fetch collections');
   }
 
-  // Get property counts for each collection
-  const collectionsWithCounts = await Promise.all(
-    (data as Collection[]).map(async (collection) => {
-      const { count } = await supabase
-        .from('collection_properties')
-        .select('*', { count: 'exact', head: true })
-        .eq('collection_id', collection.id);
+  // One query for all membership rows, counted in memory — the previous
+  // version issued a COUNT round-trip per collection (N+1).
+  const { data: links } = await supabase
+    .from('collection_properties')
+    .select('collection_id');
 
-      return { ...collection, property_count: count || 0 };
-    })
-  );
+  const counts = new Map<string, number>();
+  for (const l of links ?? []) {
+    counts.set(l.collection_id, (counts.get(l.collection_id) ?? 0) + 1);
+  }
 
-  return collectionsWithCounts;
+  return (data as Collection[]).map((c) => ({
+    ...c,
+    property_count: counts.get(c.id) ?? 0,
+  }));
 }
 
 // Fetch collection by ID with properties (admin edit)
@@ -67,61 +70,19 @@ export async function getCollectionById(id: string) {
       .select('*')
       .in('id', propertyIds);
 
-    // Sort them in the correct order
+    // Restore curated order via Map (O(n), was O(n²) .find per id)
     if (props) {
+      const byId = new Map((props as Property[]).map((p) => [p.id, p]));
       properties = propertyIds
-        .map((id) => props.find((p) => p.id === id))
-        .filter(Boolean) as Property[];
+        .map((id) => byId.get(id))
+        .filter((p): p is Property => Boolean(p));
     }
   }
 
   return { ...(collection as Collection), properties } as CollectionWithProperties;
 }
 
-// Fetch collection by slug with properties (public)
-export async function getCollectionBySlug(slug: string) {
-  const supabase = await createServerSupabaseClient();
-
-  const { data: collection, error } = await supabase
-    .from('collections')
-    .select('*')
-    .eq('slug', slug)
-    .eq('is_published', true)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    console.error('Error fetching collection:', error);
-    throw new Error('Failed to fetch collection');
-  }
-
-  // Get ordered property IDs
-  const { data: collectionProperties } = await supabase
-    .from('collection_properties')
-    .select('property_id, sort_order')
-    .eq('collection_id', collection.id)
-    .order('sort_order', { ascending: true });
-
-  const propertyIds = (collectionProperties || []).map((cp) => cp.property_id);
-
-  // Fetch published properties only
-  let properties: Property[] = [];
-  if (propertyIds.length > 0) {
-    const { data: props } = await supabase
-      .from('properties')
-      .select('*')
-      .in('id', propertyIds)
-      .eq('published', true);
-
-    if (props) {
-      properties = propertyIds
-        .map((id) => props.find((p) => p.id === id))
-        .filter(Boolean) as Property[];
-    }
-  }
-
-  return { ...(collection as Collection), properties } as CollectionWithProperties;
-}
+// Public read (getCollectionBySlug) lives in src/lib/queries.ts.
 
 // Create collection
 export async function createCollection(data: {
@@ -177,6 +138,7 @@ export async function createCollection(data: {
   }
 
   revalidatePath('/admin/collections');
+  updateTag(COLLECTIONS_TAG);
   return collection as Collection;
 }
 
@@ -234,7 +196,7 @@ export async function updateCollection(id: string, data: {
   }
 
   revalidatePath('/admin/collections');
-  revalidatePath(`/collection/${collection.slug}`);
+  updateTag(COLLECTIONS_TAG);
   return collection as Collection;
 }
 
@@ -256,6 +218,7 @@ export async function deleteCollection(id: string) {
   }
 
   revalidatePath('/admin/collections');
+  updateTag(COLLECTIONS_TAG);
   return { success: true };
 }
 
@@ -279,25 +242,6 @@ export async function toggleCollectionPublished(id: string, is_published: boolea
   }
 
   revalidatePath('/admin/collections');
+  updateTag(COLLECTIONS_TAG);
   return data as Collection;
-}
-
-// Increment view count (public, called on page load)
-export async function incrementCollectionViews(slug: string) {
-  const supabase = await createServerSupabaseClient();
-
-  // Get current count and increment
-  const { data } = await supabase
-    .from('collections')
-    .select('id, view_count')
-    .eq('slug', slug)
-    .eq('is_published', true)
-    .single();
-
-  if (data) {
-    await supabase
-      .from('collections')
-      .update({ view_count: (data.view_count || 0) + 1 })
-      .eq('id', data.id);
-  }
 }

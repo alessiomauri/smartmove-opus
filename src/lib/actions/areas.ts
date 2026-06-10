@@ -52,21 +52,7 @@ export async function getAllAreas(): Promise<Area[]> {
   return (data || []) as Area[];
 }
 
-export async function getPublishedAreas(): Promise<Area[]> {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from('areas')
-    .select('*')
-    .eq('published', true)
-    .order('display_order', { ascending: true })
-    .order('name', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching areas:', error);
-    return [];
-  }
-  return (data || []) as Area[];
-}
+// Public reads live in src/lib/queries.ts (static client + AREAS_TAG).
 
 export async function getAreaBySlug(slug: string): Promise<Area | null> {
   const supabase = await createServerSupabaseClient();

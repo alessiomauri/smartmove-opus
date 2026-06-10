@@ -3,13 +3,21 @@ import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { BookOpen, ArrowRight, Clock } from 'lucide-react';
 import { BLOG_CATEGORY_LABELS } from '@/types/blog';
-import { getPublishedBlogPosts } from '@/lib/actions/blog';
+import { getPublishedBlogPostsCached } from '@/lib/queries';
+import { localizedAlternates, localizedUrl } from '@/lib/seo';
+import type { Locale } from '@/i18n/routing';
 
 export const revalidate = 3600; // ISR: regenerate every hour
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
-export const metadata: Metadata = {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return {
   title: 'Marbella Property Blog | Buying Guides, Market Reports & Area Guides',
   description: 'Expert insights on buying property in Marbella and the Costa del Sol. Buying guides, market reports, area comparisons, tax guides, and lifestyle advice from local experts.',
   keywords: [
@@ -17,18 +25,19 @@ export const metadata: Metadata = {
     'Spain property market report', 'buying property Spain guide', 'Marbella area guide',
     'property taxes Spain', 'Golden Visa Spain', 'living in Marbella',
   ],
-  alternates: { canonical: `${baseUrl}/blog` },
+  alternates: localizedAlternates(locale, '/blog'),
   openGraph: {
     title: 'Marbella Property Blog | Smartmove Marbella',
     description: 'Expert insights on buying and investing in Costa del Sol property.',
-    url: `${baseUrl}/blog`,
+    url: localizedUrl(locale, '/blog'),
     siteName: 'Smartmove Marbella',
     type: 'website',
   },
-};
+  };
+}
 
 export default async function BlogIndexPage() {
-  const allPosts = await getPublishedBlogPosts();
+  const allPosts = await getPublishedBlogPostsCached();
   const featured = allPosts.filter(p => p.featured);
   const other = allPosts.filter(p => !p.featured);
 

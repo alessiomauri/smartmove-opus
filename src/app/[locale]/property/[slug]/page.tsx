@@ -1,12 +1,14 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPropertyBySlug } from '@/lib/actions/properties';
+import { getPropertyBySlugCached } from '@/lib/queries';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
+import { localizedAlternates, localizedUrl } from '@/lib/seo';
+import type { Locale } from '@/i18n/routing';
 import PropertyPageClient from './PropertyPageClient';
 import { Property } from '@/types/property';
 
 interface PropertyPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: Locale; slug: string }>;
 }
 
 export const revalidate = 3600;
@@ -26,8 +28,9 @@ export async function generateStaticParams() {
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: PropertyPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const property = await getPropertyBySlug(slug);
+  const { locale, slug } = await params;
+  // Deduped with the page body via react.cache — one query per request.
+  const property = await getPropertyBySlugCached(slug);
 
   if (!property) {
     return {
@@ -36,8 +39,8 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
-  const propertyUrl = `${baseUrl}/property/${property.slug}`;
+  const href = { pathname: '/property/[slug]', params: { slug: property.slug } } as const;
+  const propertyUrl = localizedUrl(locale, href);
 
   // Build comprehensive title with location for local SEO
   const title = `${property.name} | Luxury Property in ${property.location}, Marbella`;
@@ -118,14 +121,8 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
         'max-snippet': -1,
       },
     },
-    alternates: {
-      canonical: propertyUrl,
-      languages: {
-        'en-US': propertyUrl,
-        'es-ES': propertyUrl,
-        'x-default': propertyUrl,
-      },
-    },
+    // Locale-correct canonical + hreflang (EN ↔ ES localized paths).
+    alternates: localizedAlternates(locale, href),
     openGraph: {
       title: `${property.name} | ${property.location}, Marbella`,
       description: ogDescription,
@@ -284,7 +281,7 @@ function generatePropertyJsonLd(property: Property, baseUrl: string) {
 
 export default async function PropertyPage({ params }: PropertyPageProps) {
   const { slug } = await params;
-  const property = await getPropertyBySlug(slug);
+  const property = await getPropertyBySlugCached(slug);
 
   if (!property) {
     notFound();

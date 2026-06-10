@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getAreaBySlug, getPublishedAreas } from '@/lib/actions/areas';
+import { localizedAlternates, localizedUrl } from '@/lib/seo';
+import type { Locale } from '@/i18n/routing';
+import { getAreaBySlugCached, getPublishedAreasCached } from '@/lib/queries';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { getPropertiesForArea, getDevelopmentsForArea } from '@/lib/cache';
 import AreaPageClient from './AreaPageClient';
@@ -17,18 +19,19 @@ export async function generateStaticParams() {
 }
 
 interface Props {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: Locale; slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const area = await getAreaBySlug(slug);
+  const { locale, slug } = await params;
+  const area = await getAreaBySlugCached(slug);
 
   if (!area) {
     return { title: 'Area Not Found' };
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
+  const href = { pathname: '/areas/[slug]', params: { slug: area.slug } } as const;
 
   // Auto-generate Spanish keyword variants for this area so we capture
   // Spanish-language searches without maintaining a separate /es/ tree.
@@ -46,18 +49,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: area.title,
     description: area.meta_description,
     keywords: [...area.keywords, ...spanishKeywords],
-    alternates: {
-      canonical: `${baseUrl}/areas/${area.slug}`,
-      languages: {
-        'en-US': `${baseUrl}/areas/${area.slug}`,
-        'es-ES': `${baseUrl}/areas/${area.slug}`,
-        'x-default': `${baseUrl}/areas/${area.slug}`,
-      },
-    },
+    alternates: localizedAlternates(locale, href),
     openGraph: {
       title: area.title,
       description: area.meta_description,
-      url: `${baseUrl}/areas/${area.slug}`,
+      url: localizedUrl(locale, href),
       siteName: 'Smartmove Marbella',
       locale: 'en_US',
       alternateLocale: ['es_ES'],
@@ -87,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function AreaPage({ params }: Props) {
   const { slug } = await params;
-  const area = await getAreaBySlug(slug);
+  const area = await getAreaBySlugCached(slug);
 
   if (!area || !area.published) {
     notFound();
@@ -96,7 +92,7 @@ export default async function AreaPage({ params }: Props) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
   // Load all published areas to resolve nearby, child, and descendant areas
-  const allAreas = await getPublishedAreas();
+  const allAreas = await getPublishedAreasCached();
   const nearbyAreas = allAreas.filter(a => area.nearby_areas.includes(a.slug));
   const childAreas = allAreas.filter(a => a.parent_area === area.slug);
   const parentArea = area.parent_area ? (allAreas.find(a => a.slug === area.parent_area) ?? null) : null;

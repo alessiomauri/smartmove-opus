@@ -4,7 +4,9 @@ import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { ChevronRight, Clock, Calendar, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BLOG_CATEGORY_LABELS } from '@/types/blog';
-import { getBlogPostBySlug, getPublishedBlogPosts } from '@/lib/actions/blog';
+import { getBlogPostBySlugCached, getPublishedBlogPostsCached } from '@/lib/queries';
+import { localizedAlternates, localizedUrl } from '@/lib/seo';
+import type { Locale } from '@/i18n/routing';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 
 export const revalidate = 3600; // ISR: regenerate every hour
@@ -19,16 +21,17 @@ export async function generateStaticParams() {
 }
 
 interface Props {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: Locale; slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const { locale, slug } = await params;
+  const post = await getBlogPostBySlugCached(slug);
 
   if (!post) return { title: 'Post Not Found' };
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
+  const href = { pathname: '/blog/[slug]', params: { slug: post.slug } } as const;
 
   // Spanish keyword variants — captures Spanish-language searches without
   // a separate /es/ subtree.
@@ -44,14 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.title,
     description: post.meta_description,
     keywords: [...post.keywords, ...spanishVariants],
-    alternates: {
-      canonical: `${baseUrl}/blog/${post.slug}`,
-      languages: {
-        'en-US': `${baseUrl}/blog/${post.slug}`,
-        'es-ES': `${baseUrl}/blog/${post.slug}`,
-        'x-default': `${baseUrl}/blog/${post.slug}`,
-      },
-    },
+    alternates: localizedAlternates(locale, href),
     openGraph: {
       title: post.title,
       description: post.meta_description,
@@ -93,14 +89,14 @@ function formatDate(dateStr: string): string {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const post = await getBlogPostBySlugCached(slug);
 
   if (!post || !post.published) notFound();
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
   // Find related posts (same category, excluding current)
-  const allPosts = await getPublishedBlogPosts();
+  const allPosts = await getPublishedBlogPostsCached();
   const related = allPosts
     .filter(p => p.slug !== post.slug)
     .sort((a, b) => (a.category === post.category ? -1 : 1))

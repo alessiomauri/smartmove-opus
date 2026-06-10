@@ -1,213 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Property, PropertyFilters, SortOption } from '@/types/property';
+import { useState, useEffect, useRef } from 'react';
+import { Property } from '@/types/property';
 import { createClient } from '@/lib/supabase';
-
-// Hook to fetch site default sort setting
-export function useDefaultSort() {
-  const [defaultSort, setDefaultSort] = useState<SortOption>('newest');
-
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('site_settings')
-          .select('default_sort')
-          .eq('id', 1)
-          .single();
-
-        if (data?.default_sort) {
-          setDefaultSort(data.default_sort as SortOption);
-        }
-      } catch {
-        // Silently fallback to 'newest'
-      }
-    }
-    fetchSettings();
-  }, []);
-
-  return defaultSort;
-}
-
-export function useProperties(
-  filters: PropertyFilters = {},
-  sort: SortOption = 'newest'
-) {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchProperties() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const supabase = createClient();
-        const { data, error: fetchError } = await supabase
-          .from('properties')
-          .select('id,slug,name,status,property_type,price,price_on_request,location,area,micro_location,bedrooms,bathrooms,interior_size,plot_size,hero_image,is_featured,featured_order,features,description,created_at')
-          .eq('published', true);
-
-        if (fetchError) {
-          throw fetchError;
-        }
-
-        setProperties((data as Property[]) || []);
-      } catch (err) {
-        console.error('Error fetching properties:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch properties');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProperties();
-  }, []);
-
-  // Apply filters and sorting
-  const filteredProperties = useMemo(() => {
-    let result = [...properties];
-
-    // Filter by status
-    if (filters.status && filters.status !== 'all') {
-      result = result.filter((p) => p.status === filters.status);
-    }
-
-    // Filter by property type
-    if (filters.propertyType) {
-      result = result.filter((p) => p.property_type === filters.propertyType);
-    }
-
-    // Filter by area — matches main area name, child area names, OR micro_location slug
-    if (filters.area || filters.childAreaNames?.length || filters.microLocationSlugs?.length) {
-      result = result.filter((p) => {
-        if (filters.area && p.area === filters.area) return true;
-        if (filters.childAreaNames?.length && filters.childAreaNames.includes(p.area)) return true;
-        if (filters.microLocationSlugs?.length && p.micro_location) {
-          return filters.microLocationSlugs.includes(p.micro_location);
-        }
-        return false;
-      });
-    }
-
-    // Filter by price range
-    if (filters.minPrice !== undefined) {
-      result = result.filter(
-        (p) => p.price !== null && p.price >= filters.minPrice!
-      );
-    }
-    if (filters.maxPrice !== undefined) {
-      result = result.filter(
-        (p) => p.price !== null && p.price <= filters.maxPrice!
-      );
-    }
-
-    // Filter by minimum bedrooms
-    if (filters.minBedrooms !== undefined) {
-      result = result.filter(
-        (p) => p.bedrooms !== null && p.bedrooms >= filters.minBedrooms!
-      );
-    }
-
-    // Filter by features
-    if (filters.features && filters.features.length > 0) {
-      result = result.filter((p) =>
-        filters.features!.every((f) => p.features.includes(f))
-      );
-    }
-
-    // Search by name
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.location.toLowerCase().includes(searchLower) ||
-          p.description.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Sort helper for non-featured properties
-    const applySortOrder = (a: Property, b: Property) => {
-      switch (sort) {
-        case 'price_asc':
-          if (a.price === null) return 1;
-          if (b.price === null) return -1;
-          return a.price - b.price;
-        case 'price_desc':
-          if (a.price === null) return 1;
-          if (b.price === null) return -1;
-          return b.price - a.price;
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'newest':
-        default:
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-    };
-
-    // Featured properties always come first, sorted by featured_order
-    // Then non-featured properties follow the selected sort
-    result.sort((a, b) => {
-      if (a.is_featured && !b.is_featured) return -1;
-      if (!a.is_featured && b.is_featured) return 1;
-      if (a.is_featured && b.is_featured) {
-        return (a.featured_order ?? 0) - (b.featured_order ?? 0);
-      }
-      return applySortOrder(a, b);
-    });
-
-    return result;
-  }, [properties, filters, sort]);
-
-  return { properties: filteredProperties, loading, error };
-}
-
-export function useProperty(slug: string) {
-  const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchProperty() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const supabase = createClient();
-        const { data, error: fetchError } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('slug', slug)
-          .single();
-
-        if (fetchError) {
-          if (fetchError.code === 'PGRST116') {
-            setError('Property not found');
-          } else {
-            throw fetchError;
-          }
-        } else {
-          setProperty(data as Property);
-        }
-      } catch (err) {
-        console.error('Error fetching property:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch property');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (slug) {
-      fetchProperty();
-    }
-  }, [slug]);
-
-  return { property, loading, error };
-}
+import { PROPERTY_LIST_COLUMNS } from '@/lib/list-columns';
 
 // Helper to check if a string is a valid UUID
 function isValidUUID(str: string): boolean {
@@ -215,71 +11,86 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
+/**
+ * Fetch the favourited properties for the favourites / shared-favourites
+ * pages. Client-side by necessity (the ids live in localStorage).
+ *
+ *  - Card columns only (shared PROPERTY_LIST_COLUMNS) — the previous
+ *    `select('*')` shipped gallery arrays + JSONB blobs per card.
+ *  - One `.or()` query covers both UUID ids and legacy slug ids.
+ *  - When ids only SHRINK (user removes a favourite), the list is
+ *    filtered locally — no refetch, no loading flash.
+ */
 export function usePropertiesByIds(ids: string[]) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Ids we already have rows for — lets removals resolve locally.
+  const fetchedIdsRef = useRef<Set<string>>(new Set());
 
-  // Create a stable string key for the ids array to prevent infinite loops
+  // Stable key prevents effect loops when callers pass a fresh array.
   const idsKey = ids.join(',');
 
   useEffect(() => {
+    const currentIds = idsKey ? idsKey.split(',').filter((id) => id.trim()) : [];
+
+    if (currentIds.length === 0) {
+      fetchedIdsRef.current = new Set();
+      setProperties([]);
+      setLoading(false);
+      return;
+    }
+
+    // Pure removal? Trim the local list and skip the network round-trip.
+    const fetched = fetchedIdsRef.current;
+    const isSubset = currentIds.every((id) => fetched.has(id));
+    if (isSubset && fetched.size > 0) {
+      const keep = new Set(currentIds);
+      fetchedIdsRef.current = keep;
+      setProperties((prev) => prev.filter((p) => keep.has(p.id) || keep.has(p.slug)));
+      return;
+    }
+
+    let cancelled = false;
     async function fetchProperties() {
-      // Parse ids from the key to ensure we have the current values
-      const currentIds = idsKey ? idsKey.split(',').filter(id => id.trim()) : [];
-
-      if (currentIds.length === 0) {
-        setProperties([]);
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       setError(null);
-
       try {
         const supabase = createClient();
 
-        // Separate valid UUIDs from potential slugs (invalid UUIDs like "6", "2" won't work)
-        const validUUIDs = currentIds.filter(id => isValidUUID(id));
-        const potentialSlugs = currentIds.filter(id => !isValidUUID(id));
+        const validUUIDs = currentIds.filter((id) => isValidUUID(id));
+        const potentialSlugs = currentIds.filter((id) => !isValidUUID(id));
 
-        let allData: Property[] = [];
+        const orParts: string[] = [];
+        if (validUUIDs.length > 0) orParts.push(`id.in.(${validUUIDs.join(',')})`);
+        if (potentialSlugs.length > 0)
+          orParts.push(`slug.in.(${potentialSlugs.map((s) => `"${s}"`).join(',')})`);
 
-        // Fetch by UUID if we have valid UUIDs
-        if (validUUIDs.length > 0) {
-          const { data: uuidData, error: uuidError } = await supabase
-            .from('properties')
-            .select('*')
-            .in('id', validUUIDs);
+        const { data, error: fetchError } = await supabase
+          .from('properties')
+          .select(PROPERTY_LIST_COLUMNS)
+          .or(orParts.join(','))
+          .eq('published', true);
 
-          if (!uuidError && uuidData) {
-            allData = [...allData, ...uuidData];
-          }
+        if (fetchError) throw fetchError;
+        if (!cancelled) {
+          fetchedIdsRef.current = new Set(currentIds);
+          setProperties((data as unknown as Property[]) || []);
         }
-
-        // Fetch by slug if we have potential slugs
-        if (potentialSlugs.length > 0) {
-          const { data: slugData, error: slugError } = await supabase
-            .from('properties')
-            .select('*')
-            .in('slug', potentialSlugs);
-
-          if (!slugError && slugData) {
-            allData = [...allData, ...slugData];
-          }
-        }
-
-        setProperties(allData);
       } catch (err) {
         console.error('Error fetching properties by ids:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch properties');
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch properties');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchProperties();
+    return () => {
+      cancelled = true;
+    };
   }, [idsKey]);
 
   return { properties, loading, error };

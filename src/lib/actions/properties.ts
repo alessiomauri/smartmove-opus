@@ -23,24 +23,6 @@ export async function getAllProperties() {
   return data as Property[];
 }
 
-// Fetch published properties (for public site)
-export async function getPublishedProperties() {
-  const supabase = await createServerSupabaseClient();
-
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('published', true)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching properties:', error);
-    throw new Error('Failed to fetch properties');
-  }
-
-  return data as Property[];
-}
-
 // Fetch single property by ID
 export async function getPropertyById(id: string) {
   const supabase = await createServerSupabaseClient();
@@ -62,47 +44,8 @@ export async function getPropertyById(id: string) {
   return data as Property;
 }
 
-// Fetch single property by slug (for public pages)
-export async function getPropertyBySlug(slug: string) {
-  const supabase = await createServerSupabaseClient();
-
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return null; // Not found
-    }
-    console.error('Error fetching property:', error);
-    throw new Error('Failed to fetch property');
-  }
-
-  return data as Property;
-}
-
-// Fetch properties by IDs (for favourites)
-export async function getPropertiesByIds(ids: string[]) {
-  if (ids.length === 0) return [];
-
-  const supabase = await createServerSupabaseClient();
-
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .in('id', ids)
-    .eq('published', true);
-
-  if (error) {
-    console.error('Error fetching properties:', error);
-    throw new Error('Failed to fetch properties');
-  }
-
-  return data as Property[];
-}
+// Public reads live in src/lib/queries.ts (static client + cache tags).
+// This file keeps admin-only reads and the mutations.
 
 // Create new property
 export async function createProperty(propertyData: Partial<Property>) {

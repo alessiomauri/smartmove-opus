@@ -2,22 +2,36 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import { getDevelopmentBySlug } from '@/lib/actions/developments';
+import { getDevelopmentBySlugCached } from '@/lib/queries';
+import { localizedAlternates, localizedUrl } from '@/lib/seo';
+import type { Locale } from '@/i18n/routing';
+import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { DEVELOPMENT_STATUS_LABELS } from '@/types/development';
 import { NEW_DEVELOPMENTS_PUBLIC } from '../feature-flag';
 
 export const revalidate = 3600;
 
+// Prebuild every published development — without this the route fell
+// back to per-request rendering despite the revalidate export.
+export async function generateStaticParams() {
+  const supabase = createStaticSupabaseClient();
+  const { data } = await supabase
+    .from('developments')
+    .select('slug')
+    .eq('published', true);
+  return (data || []).map((d) => ({ slug: d.slug }));
+}
+
 interface Props {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: Locale; slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const dev = await getDevelopmentBySlug(slug);
+  const { locale, slug } = await params;
+  const dev = await getDevelopmentBySlugCached(slug);
   if (!dev) return { title: 'Not found' };
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
+  const href = { pathname: '/new-developments/[slug]', params: { slug: dev.slug } } as const;
 
   return {
     title: dev.title || `${dev.name} | Smartmove Marbella`,
@@ -26,11 +40,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: NEW_DEVELOPMENTS_PUBLIC
       ? undefined
       : { index: false, follow: false, nocache: true },
-    alternates: { canonical: `${baseUrl}/new-developments/${dev.slug}` },
+    alternates: localizedAlternates(locale, href),
     openGraph: {
       title: dev.title || dev.name,
       description: dev.meta_description || dev.short_description,
-      url: `${baseUrl}/new-developments/${dev.slug}`,
+      url: localizedUrl(locale, href),
       siteName: 'Smartmove Marbella',
       type: 'website',
       images: dev.hero_image
@@ -51,7 +65,7 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
   if (!NEW_DEVELOPMENTS_PUBLIC) notFound();
 
   const { slug } = await params;
-  const dev = await getDevelopmentBySlug(slug);
+  const dev = await getDevelopmentBySlugCached(slug);
   if (!dev || !dev.published) notFound();
 
   return (

@@ -3,7 +3,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { BlogPost } from '@/types/blog';
 import { BLOG_POSTS as STATIC_BLOG_POSTS } from '@/lib/blog-data';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
+import { BLOG_TAG } from '@/lib/cache';
 
 // Fetch all blog posts (admin - includes unpublished)
 export async function getAllBlogPosts(): Promise<BlogPost[]> {
@@ -20,24 +21,7 @@ export async function getAllBlogPosts(): Promise<BlogPost[]> {
   return (data || []) as BlogPost[];
 }
 
-// Fetch published posts (public). Featured posts are pinned to the top of
-// the list, so anything that consumes this (homepage Latest Insight, /blog
-// index, related-posts widgets) gets featured-first ordering automatically.
-export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('published', true)
-    .order('featured', { ascending: false })
-    .order('published_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching blog posts:', error);
-    return [];
-  }
-  return (data || []) as BlogPost[];
-}
+// Public reads live in src/lib/queries.ts (static client + BLOG_TAG).
 
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   const supabase = await createServerSupabaseClient();
@@ -74,8 +58,7 @@ export async function createBlogPost(post: Partial<BlogPost>) {
   }
 
   revalidatePath('/admin/blog');
-  revalidatePath('/blog');
-  revalidatePath(`/blog/${data.slug}`);
+  updateTag(BLOG_TAG);
 
   return data as BlogPost;
 }
@@ -100,9 +83,7 @@ export async function updateBlogPost(slug: string, post: Partial<BlogPost>) {
   }
 
   revalidatePath('/admin/blog');
-  revalidatePath('/blog');
-  revalidatePath(`/blog/${slug}`);
-  if (data.slug !== slug) revalidatePath(`/blog/${data.slug}`);
+  updateTag(BLOG_TAG);
 
   return data as BlogPost;
 }
@@ -123,7 +104,7 @@ export async function deleteBlogPost(slug: string) {
   }
 
   revalidatePath('/admin/blog');
-  revalidatePath('/blog');
+  updateTag(BLOG_TAG);
   return { success: true };
 }
 
@@ -139,7 +120,7 @@ export async function toggleBlogPublished(slug: string, published: boolean) {
 
   if (error) throw new Error(error.message);
   revalidatePath('/admin/blog');
-  revalidatePath('/blog');
+  updateTag(BLOG_TAG);
   return { success: true };
 }
 
@@ -178,6 +159,6 @@ export async function seedBlogPostsFromStatic() {
   }
 
   revalidatePath('/admin/blog');
-  revalidatePath('/blog');
+  updateTag(BLOG_TAG);
   return { count: rows.length };
 }

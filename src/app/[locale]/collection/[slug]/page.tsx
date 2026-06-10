@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getCollectionBySlug, incrementCollectionViews } from '@/lib/actions/collections';
+import { after } from 'next/server';
+import { getCollectionBySlugCached, bumpCollectionViews } from '@/lib/queries';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
+import { Toaster } from 'sonner';
 import CollectionPageClient from './CollectionPageClient';
 
 interface CollectionPageProps {
@@ -22,7 +24,7 @@ export async function generateStaticParams() {
 // Dynamic metadata for SEO + OG
 export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const collection = await getCollectionBySlug(slug);
+  const collection = await getCollectionBySlugCached(slug);
 
   if (!collection) {
     return {
@@ -82,14 +84,23 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
 
 export default async function CollectionPage({ params }: CollectionPageProps) {
   const { slug } = await params;
-  const collection = await getCollectionBySlug(slug);
+  const collection = await getCollectionBySlugCached(slug);
 
   if (!collection) {
     notFound();
   }
 
-  // Increment views
-  incrementCollectionViews(slug);
+  // View counter runs after the response is sent — atomic RPC, never
+  // blocks the render and can't be dropped by serverless freeze the way
+  // an un-awaited promise in the render body could.
+  after(() => bumpCollectionViews(slug));
 
-  return <CollectionPageClient collection={collection} />;
+  return (
+    <>
+      <CollectionPageClient collection={collection} />
+      {/* Share buttons fire toasts; the Toaster lives here instead of the
+          root layout so other public pages don't pay for sonner. */}
+      <Toaster position="top-right" richColors />
+    </>
+  );
 }

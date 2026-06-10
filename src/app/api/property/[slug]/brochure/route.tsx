@@ -7,13 +7,17 @@ import sharp from 'sharp';
 // Use Node.js runtime for PDF generation (not edge)
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// PDF render + sharp transcodes of up to 25 remote images can exceed
+// the default function duration on cold paths.
+export const maxDuration = 60;
 
-// Brand colors
+// Brand colors — literal hex: react-pdf has no CSS-variable cascade,
+// so var(--sm-*) tokens are invalid here (values from docs/design/tokens.css).
 const COLORS = {
-  teal: 'var(--sm-gold)',
+  teal: '#cbaa65',   // --sm-gold
   tealLight: '#e8f4f5',
   dark: '#2e2e2e',
-  cream: 'var(--sm-paper)',
+  cream: '#F7F3EC',  // --sm-paper
   white: '#ffffff',
   gray: '#6b7280',
   lightGray: '#e5e7eb',
@@ -405,14 +409,12 @@ export async function GET(
 
     const prop = property as Property;
 
-    // Convert all images to base64 data URIs for PDF embedding
-    console.log('Fetching hero image...');
-    const heroImageData = await imageToDataUri(prop.hero_image);
-
-    console.log('Fetching gallery images...');
-    const galleryImagesData = await Promise.all(
-      (prop.gallery_images || []).slice(0, 24).map(url => imageToDataUri(url))
-    );
+    // Convert all images to base64 data URIs for PDF embedding —
+    // hero + gallery in one parallel wave.
+    const [heroImageData, ...galleryImagesData] = await Promise.all([
+      imageToDataUri(prop.hero_image),
+      ...(prop.gallery_images || []).slice(0, 24).map(url => imageToDataUri(url)),
+    ]);
 
     // Create a modified property with base64 images
     const propWithImages = {
@@ -432,6 +434,10 @@ export async function GET(
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${slug}-brochure.pdf"`,
+        // CDN-cache the rendered PDF for a day (serve-stale for a week).
+        // Regenerating on every click costs ~25 image fetches + sharp
+        // transcodes + a full PDF render.
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
       },
     });
   } catch (e) {

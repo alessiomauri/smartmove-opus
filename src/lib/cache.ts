@@ -2,21 +2,25 @@ import { unstable_cache } from 'next/cache';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { Property, SortOption } from '@/types/property';
 import { Development } from '@/types/development';
+import { PROPERTY_LIST_COLUMNS } from '@/lib/list-columns';
 
 /**
  * Cache tags used across the app. When admin mutations occur, call
- * `revalidateTag(PROPERTIES_TAG)` so every page that reads properties
- * refreshes on the next request.
+ * `updateTag(<TAG>)` so every page that reads that entity refreshes on
+ * the next request. Tag-based invalidation works regardless of the
+ * locale-prefixed URL tree (unlike revalidatePath('/blog/x'), which
+ * never matches the real /[locale]/blog/x route).
  */
 export const PROPERTIES_TAG = 'properties';
 export const AREAS_TAG = 'areas';
 export const SITE_SETTINGS_TAG = 'site_settings';
 export const DEVELOPMENTS_TAG = 'developments';
+export const BLOG_TAG = 'blog';
+export const COLLECTIONS_TAG = 'collections';
 
-// Columns we need for listing / card rendering. Keeping this narrow keeps
-// payload small and bandwidth cost low.
-const LIST_COLUMNS =
-  'id,slug,name,status,property_type,price,price_on_request,location,area,micro_location,bedrooms,bathrooms,interior_size,plot_size,hero_image,hero_image_blur,is_featured,featured_order,features,description,created_at,source,source_id,source_image_urls';
+// Columns we need for listing / card rendering — shared with the client
+// favourites hook via src/lib/list-columns.ts.
+const LIST_COLUMNS = PROPERTY_LIST_COLUMNS;
 
 /**
  * Cached fetch for every published property — the grid source of truth
@@ -39,6 +43,33 @@ export const getCachedPublishedProperties = unstable_cache(
     return (data as Property[]) ?? [];
   },
   ['published-properties'],
+  { tags: [PROPERTIES_TAG], revalidate: 600 }
+);
+
+/**
+ * Lean per-area stats source for the /areas index. The index only needs
+ * counts and min prices per area — fetching the full card payload for
+ * every published property (then discarding 95% of it) was the single
+ * largest over-fetch on the site. Four columns, editorial rows only.
+ */
+export const getCachedAreaPropertyStats = unstable_cache(
+  async (): Promise<
+    Array<{ source: string; area: string | null; micro_location: string | null; price: number | null }>
+  > => {
+    const supabase = createStaticSupabaseClient();
+    const { data, error } = await supabase
+      .from('properties')
+      .select('source,area,micro_location,price')
+      .eq('published', true)
+      .neq('source', 'resales_online');
+
+    if (error) {
+      console.error('getCachedAreaPropertyStats error:', error);
+      return [];
+    }
+    return data ?? [];
+  },
+  ['area-property-stats'],
   { tags: [PROPERTIES_TAG], revalidate: 600 }
 );
 
