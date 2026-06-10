@@ -163,6 +163,31 @@ First bulk pass (2026-06-10, production backlog): scanned 8,200 held →
 193, min_photos 142; description/location 0). R-number distribution at
 the time: p10 = 4.69M, only 287 of 8,215 rows below the 4M floor.
 
+## Location → area mapping (LOCATION NESTING groundwork)
+
+`resales_location_mapping` nests every distinct Resales
+(Location, SubLocation) pair under one of the 44 curated areas —
+groundwork for the property-page guide cross-link and approximate map
+(Prompts 3/5; nothing user-facing reads it yet). Seeder:
+`npx tsx scripts/map-resales-locations.mjs` (idempotent — re-run after
+big imports; it refreshes evidence but never overwrites a row an admin
+approved).
+
+Passes: (1) accent-insensitive name match against area names/slugs —
+SubLocation beats Location; (2) geocode evidence via OSM Nominatim
+(1 req/s, results bounded to a Costa-del-Sol viewbox) → nearest area
+centroid. Listing-GPS medians were the spec'd first choice but are
+empirically unavailable: a 1,039-call PropertyDetails sweep returned
+coordinates for OWN listings only — Resales hides GPS on MLS rows for
+this key (SearchLocations is also flat, no parent hierarchy).
+
+Confidence: high = name match or geocode <2 km (auto-approved) ·
+medium = geocode 2–5 km or coarse Location-name fallback · low =
+geocode >5 km · unmapped = no evidence (correct for inland villages
+outside our coverage — "unmapped = no guide link, never an error").
+Review CSV (sorted worst-first):
+`~/Desktop/smartmove-web-briefs/resales-location-mapping-report.csv`.
+
 ## Price-drop badges
 
 `price_drop_at` is stamped by the sync on a price decrease (cleared on
