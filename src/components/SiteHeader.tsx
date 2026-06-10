@@ -12,8 +12,8 @@ import { useFavourites } from '@/hooks/useFavourites';
  * holds nav links instead of the homepage's inline FilterBar so the
  * header has the same visual weight on every page.
  *
- * z-index 1000 (not 50) so leaflet panes — which live at 200–700 —
- * never bleed up through the sticky header.
+ * z-index 1000 (not 50) so the map canvas — which sits inside its
+ * own isolation context — never bleeds up through the sticky header.
  */
 export default function SiteHeader() {
   const pathname = usePathname();

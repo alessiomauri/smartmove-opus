@@ -13,7 +13,7 @@ import { Area, AreaRegion } from '@/types/area';
  *   1. Editorial hero with 4-stat strip + coastline glyph (SVG placeholder
  *      per user direction — to be swapped for a real map illustration later)
  *   2. Sticky region-pill filter
- *   3. Full-bleed map section (dark ink bg) — the real AreasLeafletMap from
+ *   3. Full-bleed map section (dark ink bg) — the real AreasMap from
  *      Marbella Live, rendered against the design's dark canvas, with a
  *      detail rail on the right showing the active region
  *   4. Featured 6 cards (curated hero areas)
@@ -32,8 +32,8 @@ function MapPlaceholder() {
   );
 }
 
-const AreasLeafletMap = dynamic(
-  () => import('@/components/areas/AreasLeafletMap'),
+const AreasMap = dynamic(
+  () => import('@/components/areas/AreasMap'),
   { ssr: false, loading: () => <MapPlaceholder /> }
 );
 
@@ -45,6 +45,15 @@ interface Cluster {
   regions: AreaRegion[];
   slugs?: string[];          // optional explicit slug allowlist (overrides regions)
   fromMin?: number;          // human "from €X" anchor used in the cluster head
+  /**
+   * Slug of the area whose `hero_image` represents this cluster in the
+   * rail's region-state photo slot. No region-level photo field exists
+   * on the Area model yet (admin TODO); these flagships are the
+   * editorial choice of "the photo that makes you nod at this region."
+   */
+  flagshipSlug: string;
+  /** Headline tag chip shown above the blurb in region state. */
+  tagline: string;
 }
 
 const CLUSTERS: Cluster[] = [
@@ -54,6 +63,8 @@ const CLUSTERS: Cluster[] = [
     blurb:
       "The core market. Fourteen distinct sub-areas, from the polished hush of Sierra Blanca to the marina noise of Banús. The majority of every cycle's transactions happens here.",
     regions: ['Marbella'],
+    flagshipSlug: 'marbella',
+    tagline: 'Core market',
   },
   {
     key: 'benahavis',
@@ -62,6 +73,8 @@ const CLUSTERS: Cluster[] = [
     blurb:
       "Inland from Banús, framed by mountains and the Guadalmina river. Trades nightlife for nature reserves and very large plots. Includes the coast's two most-policed gated estates.",
     regions: ['Benahavis'],
+    flagshipSlug: 'la-zagaleta',
+    tagline: 'Mountain estates',
   },
   {
     key: 'estepona',
@@ -69,6 +82,8 @@ const CLUSTERS: Cluster[] = [
     blurb:
       'Twenty-five minutes west of Marbella, with a continuous beachfront promenade now stretching most of its length. Newer buildings, fewer dynastic estates, the strongest gold-standard new-build pipeline on the coast.',
     regions: ['Estepona'],
+    flagshipSlug: 'estepona',
+    tagline: 'New-build coast',
   },
   {
     key: 'western',
@@ -77,6 +92,8 @@ const CLUSTERS: Cluster[] = [
     blurb:
       'Beyond Estepona, into Manilva, Casares, San Roque. Larger plots, lower prices, and the polo capital of Europe at the far end. Forty-five minutes from Marbella, a different demographic from the moment you cross the Guadiaro.',
     regions: ['Casares', 'Manilva', 'San Roque'],
+    flagshipSlug: 'sotogrande',
+    tagline: 'Polo & space',
   },
   {
     key: 'mijas-east',
@@ -85,6 +102,8 @@ const CLUSTERS: Cluster[] = [
     blurb:
       'East of Marbella, into Mijas, Fuengirola, Benalmádena, all the way to Málaga centro. Higher density, better value per square metre, the strongest short-let yields on the coast. Buyer profile is younger, more domestic.',
     regions: ['Mijas', 'Fuengirola', 'Torremolinos', 'Malaga'],
+    flagshipSlug: 'mijas',
+    tagline: 'Yield coast',
   },
 ];
 
@@ -202,7 +221,7 @@ export default function AreasIndexClient({
   // Macro pin clicked? Drives the rail. null = "Costa del Sol" overview.
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
-  // Leaflet (~150KB of JS) only mounts once the map section approaches
+  // MapLibre (~85KB gz) only mounts once the map section approaches
   // the viewport — keeps the chunk off the critical path on first load.
   const mapWrapRef = useRef<HTMLDivElement>(null);
   const [mapInView, setMapInView] = useState(false);
@@ -252,15 +271,28 @@ export default function AreasIndexClient({
     );
   }, [areas, activeCluster]);
 
-  // Rail is driven by pin clicks only:
-  //   - selectedSlug set → that area
-  //   - nothing selected → Costa del Sol overview
+  // Three-mode rail state machine:
+  //   1. AREA      — a pin was clicked (selectedSlug set)
+  //   2. REGION    — a pill is active (activeCluster !== 'all') and no pin
+  //   3. OVERVIEW  — default Costa del Sol view
+  // Clicking "Back" from an area returns to the active region's state if
+  // a pill is selected, otherwise the overview (handled by setSelectedSlug(null)).
   const railArea = useMemo(
     () => (selectedSlug ? propertyAreas.find((a) => a.slug === selectedSlug) ?? null : null),
     [selectedSlug, propertyAreas]
   );
+  const activeClusterDef = useMemo(
+    () => (activeCluster !== 'all' ? CLUSTERS.find((c) => c.key === activeCluster) ?? null : null),
+    [activeCluster]
+  );
+  const railMode: 'area' | 'region' | 'overview' = railArea
+    ? 'area'
+    : activeClusterDef
+      ? 'region'
+      : 'overview';
 
-  // Aggregate stats for the default Costa del Sol view.
+  // Aggregate stats — once for the whole coast, once per cluster. The
+  // region-mode rail reads cluster-level numbers; overview reads coast.
   const aggregate = useMemo(() => {
     const totalListings = propertyAreas.reduce(
       (sum, a) => sum + (listingCounts[a.slug] ?? 0),
@@ -280,20 +312,64 @@ export default function AreasIndexClient({
     };
   }, [propertyAreas, listingCounts, minPrices]);
 
-  // Hero photo for the rail. Clicked area → Marbella fallback for the
-  // Costa del Sol overview.
+  const clusterAggregates = useMemo(() => {
+    const m: Record<string, { areas: number; listings: number; fromMin: number | null }> = {};
+    for (const c of CLUSTERS) {
+      const list = clusterAreas[c.key] ?? [];
+      const listings = list.reduce((s, a) => s + (listingCounts[a.slug] ?? 0), 0);
+      const mins = list
+        .map((a) => minPrices[a.slug])
+        .filter((p): p is number => typeof p === 'number');
+      m[c.key] = {
+        areas: list.length,
+        listings,
+        fromMin: mins.length ? Math.min(...mins) : null,
+      };
+    }
+    return m;
+  }, [clusterAreas, listingCounts, minPrices]);
+
+  // Rail hero photo:
+  //   - AREA mode    → the area's hero
+  //   - REGION mode  → the cluster's flagship area's hero (no region-
+  //                    level photo field on Area yet; admin TODO)
+  //   - OVERVIEW     → marbella (the coast's anchor)
   const railPhoto = useMemo(() => {
-    if (railArea?.hero_image)
+    if (railArea?.hero_image) {
       return { src: railArea.hero_image, alt: railArea.hero_image_alt || railArea.name };
+    }
+    if (activeClusterDef) {
+      const flagship = propertyAreas.find(
+        (a) => a.slug === activeClusterDef.flagshipSlug && a.hero_image,
+      );
+      if (flagship) {
+        return {
+          src: flagship.hero_image,
+          alt: flagship.hero_image_alt || activeClusterDef.label,
+        };
+      }
+      // Fallback: first area in the cluster with a hero.
+      const list = clusterAreas[activeClusterDef.key] ?? [];
+      const any = list.find((a) => a.hero_image);
+      if (any) return { src: any.hero_image, alt: activeClusterDef.label };
+    }
     const fallback = propertyAreas.find((a) => a.slug === 'marbella' && a.hero_image)
       ?? propertyAreas.find((a) => a.hero_image);
     return fallback ? { src: fallback.hero_image, alt: 'Costa del Sol' } : null;
-  }, [railArea, propertyAreas]);
+  }, [railArea, propertyAreas, activeClusterDef, clusterAreas]);
 
-  const railCount = railArea ? listingCounts[railArea.slug] ?? 0 : aggregate.totalListings;
-  const railFrom = railArea
-    ? formatFrom(minPrices[railArea.slug])
-    : formatFrom(aggregate.fromMin ?? undefined);
+  const railCount =
+    railMode === 'area'
+      ? listingCounts[railArea!.slug] ?? 0
+      : railMode === 'region'
+        ? clusterAggregates[activeClusterDef!.key].listings
+        : aggregate.totalListings;
+  const railFrom =
+    railMode === 'area'
+      ? formatFrom(minPrices[railArea!.slug])
+      : railMode === 'region'
+        ? formatFrom(clusterAggregates[activeClusterDef!.key].fromMin ?? undefined)
+        : formatFrom(aggregate.fromMin ?? undefined);
 
   // Resolve featured area data from the live areas list.
   const featuredResolved = useMemo(
@@ -494,7 +570,7 @@ export default function AreasIndexClient({
         <div className="stage">
           <div className="sm-areas-map-wrap" ref={mapWrapRef}>
             {mapInView ? (
-              <AreasLeafletMap
+              <AreasMap
                 areas={mappedAreas}
                 selectedSlug={selectedSlug}
                 onAreaSelect={(slug) => setSelectedSlug(slug)}
@@ -511,13 +587,18 @@ export default function AreasIndexClient({
                   src={railPhoto.src}
                   alt={railPhoto.alt}
                   fill
-                  sizes="380px"
+                  // The rail photo is 380 CSS px wide. At 2x DPR the
+                  // browser needs ~760 actual px to render sharp; the
+                  // 1x src in the srcset is too soft on retina. Hint
+                  // with a wider sizes so next/image picks a higher
+                  // breakpoint from the optimiser.
+                  sizes="(min-resolution: 2dppx) 760px, 380px"
                   priority={false}
                 />
               </div>
             )}
 
-            {railArea ? (
+            {railMode === 'area' && railArea ? (
               /* ─── AREA mode — a pin was clicked ─── */
               <>
                 <div className="r-eyebrow">{railArea.region} · Now showing</div>
@@ -589,11 +670,69 @@ export default function AreasIndexClient({
                   className="r-back"
                   onClick={() => setSelectedSlug(null)}
                 >
-                  ← Back to overview
+                  ← Back to {activeClusterDef ? activeClusterDef.label : 'overview'}
+                </button>
+              </>
+            ) : railMode === 'region' && activeClusterDef ? (
+              /* ─── REGION mode — a pill is active, no pin clicked ─── */
+              <>
+                <div className="r-eyebrow">{activeClusterDef.label} · Region</div>
+                <h3>
+                  {activeClusterDef.italic
+                    ? nameWithItalic(activeClusterDef.label, activeClusterDef.italic)
+                    : activeClusterDef.label}
+                </h3>
+
+                <div className="r-tags">
+                  <span className="gold">{activeClusterDef.tagline}</span>
+                  <span>
+                    {clusterAggregates[activeClusterDef.key].areas} areas
+                  </span>
+                </div>
+
+                <p className="r-blurb">{activeClusterDef.blurb}</p>
+
+                <div className="r-stats">
+                  <div>
+                    <div className="lbl">Listings</div>
+                    <div className="val">
+                      <em>{clusterAggregates[activeClusterDef.key].listings}</em> active
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">From</div>
+                    <div className="val">
+                      {railFrom ?? <span className="txt">On request</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Areas</div>
+                    <div className="val">
+                      <em>{clusterAggregates[activeClusterDef.key].areas}</em>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="lbl">Cluster</div>
+                    <div className="val txt">{activeClusterDef.label}</div>
+                  </div>
+                </div>
+
+                <span className="r-cta r-cta--ghost">
+                  <span>
+                    Click a <em>pin</em> to drill in
+                  </span>
+                  <span className="arrow">→</span>
+                </span>
+                <button
+                  type="button"
+                  className="r-back"
+                  onClick={() => setActiveCluster('all')}
+                >
+                  ← Back to Costa del Sol
                 </button>
               </>
             ) : (
-              /* ─── COAST mode — default, nothing selected ─── */
+              /* ─── OVERVIEW mode — default, nothing selected ─── */
               <>
                 <div className="r-eyebrow">Overview · All areas</div>
                 <h3>
