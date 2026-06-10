@@ -158,6 +158,13 @@ interface SyncOpts {
   purgeImages?: (kind: 'p' | 'd', reference: string) => Promise<boolean>;
   /** Injectable for tests; defaults to env-tuned throttle. */
   throttle?: Throttle;
+  /**
+   * Dry run: plan everything against real reads, write NOTHING except
+   * the sync_runs observability row. Counts report what WOULD happen;
+   * watermark/cache/IndexNow/history/row writes are all skipped. Used
+   * by the live-API probe (`scripts/probe-resales.mjs --direct`).
+   */
+  dryRun?: boolean;
 }
 
 // ────────────────────────────────────────── pure batch planner
@@ -469,6 +476,14 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       ] as const) {
         const rows = plan.inserts.filter((i) => i.kind === kind).map((i) => i.row);
         if (rows.length === 0) continue;
+        if (opts.dryRun) {
+          rowsInserted += rows.length;
+          for (const r of rows) {
+            if (r.pending_review) pendingCount += 1;
+            else approvedCount += 1;
+          }
+          continue;
+        }
         const { error: insErr } = await opts.supabase
           .from(table)
           .upsert(rows, { onConflict: 'source,source_id' });
@@ -487,6 +502,12 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       // Updates — per row (changed rows are few by design), protected
       // fields already stripped by the planner.
       for (const u of plan.updates) {
+        if (opts.dryRun) {
+          rowsUpdated += 1;
+          if (u.priceChange) priceChanges += 1;
+          if (u.statusChange) statusChanges += 1;
+          continue;
+        }
         const table = u.kind === 'p' ? 'properties' : 'developments';
         const { error: updErr } = await opts.supabase
           .from(table)
@@ -538,7 +559,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
         ['properties', plan.touchIds.properties],
         ['developments', plan.touchIds.developments],
       ] as const) {
-        if (ids.length === 0) continue;
+        if (ids.length === 0 || opts.dryRun) continue;
         const { error: touchErr } = await opts.supabase
           .from(table)
           .update({ last_synced_at: stamp })
@@ -555,7 +576,12 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           .eq('source', 'resales_online')
           .in('source_id', soldTailRefs);
         const toFlip = (tailRows ?? []).filter((r) => r.status !== 'sold');
-        const toTouch = (tailRows ?? []).filter((r) => r.status === 'sold').map((r) => r.id);
+        const toTouch = opts.dryRun ? [] : (tailRows ?? []).filter((r) => r.status === 'sold').map((r) => r.id);
+        if (opts.dryRun) {
+          soldTailHits += toFlip.length;
+          statusChanges += toFlip.length;
+          toFlip.length = 0;
+        }
         for (const r of toFlip) {
           const { error: tailErr } = await opts.supabase
             .from('properties')
@@ -600,7 +626,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
 
     // ── Cache invalidation: only when something actually changed ──
     const wroteSomething = rowsInserted + rowsUpdated + soldTailHits > 0;
-    if (wroteSomething) {
+    if (wroteSomething && !opts.dryRun) {
       revalidateTag(PROPERTIES_TAG, 'max');
       revalidateTag(DEVELOPMENTS_TAG, 'max');
       // IndexNow: exactly the URLs this run wrote — a no-change night
@@ -617,17 +643,26 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
 
     // ── Watermark advance: full success only, never backwards ──
     let watermarkAfter = watermarkBefore;
-    if (opts.useWatermark && status === 'success') {
+    if (opts.useWatermark && opts.dryRun) {
+      // Dry runs REPORT the observed candidate regardless of status —
+      // the caller knows a capped/partial live run would not persist it.
+      watermarkAfter = maxWatermark(maxLastUpdated, watermarkBefore) ?? watermarkBefore;
+    } else if (opts.useWatermark && status === 'success') {
       const candidate = maxWatermark(maxLastUpdated, watermarkBefore);
       if (candidate && candidate !== watermarkBefore) {
-        try {
-          await setSyncState(opts.supabase, WATERMARK_KEY, {
-            watermark: candidate,
-            run_id: runId,
-          });
+        if (opts.dryRun) {
+          // (unreachable — dry runs handled above; kept for clarity)
           watermarkAfter = candidate;
-        } catch (wmErr) {
-          errors.push(wmErr instanceof Error ? wmErr.message : String(wmErr));
+        } else {
+          try {
+            await setSyncState(opts.supabase, WATERMARK_KEY, {
+              watermark: candidate,
+              run_id: runId,
+            });
+            watermarkAfter = candidate;
+          } catch (wmErr) {
+            errors.push(wmErr instanceof Error ? wmErr.message : String(wmErr));
+          }
         }
       } else {
         watermarkAfter = candidate ?? watermarkBefore;

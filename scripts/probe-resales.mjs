@@ -30,16 +30,45 @@ const here = dirname(fileURLToPath(import.meta.url));
 dotenv({ path: resolve(here, '../.env.local'), quiet: true });
 
 const { createThrottle } = await import('../src/lib/integrations/resales-throttle.ts');
+const { scrubCredentials } = await import('../workers/resales-proxy/src/scrub.ts');
 
 const briefsDir = resolve(here, '../../smartmove-web-briefs');
 const gapsDoc = resolve(briefsDir, 'RESALES_API_GAPS.md');
 const samplesDir = resolve(briefsDir, 'resales-samples');
 
+/**
+ * --direct: bypass the proxy Worker and call the Resales API straight
+ * from this machine (whose IP IS whitelisted), reading p1/p2 from
+ * workers/resales-proxy/.dev.vars. Credentials are scrubbed from every
+ * recorded/saved byte. Used while the Worker-egress IP question is open.
+ */
+const DIRECT = process.argv.includes('--direct');
+const RESALES_BASE = 'https://webapi.resales-online.com/V6';
+
+let CREDS = null;
+if (DIRECT) {
+  const devVars = await readFile(resolve(here, '../workers/resales-proxy/.dev.vars'), 'utf8');
+  const pick = (k) => devVars.match(new RegExp(`^${k}=\\s*"?([^"\\n]+)"?`, 'm'))?.[1]?.trim();
+  CREDS = { p1: pick('RESALES_P1'), p2: pick('RESALES_P2') };
+  if (!CREDS.p1 || !CREDS.p2) {
+    console.error('RESALES_P1 / RESALES_P2 missing in workers/resales-proxy/.dev.vars');
+    process.exit(1);
+  }
+  console.log(`Mode: DIRECT (p1 ends …${CREDS.p1.slice(-3)}, sandbox=true)`);
+} else {
+  console.log('Mode: via proxy Worker');
+}
+
 const PROXY = process.env.RESALES_PROXY_URL?.replace(/\/$/, '');
 const SECRET = process.env.RESALES_PROXY_SECRET;
-if (!PROXY || !SECRET) {
+if (!DIRECT && (!PROXY || !SECRET)) {
   console.error('RESALES_PROXY_URL / RESALES_PROXY_SECRET missing in .env.local');
   process.exit(1);
+}
+
+/** Remove credential values from anything we print, record, or save. */
+function scrub(text) {
+  return CREDS ? scrubCredentials(text, [CREDS.p1, CREDS.p2]) : text;
 }
 
 // Max 1 req / 2 s, jittered — boring traffic only.
@@ -51,7 +80,7 @@ async function recordFinding(title, body) {
   if (!sectionOpened) {
     await appendFile(
       gapsDoc,
-      `\n\n---\n\n## Probe findings — ${stamp} UTC (scripts/probe-resales.mjs, sandbox via Worker proxy)\n`
+      `\n\n---\n\n## Probe findings — ${stamp} UTC (scripts/probe-resales.mjs, sandbox, ${DIRECT ? 'DIRECT from whitelisted IP' : 'via Worker proxy'})\n`
     );
     sectionOpened = true;
   }
@@ -60,16 +89,22 @@ async function recordFinding(title, body) {
 }
 
 async function api(endpoint, params = {}) {
-  const url = new URL(`${PROXY}/${endpoint}`);
+  const url = new URL(DIRECT ? `${RESALES_BASE}/${endpoint}` : `${PROXY}/${endpoint}`);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
+  if (DIRECT) {
+    url.searchParams.set('p1', CREDS.p1);
+    url.searchParams.set('p2', CREDS.p2);
+    url.searchParams.set('P_sandbox', 'true');
+  }
   return throttle.run(endpoint, async () => {
     const res = await fetch(url, {
-      headers: { 'x-smartmove-secret': SECRET },
+      headers: DIRECT ? { Accept: 'application/json' } : { 'x-smartmove-secret': SECRET },
       signal: AbortSignal.timeout(30_000),
     });
-    const text = await res.text();
+    // Scrub at the boundary — nothing downstream ever sees credentials.
+    const text = scrub(await res.text());
     let json = null;
     try { json = JSON.parse(text); } catch { /* non-JSON body */ }
     return { status: res.status, json, text };
@@ -84,7 +119,7 @@ function fence(obj) {
 }
 
 // ─────────────────────────────────────────── preflight
-console.log('Preflight: minimal SearchProperties through the proxy…');
+console.log(`Preflight: minimal SearchProperties ${DIRECT ? 'DIRECT against Resales' : 'through the proxy'}…`);
 const pre = await api('SearchProperties', { p_agency_filterid: 1, P_PageSize: 1 });
 const preErr = pre.json?.transaction?.status === 'error';
 const errCodes = preErr ? Object.keys(pre.json.transaction.errordescription ?? {}) : [];
@@ -125,6 +160,14 @@ if (ipBlocked) {
   console.log('\n⛔ API blocked by IP whitelist — continuing with probe (c) only (direct media fetch needs no creds).');
 } else if (!preErr) {
   console.log('Preflight OK — full probe running.');
+  if (DIRECT) {
+    await recordFinding(
+      '✅ Key validity (direct, whitelisted IP)',
+      `New production key authenticates against sandbox: \`transaction.status: success\`, ` +
+      `PropertyCount=${pre.json?.QueryInfo?.PropertyCount}, QueryId issued. ` +
+      `(The same key through the Worker proxy still returns 001 — Worker egress remains un-whitelisted; known state.)`
+    );
+  }
 }
 
 // ─────────────────────────────────────────── (a) deliberate invalid request
@@ -140,8 +183,82 @@ if (!preErr) {
   );
 }
 
+// ─────────────────────────────────────────── (4) watermark dry-run (direct only)
+if (DIRECT && !preErr) {
+  console.log('\nLeg (4): incremental-sync DRY RUN against live sandbox (no table writes)…');
+  const { runResalesSync } = await import('../src/lib/integrations/resales-sync.ts');
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  // Bare fetcher (no api() wrapper) — the orchestrator's own throttle
+  // paces it; sharing the script's throttle keeps GLOBAL pacing ≤0.5rps.
+  const directFetchPage = async ({ page, queryId, pageSize }) => {
+    const url = new URL(`${RESALES_BASE}/SearchProperties`);
+    url.searchParams.set('p_agency_filterid', '1');
+    url.searchParams.set('P_PageSize', String(pageSize));
+    if (page) url.searchParams.set('P_PageNo', String(page));
+    if (queryId) url.searchParams.set('P_QueryId', queryId);
+    url.searchParams.set('p_SortType', '3');
+    url.searchParams.set('p_ShowLastUpdateDate', 'true');
+    url.searchParams.set('p1', CREDS.p1);
+    url.searchParams.set('p2', CREDS.p2);
+    url.searchParams.set('P_sandbox', 'true');
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(30_000) });
+    const env = JSON.parse(scrub(await res.text()));
+    if (env.transaction?.status === 'error') {
+      throw new Error(`Resales transaction error: ${JSON.stringify(env.transaction.errordescription ?? {})}`);
+    }
+    const total = env.QueryInfo.PropertyCount;
+    const perPage = env.QueryInfo.PropertiesPerPage || pageSize;
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+    return {
+      properties: env.Property ?? [],
+      totalCount: total,
+      queryId: env.QueryInfo.QueryId || null,
+      done: page >= totalPages || (env.Property ?? []).length === 0,
+    };
+  };
+
+  const report = await runResalesSync({
+    supabase,
+    trigger: 'probe',
+    fetchPage: directFetchPage,
+    pageSize: 50,
+    maxPages: 5,
+    useWatermark: true,   // exercise read + advance logic
+    dryRun: true,         // …but persist nothing except the sync_runs row
+    throttle,             // shared pacing with the rest of the probe
+  });
+
+  const wmOk = report.status === 'success' && report.watermarkAfter && report.watermarkAfter !== report.watermarkBefore;
+  await recordFinding(
+    '(4) Watermark seeding against real LastUpdated values — DRY RUN ' + (wmOk ? '✅' : '⚠️'),
+    [
+      `Live sandbox walk (sorted LastUpdated DESC, dry run — zero table writes, run logged as trigger='probe'):`,
+      '',
+      `| metric | value |`,
+      `|---|---|`,
+      `| status | ${report.status} |`,
+      `| pages / rows seen | ${report.pagesWalked} / ${report.rowsSeen} |`,
+      `| would insert / update / skip | ${report.rowsInserted} / ${report.rowsUpdated} / ${report.rowsSkippedUnchanged} |`,
+      `| watermark before | ${report.watermarkBefore ?? '∅ (none persisted yet)'} |`,
+      `| watermark WOULD seed to | ${report.watermarkAfter ?? '∅'} |`,
+      '',
+      wmOk
+        ? 'LastUpdated is present on live rows, the max extracts correctly, and a successful run would persist it — the acceptance criterion the samples couldn\'t cover. ✓'
+        : 'Watermark did not advance — inspect the report above (errors / partial cap / missing LastUpdated).',
+      report.errors.length ? `Errors: ${report.errors.join('; ')}` : '',
+    ].filter(Boolean).join('\n')
+  );
+  console.log(`  dry-run: ${report.status}, seen ${report.rowsSeen}, watermark → ${report.watermarkAfter}`);
+}
+
 // ─────────────────────────────────────────── (c) image URL stability
-{
+if (!DIRECT) {
   console.log('\nProbe (c): image URL stability (direct media fetch)…');
   // Pull a known image URL from the saved samples — prefer the newer CDN
   // format, fall back to the ASP format.

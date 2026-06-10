@@ -20,6 +20,8 @@
  * is intentionally NOT in the list — Smartmove does not push leads to Resales.
  */
 
+import { scrubCredentials } from './scrub';
+
 export interface Env {
   RESALES_P1: string;
   RESALES_P2: string;
@@ -60,13 +62,24 @@ export default {
     upstream.searchParams.set('p2', env.RESALES_P2);
     upstream.searchParams.set('P_sandbox', env.RESALES_SANDBOX);
 
-    const upstreamRes = await fetch(upstream.toString(), {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
+    // NOTE: never log `upstream` (it carries p1/p2 in the query string).
+    let upstreamRes: Response;
+    try {
+      upstreamRes = await fetch(upstream.toString(), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+    } catch {
+      // Generic failure — deliberately no error detail that could carry
+      // the credentialed URL.
+      return new Response('Upstream unreachable', { status: 502, headers: corsHeaders() });
+    }
 
-    // Pass through the body and content-type, but never leak upstream headers
-    const body = await upstreamRes.arrayBuffer();
+    // Pass through body + content-type, but never leak upstream headers —
+    // and scrub credentials: Resales error envelopes echo p1/p2 in clear
+    // text under `parsedparameters` (probe finding, RESALES_API_GAPS.md).
+    const raw = await upstreamRes.text();
+    const body = scrubCredentials(raw, [env.RESALES_P1, env.RESALES_P2]);
     return new Response(body, {
       status: upstreamRes.status,
       headers: {
