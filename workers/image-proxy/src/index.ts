@@ -34,7 +34,7 @@ export interface Env {
 const ROUTE_RE = /^\/(p|d)\/([\w-]+)\/(\d+)$/;
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (req.method !== 'GET' && req.method !== 'OPTIONS' && req.method !== 'HEAD') {
       return new Response('Method not allowed', { status: 405 });
     }
@@ -49,16 +49,37 @@ export default {
     const [, kind, id, index] = m;
     const r2Key = `${kind}/${id}/${index}.jpg`;
 
-    // 1. R2 hit
+    // 0. Edge cache. No-op on *.workers.dev (Cache API needs a zone),
+    // but the moment the worker gets a custom domain every repeat hit
+    // is served from the Cloudflare edge without invoking R2 at all.
+    const cacheKey = new Request(url.toString(), { method: 'GET' });
+    const edge = await caches.default.match(cacheKey);
+    if (edge) return edge;
+
+    // 1. R2 hit — honour conditional requests so Vercel's image
+    // optimizer revalidations cost a 304 instead of a full body.
+    const ifNoneMatch = req.headers.get('if-none-match');
     const cached = await env.IMAGES_BUCKET.get(r2Key);
     if (cached) {
-      return r2Response(cached);
+      if (ifNoneMatch && ifNoneMatch === cached.httpEtag) {
+        return new Response(null, { status: 304, headers: { etag: cached.httpEtag, ...corsHeaders() } });
+      }
+      const res = r2Response(cached);
+      ctx.waitUntil(caches.default.put(cacheKey, res.clone()));
+      return res;
     }
 
     // 2. Miss — resolve source URL and fetch
     const sourceUrl = await resolveSourceUrl(kind, id, index, env);
     if (!sourceUrl) {
-      return new Response('Source URL unknown', { status: 404 });
+      // Negative-cache unknown ids briefly: a dead image URL in cached
+      // HTML otherwise re-triggers a Supabase lookup on every load.
+      const nf = new Response('Source URL unknown', {
+        status: 404,
+        headers: { 'cache-control': 'public, max-age=300' },
+      });
+      ctx.waitUntil(caches.default.put(cacheKey, nf.clone()));
+      return nf;
     }
     if (!isOriginAllowed(sourceUrl, env)) {
       return new Response('Source origin not allowed', { status: 403 });
@@ -66,26 +87,35 @@ export default {
 
     const upstream = await fetch(stripCacheBuster(sourceUrl));
     if (!upstream.ok) {
-      return new Response(`Upstream ${upstream.status}`, { status: 502 });
+      return new Response(`Upstream ${upstream.status}`, {
+        status: 502,
+        headers: { 'cache-control': 'public, max-age=120' },
+      });
     }
 
-    // 3. Stream into R2 and serve
+    // 3. Serve immediately; persist to R2 in the background. The R2 put
+    // used to be awaited inline, delaying first byte by the full upload.
     const bytes = await upstream.arrayBuffer();
-    await env.IMAGES_BUCKET.put(r2Key, bytes, {
-      httpMetadata: {
-        contentType: upstream.headers.get('content-type') ?? 'image/jpeg',
-        cacheControl: 'public, max-age=31536000, immutable',
-      },
-    });
+    const contentType = upstream.headers.get('content-type') ?? 'image/jpeg';
+    ctx.waitUntil(
+      env.IMAGES_BUCKET.put(r2Key, bytes, {
+        httpMetadata: {
+          contentType,
+          cacheControl: 'public, max-age=31536000, immutable',
+        },
+      })
+    );
 
-    return new Response(bytes, {
+    const res = new Response(bytes, {
       status: 200,
       headers: {
-        'content-type': upstream.headers.get('content-type') ?? 'image/jpeg',
+        'content-type': contentType,
         'cache-control': 'public, max-age=31536000, immutable',
         ...corsHeaders(),
       },
     });
+    ctx.waitUntil(caches.default.put(cacheKey, res.clone()));
+    return res;
   },
 };
 

@@ -6,26 +6,18 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const nextConfig: NextConfig = {
   // Image optimization
   images: {
+    // Pinned to the exact hosts we serve from. Wildcards like
+    // `*.workers.dev` / `*.supabase.co` would let ANYONE's worker or
+    // Supabase project be optimized through our /_next/image endpoint
+    // (billing abuse + cache pollution).
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: 'vhsttqejskvofqxgddho.supabase.co',
       },
       {
         protocol: 'https',
-        hostname: '*.supabase.co',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.supabase.in',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.workers.dev',
+        hostname: 'smartmove-image-proxy.alessio-mauri030702.workers.dev',
       },
       {
         protocol: 'https',
@@ -35,25 +27,30 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cdn.resales-online.com',
       },
+      // Dev-only placeholder sources
+      ...(process.env.NODE_ENV !== 'production'
+        ? [
+            { protocol: 'https' as const, hostname: 'picsum.photos' },
+            { protocol: 'https' as const, hostname: 'images.unsplash.com' },
+          ]
+        : []),
     ],
     // Optimize image formats for better performance
     formats: ['image/avif', 'image/webp'],
+    // Source images are immutable per URL (R2-keyed, content never changes
+    // under the same path) — cache optimized variants for 31 days instead
+    // of the 4h default to cut re-optimization cost.
+    minimumCacheTTL: 2678400,
     // Enable image optimization for external images
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-
-  // Compression for better performance (affects SEO Core Web Vitals)
-  compress: true,
 
   // Powered by header removal for cleaner responses
   poweredByHeader: false,
 
   // Strict mode for better React practices
   reactStrictMode: true,
-
-  // Generate ETags for caching
-  generateEtags: true,
 
   // Headers for SEO and security
   async headers() {
@@ -83,28 +80,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Cache static assets aggressively
+        // public/ assets are NOT content-hashed (replacing hero/brand
+        // files keeps the same URL), so a 1-year immutable here served
+        // stale assets indefinitely. A day + a week of SWR is plenty.
         source: '/(.*)\\.(ico|png|jpg|jpeg|gif|webp|svg|woff|woff2)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        // Cache JavaScript and CSS
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        // Cache Next.js optimized images
-        source: '/_next/image',
         headers: [
           {
             key: 'Cache-Control',
@@ -112,33 +91,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-    ];
-  },
-
-  // Redirects for SEO (trailing slash normalization)
-  async redirects() {
-    return [
-      // Redirect www to non-www (configure based on your preference)
-      // {
-      //   source: '/:path*',
-      //   has: [{ type: 'host', value: 'www.marbella-live.com' }],
-      //   destination: 'https://marbella-live.com/:path*',
-      //   permanent: true,
-      // },
+      // NOTE: no custom headers for /_next/static (Next serves it
+      // immutable already) or /_next/image (controlled by
+      // images.minimumCacheTTL) — the previous blocks were no-ops.
     ];
   },
 
   // Experimental features for better performance
   experimental: {
-    // Optimize package imports — tree-shake barrel exports
+    // Optimize package imports — tree-shake barrel exports.
+    // (lucide-react and the dnd-kit family are the only barrel-heavy
+    // packages actually in the dependency tree.)
     optimizePackageImports: [
       'lucide-react',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-select',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-tooltip',
-      'date-fns',
       '@dnd-kit/core',
       '@dnd-kit/sortable',
       '@dnd-kit/utilities',

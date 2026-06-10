@@ -5,7 +5,8 @@ import { routing } from '@/i18n/routing';
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-export async function middleware(request: NextRequest) {
+// Next 16 proxy convention (replaces the deprecated middleware.ts).
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Admin routes are locale-agnostic and gated by Supabase auth.
@@ -64,7 +65,7 @@ async function adminAuth(request: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals, static assets, and API routes. Everything else
-  // (admin OR public) flows through the middleware above.
-  matcher: ['/((?!_next|api|.*\\..*).*)'],
+  // Skip Next internals, Vercel telemetry beacons, static assets, and
+  // API routes. Everything else (admin OR public) flows through above.
+  matcher: ['/((?!_next|_vercel|api|.*\\..*).*)'],
 };

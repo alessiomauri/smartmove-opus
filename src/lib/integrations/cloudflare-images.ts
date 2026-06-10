@@ -24,8 +24,15 @@ export type ImageKind = 'p' | 'd'; // p = property, d = development
  */
 export function imageUrl(kind: ImageKind, id: string | number, index = 0): string {
   if (!WORKER_URL) {
-    // Dev fallback: deterministic picsum so the UI works without the Worker.
-    // See SMARTMOVE_BRIEF §8 for the placeholder strategy.
+    // Dev-only fallback: deterministic picsum so the UI works without the
+    // Worker. In production a missing NEXT_PUBLIC_IMAGE_PROXY_URL is a
+    // misconfiguration — fail loudly instead of shipping placeholder
+    // photos on live property pages.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'NEXT_PUBLIC_IMAGE_PROXY_URL is not set — refusing to serve picsum placeholders in production'
+      );
+    }
     return `https://picsum.photos/seed/${kind}-${id}-${index}/1200/800`;
   }
   return `${WORKER_URL.replace(/\/$/, '')}/${kind}/${id}/${index}`;

@@ -121,7 +121,13 @@ async function call<T>(endpoint: string, params: Record<string, string | number 
     if (v === undefined || v === null) continue;
     url.searchParams.set(k, String(v));
   }
-  const res = await fetch(url.toString(), { method: 'GET', cache: 'no-store' });
+  // 20s ceiling — one stuck upstream call must not hold a sync request
+  // (or its serverless function) open indefinitely.
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    cache: 'no-store',
+    signal: AbortSignal.timeout(20_000),
+  });
   if (!res.ok) {
     throw new Error(`Resales ${endpoint} ${res.status}: ${await res.text()}`);
   }

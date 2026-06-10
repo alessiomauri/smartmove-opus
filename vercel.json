@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/resales/sync",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
