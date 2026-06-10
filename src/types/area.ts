@@ -4,6 +4,7 @@ export type AreaRegion =
   | 'Benahavis'
   | 'Mijas'
   | 'Fuengirola'
+  | 'Benalmadena'
   | 'Torremolinos'
   | 'Malaga'
   | 'Casares'
@@ -16,6 +17,7 @@ export const AREA_REGIONS: AreaRegion[] = [
   'Benahavis',
   'Mijas',
   'Fuengirola',
+  'Benalmadena',
   'Torremolinos',
   'Malaga',
   'Casares',

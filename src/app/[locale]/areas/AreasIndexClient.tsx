@@ -101,7 +101,7 @@ const CLUSTERS: Cluster[] = [
     italic: '& East',
     blurb:
       'East of Marbella, into Mijas, Fuengirola, Benalmádena, all the way to Málaga centro. Higher density, better value per square metre, the strongest short-let yields on the coast. Buyer profile is younger, more domestic.',
-    regions: ['Mijas', 'Fuengirola', 'Torremolinos', 'Malaga'],
+    regions: ['Mijas', 'Fuengirola', 'Benalmadena', 'Torremolinos', 'Malaga'],
     flagshipSlug: 'mijas',
     tagline: 'Yield coast',
   },
