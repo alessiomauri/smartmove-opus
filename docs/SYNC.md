@@ -62,21 +62,33 @@ the self-chaining continuation calls and any external scheduler).
 
 ## Full-import runbook (one-time bootstrap, ~50k rows)
 
-1. Ensure the Worker proxy has production `p1`/`p2` and
-   `RESALES_SANDBOX=false`, and the image worker has `PURGE_SECRET`.
-2. `/admin/resales` → **Start full import**. Each invocation processes
-   ≤40 pages (~2,000 rows) at ~2.5 req/s, persists its cursor in
-   `sync_state.resales_full_import`, then **self-chains** the next chunk
-   via `after()`. Leave the page; watch progress in the "Sync state"
-   card or `sync_state`.
-3. If a chunk dies (deploy, crash): nothing is lost. The nightly cron
-   resumes a `running` import automatically, or click **Resume full
-   import**. If the Resales `QueryId` expired between chunks, the walk
-   restarts from page 1 — hash-skips make the re-walk cheap. (Measured
-   2026-06-10: QueryId survived ≥60 min, so back-to-back chunk
-   continuations will essentially never hit this; it's a safety net for
-   multi-hour gaps.)
-4. On completion the import seeds the watermark from the max
+1. Ensure the relay has production `p1`/`p2` and `RESALES_SANDBOX=false`,
+   and the image worker has `PURGE_SECRET`.
+2. `/admin/resales` → **Start full import**. The button returns
+   immediately ("started — running in the background"); the work happens
+   in `after()`. Watch progress in the "Sync state" card or `sync_state`.
+3. How it runs (immediate-ack + deadline drain): each invocation drains
+   pages until the feed end OR a wall-clock deadline
+   (`RESALES_DRAIN_BUDGET_MS`, default 230s — well under the 300s
+   function limit), persisting the cursor in
+   `sync_state.resales_full_import` **after every page**. If not done, it
+   fires ONE continuation (`POST {mode:'full-import', _continuation:true}`
+   with the cron secret) and exits. The continuation immediate-acks, so
+   the chain is **linear and non-nesting** — each invocation lives only
+   for its own drain, and its run row always finalizes before any kill.
+   (This replaced the original `after()`→`await fetch(child)` design,
+   which nested the awaits, blew maxDuration, and left run rows stuck
+   `running`.)
+4. If a link dies (deploy, crash, network blip): nothing is lost. The
+   cursor persists; the nightly cron resumes a `running` import
+   automatically (it takes over once the heartbeat goes stale), or click
+   **Resume full import**. A QueryId expiry mid-walk restarts the walk
+   from page 1 — hash-skips make it cheap (TTL ≥60 min, so rare).
+5. Concurrency: full import is gated on `sync_state` freshness, not the
+   run-row lock. A manual click while a drain is actively heartbeating is
+   skipped ("already draining"); once stale (>8 min) a resume/cron takes
+   over. Stale `running` run rows auto-fail at the same 8-min TTL.
+6. On completion the import seeds the watermark from the max
    `LastUpdated` observed; nightly incremental takes over automatically.
 
 ## Reading `resales_sync_runs`

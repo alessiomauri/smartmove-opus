@@ -147,6 +147,14 @@ interface SyncOpts {
   /** Chunk resume state (full import). */
   startPage?: number;
   initialQueryId?: string | null;
+  /**
+   * Wall-clock stop (epoch ms). The walk exits cleanly when reached —
+   * treated like a page cap (status 'partial', cursor.done=false) so the
+   * caller resumes. Lets a single invocation drain MANY pages within the
+   * serverless time budget and still finalize its run row before any
+   * platform kill.
+   */
+  deadlineMs?: number;
   /** Persisted after every page — lets a chunked caller resume. */
   onPageComplete?: (cursor: {
     nextPage: number;
@@ -398,7 +406,12 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
   const nowIso = () => new Date().toISOString();
 
   try {
-    while (!done && !stopReached && pagesWalked < maxPages) {
+    while (
+      !done &&
+      !stopReached &&
+      pagesWalked < maxPages &&
+      (!opts.deadlineMs || Date.now() < opts.deadlineMs)
+    ) {
       let result: ResalesPage;
       try {
         result = await throttle.run(`SearchProperties p${page}`, () =>
@@ -669,12 +682,12 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       indexnowPinged = await pingIndexNow(changedUrls);
     }
 
-    // Capped before reaching the boundary = partial coverage. (For
-    // chunked full-import calls the caller interprets the cursor; the
-    // run row still records 'partial' to mean "more to do".)
-    const cappedShort = !done && !stopReached && pagesWalked >= maxPages;
+    // Incomplete walk (hit the page cap OR the wall-clock deadline before
+    // the feed end / stop boundary) = partial coverage. The caller reads
+    // the cursor to resume; the run row records 'partial' = "more to do".
+    const incompleteWalk = !done && !stopReached;
     const status: SyncReport['status'] =
-      errors.length === 0 ? (cappedShort ? 'partial' : 'success') : 'partial';
+      errors.length === 0 ? (incompleteWalk ? 'partial' : 'success') : 'partial';
 
     // ── Watermark advance: full success only, never backwards ──
     let watermarkAfter = watermarkBefore;

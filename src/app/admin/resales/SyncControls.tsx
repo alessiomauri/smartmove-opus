@@ -30,6 +30,16 @@ export default function SyncControls({
           description: json.error || json.report?.message || 'Unknown error',
           duration: 8000,
         });
+      } else if (json.started) {
+        // Full import: immediate-ack — it drains + self-chains in the
+        // background. Progress shows in the "Sync state" card.
+        toast.success(`${label} started`, {
+          description: 'Running in the background — it continues across page boundaries on its own. Watch the Sync state card.',
+          duration: 7000,
+        });
+        router.refresh();
+      } else if (json.skipped) {
+        toast.info(`${label} skipped`, { description: json.skipped, duration: 6000 });
       } else {
         toast.success(`${label} ${json.done === false ? 'chunk done — continuing in background' : 'complete'}`, {
           description: json.report?.message || json.summary
