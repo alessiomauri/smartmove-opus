@@ -1,0 +1,38 @@
+# systemd unit for the Resales fixed-IP relay.
+# Installed by setup.sh to /etc/systemd/system/resales-relay.service
+
+[Unit]
+Description=Resales API fixed-IP relay (credential-injecting proxy)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=resales-relay
+Group=resales-relay
+EnvironmentFile=/etc/resales-relay/env
+ExecStart=/usr/bin/node /opt/resales-relay/server.mjs
+Restart=always
+RestartSec=3
+
+# Hardening — the service needs nothing but outbound HTTPS + its port.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+# NOTE: no MemoryDenyWriteExecute — V8's JIT requires W^X memory and
+# node crashes with SIGTRAP under it.
+RestrictAddressFamilies=AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

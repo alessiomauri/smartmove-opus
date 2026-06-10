@@ -1,0 +1,17 @@
+# Resales relay — TLS termination + reverse proxy.
+#
+# Current hostname: sslip.io magic DNS (resolves 167-233-98-46.sslip.io
+# → 167.233.98.46 without owning a zone). Let's Encrypt issuance is
+# automatic via Caddy.
+#
+# MIGRATING TO A REAL SUBDOMAIN later (e.g. resales-relay.smartmovemarbella.com):
+#   1. Add an A record: resales-relay.smartmovemarbella.com → 167.233.98.46
+#   2. Replace the hostname on the first line below
+#   3. `systemctl reload caddy` (new cert issues automatically)
+#   4. Update RESALES_PROXY_URL in Vercel (Production + Preview) and .env.local
+# Nothing else changes — the relay itself is hostname-agnostic.
+
+167-233-98-46.sslip.io {
+	encode gzip
+	reverse_proxy 127.0.0.1:8787
+}
