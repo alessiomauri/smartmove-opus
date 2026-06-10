@@ -121,11 +121,18 @@ async function call<T>(endpoint: string, params: Record<string, string | number 
     if (v === undefined || v === null) continue;
     url.searchParams.set(k, String(v));
   }
+  // The Worker proxy rejects anything without the shared secret — without
+  // this header every live call 401s before reaching Resales.
+  const proxySecret = process.env.RESALES_PROXY_SECRET;
+  if (!proxySecret) {
+    throw new Error('RESALES_PROXY_SECRET is not set — the Worker proxy will refuse the call.');
+  }
   // 20s ceiling — one stuck upstream call must not hold a sync request
   // (or its serverless function) open indefinitely.
   const res = await fetch(url.toString(), {
     method: 'GET',
     cache: 'no-store',
+    headers: { 'x-smartmove-secret': proxySecret },
     signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) {

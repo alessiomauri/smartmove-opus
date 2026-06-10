@@ -33,8 +33,9 @@ import { hashContent } from './resales-hash';
 import { createThrottle, type Throttle } from './resales-throttle';
 import { getSyncState, setSyncState, RECONCILE_KEY } from './sync-state';
 import { purgeImages } from './cloudflare-images';
-import { updateTag } from 'next/cache';
+import { revalidateTag } from 'next/cache';
 import { PROPERTIES_TAG, DEVELOPMENTS_TAG } from '@/lib/cache';
+import { pingIndexNow, entityUrls } from '@/lib/indexnow';
 
 export interface ReconcileState extends Record<string, unknown> {
   status: 'idle' | 'walking' | 'done' | 'failed';
@@ -61,6 +62,7 @@ export const FRESH_RECONCILE: ReconcileState = {
 export interface DbRefRow {
   id: string;
   source_id: string;
+  slug: string | null;
   last_synced_at: string | null;
   published: boolean | null;
   removed_at: string | null;
@@ -105,7 +107,7 @@ async function fetchAllDbRefs(supabase: SupabaseClient): Promise<DbRefRow[]> {
     while (true) {
       const { data, error } = await supabase
         .from(table)
-        .select('id, source_id, last_synced_at, published, removed_at')
+        .select('id, source_id, slug, last_synced_at, published, removed_at')
         .eq('source', 'resales_online')
         .order('source_id', { ascending: true })
         .range(fromIdx, fromIdx + pageSize - 1);
@@ -233,6 +235,7 @@ export async function runReconcileChunk(opts: {
   const errors: string[] = [];
   let removed = 0;
   let ingested = 0;
+  const changedUrls: string[] = [];
 
   const dbRows = await fetchAllDbRefs(supabase);
   const diff = computeReconcileDiff(dbRows, liveRefs, new Date());
@@ -249,6 +252,7 @@ export async function runReconcileChunk(opts: {
       continue;
     }
     removed += 1;
+    if (row.slug) changedUrls.push(...entityUrls(row.kind, row.slug));
     try {
       await purgeImages(row.kind, row.source_id);
     } catch (e) {
@@ -280,15 +284,24 @@ export async function runReconcileChunk(opts: {
         .from(table)
         .upsert({ ...row, content_hash: hashContent(row) }, { onConflict: 'source,source_id' });
       if (error) errors.push(`ingest ${ref}: ${error.message}`);
-      else ingested += 1;
+      else {
+        ingested += 1;
+        if (typeof row.slug === 'string') {
+          changedUrls.push(...entityUrls(entry.kind === 'development' ? 'd' : 'p', row.slug));
+        }
+      }
     } catch (e) {
       errors.push(`ingest ${ref}: ${e instanceof Error ? e.message : e}`);
     }
   }
 
+  let indexnowPinged = 0;
   if (removed + ingested > 0) {
-    updateTag(PROPERTIES_TAG);
-    updateTag(DEVELOPMENTS_TAG);
+    revalidateTag(PROPERTIES_TAG, 'max');
+    revalidateTag(DEVELOPMENTS_TAG, 'max');
+    // Unpublished URLs are pinged too — IndexNow is how engines learn
+    // to recrawl (and then drop) a page that just went away.
+    indexnowPinged = await pingIndexNow(changedUrls);
   }
 
   const finishedAt = new Date().toISOString();
@@ -302,6 +315,7 @@ export async function runReconcileChunk(opts: {
         rows_inserted: ingested,
         soft_deleted: removed,
         images_purged: removed,
+        indexnow_pinged: indexnowPinged,
         api_calls: throttle.apiCalls,
         duration_ms: new Date(finishedAt).getTime() - new Date(startedAt).getTime(),
         errors_count: errors.length,

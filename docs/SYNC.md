@@ -108,11 +108,34 @@ hold: site-wide toggle ON (`/admin/resales`) + listing not opted out
 gates also apply to any future alert emails. Nothing in the UI renders
 the badge yet — the data and gating are ready for when design lands.
 
+## Known-good run (smoke test, 2026-06-10)
+
+Captured from `resales_sync_runs` — four consecutive runs of the full
+orchestrator against the real DB (samples fetcher; live sandbox was
+IP-blocked at the time, see RESALES_API_GAPS.md probe findings):
+
+| Time (UTC) | Run | status | seen | skipped | updated | inserted | price Δ | indexnow | duration |
+|---|---|---|---|---|---|---|---|---|---|
+| 10:49:14 | A — steady state | success | 19 | 15 | **0** | **0** | 0 | 0 | 702ms |
+| 10:49:15 | B — immediate rerun | success | 19 | 15 | **0** | **0** | 0 | 0 | 534ms |
+| 10:49:45 | C — one upstream price change staged | success | 19 | 14 | **1** | 0 | **1** | 0 | 848ms |
+| 10:50:03 | D — convergence | success | 19 | 15 | **0** | **0** | 0 | 0 | 616ms |
+
+Run C also wrote exactly one `property_price_history` row
+(`150000 → 92000`) and stamped `price_drop_at` — acceptance criterion 2
+end-to-end. (seen 19 = 15 unique mappable + 3 duplicate occurrences
+across overlapping sample files, deduped last-wins + 1 sold-tail touch.)
+
+Pending against LIVE sandbox (blocked by the IP whitelist — see the
+probe section in RESALES_API_GAPS.md): watermark seeding (samples carry
+no `LastUpdated`) and the P_QueryId TTL probe. `scripts/probe-resales.mjs`
+re-run completes both automatically once credentials work.
+
 ## Acceptance criteria → where they're enforced
 
 | Criterion | Enforcement |
 |---|---|
-| No-change night ⇒ zero row writes, zero invalidations | `planBatch` (tested), `updateTag` only fires when writes > 0 |
+| No-change night ⇒ zero row writes, zero invalidations | `planBatch` (tested), `revalidateTag` only fires when writes > 0 |
 | One price change ⇒ 1 update + 1 history insert + targeted invalidation | `planBatch` + orchestrator history block (tested) |
 | Kill mid-run, rerun ⇒ identical state | watermark only advances on success; hashing makes re-walks idempotent |
 | 50k import without timeouts | ≤60-page chunks, cursor in `sync_state`, self-chaining `after()` calls |

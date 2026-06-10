@@ -63,3 +63,6 @@ Area photos/
 
 # wrangler local state
 .wrangler/
+
+# IndexNow key file (generated at build from INDEXNOW_KEY)
+/public/*.txt

@@ -59,16 +59,24 @@ export default {
     const [, kind, id, index] = m;
     const r2Key = `${kind}/${id}/${index}.jpg`;
 
-    // 0. Edge cache. No-op on *.workers.dev (Cache API needs a zone),
-    // but the moment the worker gets a custom domain every repeat hit
-    // is served from the Cloudflare edge without invoking R2 at all.
+    // 0. Edge cache — ACTIVE on *.workers.dev too (verified empirically
+    // 2026-06-10: repeat requests return cf-cache-status: HIT; the old
+    // comment claiming the Cache API needs a custom domain was wrong).
+    // Edge entries carry an etag, so revalidations 304 here without
+    // touching R2.
+    const ifNoneMatch = req.headers.get('if-none-match');
     const cacheKey = new Request(url.toString(), { method: 'GET' });
     const edge = await caches.default.match(cacheKey);
-    if (edge) return edge;
+    if (edge) {
+      const edgeEtag = edge.headers.get('etag');
+      if (ifNoneMatch && edgeEtag && ifNoneMatch === edgeEtag) {
+        return new Response(null, { status: 304, headers: { etag: edgeEtag, ...corsHeaders() } });
+      }
+      return edge;
+    }
 
     // 1. R2 hit — honour conditional requests so Vercel's image
     // optimizer revalidations cost a 304 instead of a full body.
-    const ifNoneMatch = req.headers.get('if-none-match');
     const cached = await env.IMAGES_BUCKET.get(r2Key);
     if (cached) {
       if (ifNoneMatch && ifNoneMatch === cached.httpEtag) {
@@ -116,11 +124,19 @@ export default {
       })
     );
 
+    // Etag = quoted MD5 hex — exactly what R2 reports as httpEtag for a
+    // single-part upload, so the miss-path etag and every later R2-hit
+    // etag are identical. Without this, the year-long edge entry from a
+    // miss was unrevalidatable (no etag → no 304s until eviction).
+    const md5 = await crypto.subtle.digest('MD5', bytes);
+    const etag = `"${[...new Uint8Array(md5)].map((b) => b.toString(16).padStart(2, '0')).join('')}"`;
+
     const res = new Response(bytes, {
       status: 200,
       headers: {
         'content-type': contentType,
         'cache-control': 'public, max-age=31536000, immutable',
+        etag,
         ...corsHeaders(),
       },
     });

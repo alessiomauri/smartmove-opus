@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runResalesSync, type ResalesPage } from '@/lib/integrations/resales-sync';
 import type { ResalesPropertyRaw } from '@/lib/integrations/resales-mapping';
@@ -19,11 +20,28 @@ import type { ResalesPropertyRaw } from '@/lib/integrations/resales-mapping';
  * (the samples aren't deployed). That's by design: this is a
  * dev seeding aid, not a production primitive.
  */
-export async function POST() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+export async function POST(req: NextRequest) {
+  // Same dual auth as the sync route: admin session, or the shared
+  // secret header (lets local smoke tests / CI exercise the full
+  // pipeline without a browser session).
+  const secretHeader = req.headers.get('x-smartmove-cron-secret');
+  const secretOk = Boolean(process.env.SYNC_CRON_SECRET) && secretHeader === process.env.SYNC_CRON_SECRET;
+
+  let supabase;
+  let userId: string | null = null;
+  if (secretOk && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    supabase = createSupabaseAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+  } else {
+    supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    userId = user.id;
   }
 
   const samplesDir =
@@ -72,7 +90,7 @@ export async function POST() {
     supabase,
     trigger: 'samples',
     fetchPage,
-    triggeredBy: user.id,
+    triggeredBy: userId,
   });
 
   return NextResponse.json({

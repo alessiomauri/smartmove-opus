@@ -66,8 +66,9 @@ import {
 } from './resales-hash';
 import { createThrottle, type Throttle } from './resales-throttle';
 import { getSyncState, setSyncState, WATERMARK_KEY } from './sync-state';
-import { updateTag } from 'next/cache';
+import { revalidateTag } from 'next/cache';
 import { PROPERTIES_TAG, DEVELOPMENTS_TAG } from '@/lib/cache';
+import { pingIndexNow, entityUrls } from '@/lib/indexnow';
 
 export type SyncTrigger =
   | 'cron'
@@ -93,6 +94,8 @@ export interface SyncReport {
   statusChanges: number;
   imagesPurged: number;
   apiCalls: number;
+  /** URLs submitted to IndexNow (0 when INDEXNOW_KEY unset or no writes). */
+  indexnowPinged: number;
   soldTailHits: number;
   watermarkBefore: string | null;
   watermarkAfter: string | null;
@@ -162,6 +165,7 @@ interface SyncOpts {
 export interface ExistingRow {
   id: string;
   source_id: string;
+  slug: string | null;
   content_hash: string | null;
   rejected: boolean | null;
   price: number | null;
@@ -173,6 +177,8 @@ export interface PlannedUpdate {
   id: string;
   reference: string;
   kind: 'p' | 'd';
+  /** Public slug of the existing row — drives the IndexNow ping. */
+  slug: string | null;
   payload: Record<string, unknown>;
   priceChange: { old: number | null; next: number | null; currency: string } | null;
   statusChange: { old: string | null; next: string } | null;
@@ -215,7 +221,15 @@ export function planBatch(
     skippedRejected: 0,
   };
 
-  for (const m of mapped) {
+  // Dedupe within the batch — the same reference can appear twice with
+  // different shapes (overlapping sample files; live pages reshuffling
+  // mid-walk). Without this, two occurrences ping-pong the stored hash
+  // and the row re-updates forever. Last occurrence wins (later = newer).
+  const byKey = new Map<string, (typeof mapped)[number]>();
+  for (const m of mapped) byKey.set(`${m.kind}:${m.reference}`, m);
+  const deduped = [...byKey.values()];
+
+  for (const m of deduped) {
     const row = m.entry.row as unknown as Record<string, unknown>;
     const hash = hashContent(row);
     const existing = existingBySourceId.get(`${m.kind}:${m.reference}`);
@@ -270,6 +284,7 @@ export function planBatch(
       id: existing.id,
       reference: m.reference,
       kind: m.kind,
+      slug: existing.slug,
       payload,
       priceChange,
       statusChange,
@@ -301,7 +316,10 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
   let priceChanges = 0;
   let statusChanges = 0;
   let imagesPurged = 0;
+  let indexnowPinged = 0;
   let soldTailHits = 0;
+  // Public URLs of rows actually written this run — fed to IndexNow.
+  const changedUrls: string[] = [];
   let pendingCount = 0;
   let approvedCount = 0;
 
@@ -414,9 +432,15 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       ] as const) {
         const refs = mapped.filter((m) => m.kind === kind).map((m) => m.reference);
         if (refs.length === 0) continue;
+        // developments carry price ranges, not a single price/status —
+        // the planner only consults price/status for property rows.
+        const cols =
+          kind === 'p'
+            ? 'id, source_id, slug, content_hash, rejected, price, status, source_image_urls'
+            : 'id, source_id, slug, content_hash, rejected, source_image_urls';
         const { data: existingRows, error: exErr } = await opts.supabase
           .from(table)
-          .select('id, source_id, content_hash, rejected, price, status, source_image_urls')
+          .select(cols)
           .eq('source', 'resales_online')
           .in('source_id', refs);
         if (exErr) {
@@ -424,7 +448,12 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           continue;
         }
         for (const r of existingRows ?? []) {
-          existingBySourceId.set(`${kind}:${r.source_id}`, r as unknown as ExistingRow);
+          const row = r as unknown as ExistingRow;
+          existingBySourceId.set(`${kind}:${row.source_id}`, {
+            ...row,
+            price: row.price ?? null,
+            status: row.status ?? null,
+          });
         }
       }
 
@@ -450,6 +479,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           for (const r of rows) {
             if (r.pending_review) pendingCount += 1;
             else approvedCount += 1;
+            if (typeof r.slug === 'string') changedUrls.push(...entityUrls(kind, r.slug));
           }
         }
       }
@@ -467,6 +497,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           continue;
         }
         rowsUpdated += 1;
+        if (u.slug) changedUrls.push(...entityUrls(u.kind, u.slug));
 
         if (u.priceChange) {
           priceChanges += 1;
@@ -520,7 +551,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       if (soldTailRefs.length > 0) {
         const { data: tailRows } = await opts.supabase
           .from('properties')
-          .select('id, source_id, status')
+          .select('id, source_id, slug, status')
           .eq('source', 'resales_online')
           .in('source_id', soldTailRefs);
         const toFlip = (tailRows ?? []).filter((r) => r.status !== 'sold');
@@ -536,6 +567,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           }
           soldTailHits += 1;
           statusChanges += 1;
+          if (r.slug) changedUrls.push(...entityUrls('p', r.slug));
           await opts.supabase.from('property_status_history').insert({
             property_id: r.id,
             old_status: r.status,
@@ -569,8 +601,11 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
     // ── Cache invalidation: only when something actually changed ──
     const wroteSomething = rowsInserted + rowsUpdated + soldTailHits > 0;
     if (wroteSomething) {
-      updateTag(PROPERTIES_TAG);
-      updateTag(DEVELOPMENTS_TAG);
+      revalidateTag(PROPERTIES_TAG, 'max');
+      revalidateTag(DEVELOPMENTS_TAG, 'max');
+      // IndexNow: exactly the URLs this run wrote — a no-change night
+      // sends zero pings (env-gated; never throws).
+      indexnowPinged = await pingIndexNow(changedUrls);
     }
 
     // Capped before reaching the boundary = partial coverage. (For
@@ -618,6 +653,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           price_changes: priceChanges,
           status_changes: statusChanges,
           images_purged: imagesPurged,
+          indexnow_pinged: indexnowPinged,
           api_calls: throttle.apiCalls,
           duration_ms: Date.now() - startedMs,
           watermark_after: watermarkAfter,
@@ -643,6 +679,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       statusChanges,
       imagesPurged,
       apiCalls: throttle.apiCalls,
+      indexnowPinged,
       soldTailHits,
       watermarkBefore,
       watermarkAfter,
@@ -697,6 +734,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       statusChanges,
       imagesPurged,
       apiCalls: throttle.apiCalls,
+      indexnowPinged,
       soldTailHits,
       watermarkBefore,
       watermarkAfter: watermarkBefore,
