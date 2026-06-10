@@ -1,3 +1,8 @@
+# ⚠️ IDLE FALLBACK (2026-06-10): Resales whitelists ONE static IP per key;
+# Workers egress isn't it. Production traffic goes through the fixed-IP VPS
+# relay (relay/resales-relay/, https://167-233-98-46.sslip.io). This worker
+# stays deployed in case Resales ever supports IP ranges — repoint
+# RESALES_PROXY_URL back here and decommission the VPS if that happens.
 name = "smartmove-resales-proxy"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"

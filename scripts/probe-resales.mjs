@@ -56,7 +56,7 @@ if (DIRECT) {
   }
   console.log(`Mode: DIRECT (p1 ends …${CREDS.p1.slice(-3)}, sandbox=true)`);
 } else {
-  console.log('Mode: via proxy Worker');
+  console.log(`Mode: via proxy ${process.env.RESALES_PROXY_URL}`);
 }
 
 const PROXY = process.env.RESALES_PROXY_URL?.replace(/\/$/, '');
@@ -80,7 +80,7 @@ async function recordFinding(title, body) {
   if (!sectionOpened) {
     await appendFile(
       gapsDoc,
-      `\n\n---\n\n## Probe findings — ${stamp} UTC (scripts/probe-resales.mjs, sandbox, ${DIRECT ? 'DIRECT from whitelisted IP' : 'via Worker proxy'})\n`
+      `\n\n---\n\n## Probe findings — ${stamp} UTC (scripts/probe-resales.mjs, sandbox, ${DIRECT ? 'DIRECT from whitelisted IP' : `via relay ${new URL(PROXY).host}`})\n`
     );
     sectionOpened = true;
   }
