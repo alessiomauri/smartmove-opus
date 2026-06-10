@@ -13,7 +13,7 @@ import { Area, AreaRegion } from '@/types/area';
  *   1. Editorial hero with 4-stat strip + coastline glyph (SVG placeholder
  *      per user direction — to be swapped for a real map illustration later)
  *   2. Sticky region-pill filter
- *   3. Full-bleed map section (dark ink bg) — the real AreasLeafletMap from
+ *   3. Full-bleed map section (dark ink bg) — the real AreasMap from
  *      Marbella Live, rendered against the design's dark canvas, with a
  *      detail rail on the right showing the active region
  *   4. Featured 6 cards (curated hero areas)
@@ -32,8 +32,8 @@ function MapPlaceholder() {
   );
 }
 
-const AreasLeafletMap = dynamic(
-  () => import('@/components/areas/AreasLeafletMap'),
+const AreasMap = dynamic(
+  () => import('@/components/areas/AreasMap'),
   { ssr: false, loading: () => <MapPlaceholder /> }
 );
 
@@ -202,7 +202,7 @@ export default function AreasIndexClient({
   // Macro pin clicked? Drives the rail. null = "Costa del Sol" overview.
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
-  // Leaflet (~150KB of JS) only mounts once the map section approaches
+  // MapLibre (~85KB gz) only mounts once the map section approaches
   // the viewport — keeps the chunk off the critical path on first load.
   const mapWrapRef = useRef<HTMLDivElement>(null);
   const [mapInView, setMapInView] = useState(false);
@@ -494,7 +494,7 @@ export default function AreasIndexClient({
         <div className="stage">
           <div className="sm-areas-map-wrap" ref={mapWrapRef}>
             {mapInView ? (
-              <AreasLeafletMap
+              <AreasMap
                 areas={mappedAreas}
                 selectedSlug={selectedSlug}
                 onAreaSelect={(slug) => setSelectedSlug(slug)}
@@ -511,7 +511,12 @@ export default function AreasIndexClient({
                   src={railPhoto.src}
                   alt={railPhoto.alt}
                   fill
-                  sizes="380px"
+                  // The rail photo is 380 CSS px wide. At 2x DPR the
+                  // browser needs ~760 actual px to render sharp; the
+                  // 1x src in the srcset is too soft on retina. Hint
+                  // with a wider sizes so next/image picks a higher
+                  // breakpoint from the optimiser.
+                  sizes="(min-resolution: 2dppx) 760px, 380px"
                   priority={false}
                 />
               </div>

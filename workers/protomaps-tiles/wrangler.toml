@@ -1,0 +1,17 @@
+name = "smartmove-map-tiles"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+workers_dev = true
+
+# R2 bucket binding — create the bucket via:
+#   npx wrangler r2 bucket create smartmove-map-tiles
+[[r2_buckets]]
+binding = "TILES_BUCKET"
+bucket_name = "smartmove-map-tiles"
+
+[vars]
+# Public archive name(s) served from the bucket root. The Worker only
+# range-reads files listed here; anything else returns 404.
+ALLOWED_ARCHIVES = "costa-del-sol.pmtiles"
+# Comma-separated origins allowed for CORS responses. Empty = "*".
+ALLOWED_ORIGINS = ""

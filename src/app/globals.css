@@ -2488,9 +2488,9 @@ select:focus {
    accessible while the user pans the map. Light paper background so
    it reads as its own strip, distinct from the dark band above.
 
-   Stacking: SiteHeader is z-[1000], leaflet panes are scoped inside
-   `.sm-areas-map-wrap` (isolation: isolate). The sticky filter at z-40
-   sits cleanly above the map and below the header. */
+   Stacking: SiteHeader is z-[1000], the MapLibre canvas is scoped
+   inside `.sm-areas-map-wrap` (isolation: isolate). The sticky filter
+   at z-40 sits cleanly above the map and below the header. */
 .sm-areas-filter {
   background: rgba(247, 244, 239, 0.94);
   backdrop-filter: blur(10px) saturate(160%);
@@ -2601,30 +2601,26 @@ select:focus {
   position: relative;
   background: var(--sm-paper);
   border-right: 1px solid rgba(255,255,255,.08);
-  /* Isolate leaflet's internal stacking (pane z-indexes 200–700) so it
-     can never bleed up through the sticky SiteHeader or any other
-     element above the map. */
+  /* Isolate the MapLibre canvas so its internal stacking can never bleed
+     up through the sticky SiteHeader or any other element above. */
   isolation: isolate;
 }
-/* AreasLeafletMap renders an outer card div with the legend overlay
-   and a "Scroll to zoom" footer below the MapContainer. We flatten its
-   chrome inside the dark map section: the outer div becomes a flex
-   column that fills the wrap, the MapContainer flex-grows to consume
-   whatever space the rail leaves, and the footer keeps its natural
-   height at the bottom — so no white gap below the map. */
+/* AreasMap renders an outer card div with the legend overlay and a
+   "Scroll to zoom" footer below the canvas. We flatten its chrome
+   inside the dark map section: the outer div becomes a flex column
+   that fills the wrap, the canvas div flex-grows to consume whatever
+   space the rail leaves, and the footer keeps its natural height at
+   the bottom — so no white gap below the map. */
 .sm-areas-mapsec .stage > .sm-areas-map-wrap > * {
   height: 100% !important;
   border-radius: 0 !important;
   display: flex;
   flex-direction: column;
 }
-.sm-areas-mapsec .stage > .sm-areas-map-wrap .leaflet-container {
+.sm-areas-mapsec .stage > .sm-areas-map-wrap .sm-areas-map-canvas {
   flex: 1 1 auto;
   height: auto !important;
   min-height: 0;
-  /* Belt-and-braces: keep the leaflet root in the same stacking context
-     as its parent. The wrap already isolates, but newer browsers honour
-     `z-index: 0` here as an extra guarantee. */
   z-index: 0;
 }
 
@@ -2720,11 +2716,12 @@ select:focus {
   text-align: center; margin-top: 14px;
 }
 
-/* ----- MAP PIN: HOVER TOOLTIP + SELECTED STATE ----- */
-/* Leaflet tooltip is rebuilt to feel editorial — a hairline gold rule
-   on the left, eyebrow on top, name large, faint cta below. Sits on a
-   warm paper card so it reads against the light basemap. */
-.leaflet-tooltip.sm-pin-tooltip {
+/* ----- MAP PIN: HOVER TOOLTIP -----
+   Editorial card — hairline gold rule on the left, eyebrow on top, name
+   large, faint cta below. Sits on warm paper so it reads against the
+   light basemap. The selected-pin halo is drawn on the GL canvas via a
+   second circle layer (see AreasMap.tsx), not via CSS. */
+.sm-pin-tooltip {
   background: var(--sm-paper);
   color: var(--sm-ink);
   border: 1px solid var(--sm-line);
@@ -2734,7 +2731,6 @@ select:focus {
   box-shadow: 0 6px 24px -8px rgba(28,26,23,0.22);
   font-family: var(--sm-font-body);
 }
-.leaflet-tooltip.sm-pin-tooltip::before { display: none !important; }
 .sm-pin-tooltip-eyebrow {
   font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--sm-gold-deep); font-weight: 600; margin-bottom: 4px;
@@ -2751,12 +2747,6 @@ select:focus {
   font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--sm-text-muted); font-weight: 600;
   white-space: nowrap;
-}
-
-/* Selected pin: subtle gold halo. Layered as an outline so the
-   circle marker fill stays clean. */
-.leaflet-interactive.sm-pin--selected {
-  filter: drop-shadow(0 0 6px rgba(180, 142, 73, 0.55));
 }
 
 /* ----- FEATURED 6 ----- */
