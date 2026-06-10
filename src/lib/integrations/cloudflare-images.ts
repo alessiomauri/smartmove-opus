@@ -39,28 +39,33 @@ export function imageUrl(kind: ImageKind, id: string | number, index = 0): strin
 }
 
 /**
- * Purge cached images for a property/development. Called by the cleanse job
- * (SMARTMOVE_BRIEF §3.7) when a property is removed from the Resales feed.
+ * Purge stored + edge-cached images for a property/development. Called by
+ * the sync when a row's image manifest changes, and by the weekly
+ * reconciliation when a reference leaves the Resales feed entirely.
  *
- * Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID server-side.
+ * Talks to the image worker's secret-gated DELETE path, which removes
+ * every R2 object under `{kind}/{id}/` and evicts the edge cache. (The
+ * previous implementation used the zone-level purge_cache API, which
+ * never worked here: prefix purge is Enterprise-only, *.workers.dev
+ * isn't in our zone, and the actual stale copies live in R2 — nothing
+ * ever deleted them.)
+ *
+ * Returns true on success, false when purging isn't configured —
+ * callers treat false as "skipped", not an error.
  */
-export async function purgeImages(kind: ImageKind, id: string | number): Promise<void> {
-  const token = process.env.CLOUDFLARE_API_TOKEN;
-  const zone = process.env.CLOUDFLARE_ZONE_ID;
-  if (!token || !zone || !WORKER_URL) {
-    throw new Error('Cloudflare credentials not configured');
+export async function purgeImages(kind: ImageKind, id: string | number): Promise<boolean> {
+  const secret = process.env.IMAGE_PROXY_PURGE_SECRET;
+  if (!secret || !WORKER_URL) {
+    console.warn('purgeImages skipped: IMAGE_PROXY_PURGE_SECRET / NEXT_PUBLIC_IMAGE_PROXY_URL not set');
+    return false;
   }
-  // Purge the Worker URL prefix so cached image variants flush.
-  const prefix = `${WORKER_URL}/${kind}/${id}/`;
-  const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zone}/purge_cache`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ prefixes: [prefix] }),
+  const res = await fetch(`${WORKER_URL.replace(/\/$/, '')}/${kind}/${id}`, {
+    method: 'DELETE',
+    headers: { 'x-purge-secret': secret },
+    signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) {
-    throw new Error(`Cloudflare purge ${res.status}: ${await res.text()}`);
+    throw new Error(`Image purge ${res.status}: ${await res.text()}`);
   }
+  return true;
 }

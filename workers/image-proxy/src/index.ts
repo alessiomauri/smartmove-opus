@@ -29,12 +29,22 @@ export interface Env {
   /** Set via wrangler secret. Used for the source URL lookup. */
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
+  /**
+   * Set via `wrangler secret put PURGE_SECRET`. Authorises the
+   * DELETE /{p|d}/{id} cleanse path (called by the nightly sync when a
+   * property's image manifest changes or the reference leaves the feed).
+   */
+  PURGE_SECRET?: string;
 }
 
 const ROUTE_RE = /^\/(p|d)\/([\w-]+)\/(\d+)$/;
+const PURGE_RE = /^\/(p|d)\/([\w-]+)$/;
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (req.method === 'DELETE') {
+      return handlePurge(req, env);
+    }
     if (req.method !== 'GET' && req.method !== 'OPTIONS' && req.method !== 'HEAD') {
       return new Response('Method not allowed', { status: 405 });
     }
@@ -118,6 +128,47 @@ export default {
     return res;
   },
 };
+
+/**
+ * Secret-gated cleanse: DELETE /{p|d}/{id} removes every R2 object under
+ * the reference's prefix and evicts the matching edge-cache entries.
+ * R2 keys are index-based, so when a manifest changes the only safe move
+ * is purge-everything + lazy refill; when a property leaves the feed the
+ * sweep calls this for the full cleanse. Without this path, removed
+ * properties' photos lived in R2 forever.
+ */
+async function handlePurge(req: Request, env: Env): Promise<Response> {
+  if (!env.PURGE_SECRET) {
+    return new Response('Purge not configured', { status: 501 });
+  }
+  if (req.headers.get('x-purge-secret') !== env.PURGE_SECRET) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+  const url = new URL(req.url);
+  const m = url.pathname.match(PURGE_RE);
+  if (!m) return new Response('Not found', { status: 404 });
+  const [, kind, id] = m;
+  const prefix = `${kind}/${id}/`;
+
+  let deleted = 0;
+  let cursor: string | undefined;
+  do {
+    const listing: R2Objects = await env.IMAGES_BUCKET.list({ prefix, cursor });
+    const keys = listing.objects.map((o) => o.key);
+    if (keys.length > 0) {
+      await env.IMAGES_BUCKET.delete(keys);
+      deleted += keys.length;
+      // Evict matching edge-cache entries (key = the public GET URL).
+      for (const key of keys) {
+        const publicUrl = new URL(`/${key.replace(/\.jpg$/, '')}`, url.origin);
+        await caches.default.delete(new Request(publicUrl.toString(), { method: 'GET' }));
+      }
+    }
+    cursor = listing.truncated ? listing.cursor : undefined;
+  } while (cursor);
+
+  return Response.json({ ok: true, deleted, prefix });
+}
 
 async function resolveSourceUrl(
   kind: string,

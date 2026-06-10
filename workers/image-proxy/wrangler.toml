@@ -21,3 +21,9 @@ ALLOWED_ORIGINS = "media-webapi.resales-online.com,cdn.resales-online.com,picsum
 # Cloudflare Images delivery URL prefix — set to your account's URL once Images is enabled.
 # Format: https://imagedelivery.net/<account-hash>
 CF_IMAGES_DELIVERY = ""
+
+# Secrets (set via `npx wrangler secret put <NAME>`):
+#   SUPABASE_URL        — source-URL lookup fallback
+#   SUPABASE_ANON_KEY   — "
+#   PURGE_SECRET        — authorises DELETE /{p|d}/{id} (R2 prefix cleanse;
+#                         must match IMAGE_PROXY_PURGE_SECRET on Vercel)
