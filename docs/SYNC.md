@@ -72,7 +72,10 @@ the self-chaining continuation calls and any external scheduler).
 3. If a chunk dies (deploy, crash): nothing is lost. The nightly cron
    resumes a `running` import automatically, or click **Resume full
    import**. If the Resales `QueryId` expired between chunks, the walk
-   restarts from page 1 — hash-skips make the re-walk cheap.
+   restarts from page 1 — hash-skips make the re-walk cheap. (Measured
+   2026-06-10: QueryId survived ≥60 min, so back-to-back chunk
+   continuations will essentially never hit this; it's a safety net for
+   multi-hour gaps.)
 4. On completion the import seeds the watermark from the max
    `LastUpdated` observed; nightly incremental takes over automatically.
 
