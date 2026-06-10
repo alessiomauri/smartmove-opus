@@ -146,11 +146,20 @@ export async function runReconcileChunk(opts: {
   restart?: boolean;
   /** Max PropertyDetails fetches per run — bounds the ingest phase. */
   ingestCap?: number;
+  /**
+   * Wall-clock stop (epoch ms). The refs-only walk is light, so one
+   * invocation within this budget drains the whole feed for any
+   * realistic size (≈575 pages / 23k rows at 2.5 req/s in 230s). When
+   * absent, only `pagesPerChunk` bounds the walk.
+   */
+  deadlineMs?: number;
   throttle?: Throttle;
 }): Promise<ReconcileChunkResult> {
   const { supabase } = opts;
   const throttle = opts.throttle ?? createThrottle();
-  const pagesPerChunk = Math.min(Math.max(opts.pagesPerChunk ?? 40, 1), 60);
+  // Raised from the old 60-page cap: the walk is refs-only and the
+  // deadline is the real stop, so let one invocation cover the feed.
+  const pagesPerChunk = Math.min(Math.max(opts.pagesPerChunk ?? 600, 1), 2000);
   const ingestCap = Math.min(Math.max(opts.ingestCap ?? 200, 0), 500);
   const pageSize = 100; // refs-only walk: fewest round-trips allowed
 
@@ -168,7 +177,7 @@ export async function runReconcileChunk(opts: {
   let restarted = false;
   const liveRefs = new Set(state.refs);
 
-  while (!done && walked < pagesPerChunk) {
+  while (!done && walked < pagesPerChunk && (!opts.deadlineMs || Date.now() < opts.deadlineMs)) {
     let env: ResalesEnvelope<ResalesProperty>;
     try {
       env = await throttle.run(`reconcile p${state.page}`, () =>

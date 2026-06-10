@@ -74,44 +74,73 @@ export async function POST(req: NextRequest) {
   });
 }
 
-async function execute(
+/**
+ * Immediate-ack: schedule the reconcile drain in after() and return at
+ * once. Same fix as the full-import route — the previous design awaited
+ * the continuation's full response inside after(), nesting the awaits
+ * across the chain and blowing maxDuration (a ~217-page feed needs two
+ * drains, so this bit in prod). Now each drain is independent and its
+ * continuation fetch returns in ~100ms.
+ */
+function execute(
   req: NextRequest,
   supabase: SupabaseClient,
   opts: { triggeredBy: string | null; restart?: boolean; pagesPerChunk?: number }
 ) {
-  const result = await runReconcileChunk({
-    supabase,
-    triggeredBy: opts.triggeredBy,
-    restart: opts.restart,
-    pagesPerChunk: opts.pagesPerChunk,
-  });
+  const origin = continuationOrigin(req);
+  after(() => drainReconcile(supabase, opts.triggeredBy, opts.restart ?? false, opts.pagesPerChunk, origin));
+  return NextResponse.json({ ok: true, started: true });
+}
 
+async function drainReconcile(
+  supabase: SupabaseClient,
+  triggeredBy: string | null,
+  restart: boolean,
+  pagesPerChunk: number | undefined,
+  origin: string
+) {
+  let result;
+  try {
+    result = await runReconcileChunk({
+      supabase,
+      triggeredBy,
+      restart,
+      pagesPerChunk,
+      deadlineMs: Date.now() + (Number(process.env.RESALES_DRAIN_BUDGET_MS || '') || 230_000),
+    });
+  } catch (e) {
+    console.error('reconcile drain failed (cron/manual will resume):', e);
+    return;
+  }
+  // Walk incomplete → chain one more drain (child immediate-acks, no
+  // nesting). The weekly cron is the backstop if the fetch fails.
   if (!result.done) {
     const secret = process.env.SYNC_CRON_SECRET;
-    if (secret) {
-      const selfUrl = new URL('/api/admin/resales/reconcile', req.nextUrl.origin).toString();
-      after(async () => {
-        try {
-          await fetch(selfUrl, {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'x-smartmove-cron-secret': secret,
-            },
-            body: JSON.stringify({ continuation: true }),
-          });
-        } catch (e) {
-          console.error('reconcile continuation failed to schedule:', e);
-        }
-      });
+    if (!secret) return;
+    const url = new URL('/api/admin/resales/reconcile', origin).toString();
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+      'x-smartmove-cron-secret': secret,
+    };
+    if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+      headers['x-vercel-protection-bypass'] = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
     }
-    return NextResponse.json({
-      ok: true,
-      done: false,
-      chained: Boolean(secret),
-      progress: { page: result.state.page, refsCollected: result.state.refs.length, total: result.state.total_count },
-    });
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ continuation: true }),
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (e) {
+      console.error('reconcile continuation fetch failed (cron will resume):', e);
+    }
   }
+}
 
-  return NextResponse.json({ ok: true, done: true, summary: result.summary });
+/** Request origin (correct in prod + local), env fallback for odd cases. */
+function continuationOrigin(req: NextRequest): string {
+  const o = req.nextUrl.origin;
+  if (o && /^https?:\/\//.test(o)) return o;
+  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 }
