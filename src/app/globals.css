@@ -3051,14 +3051,17 @@ select:focus {
   position: relative;
   width: calc(100% + 64px);       /* break out of the 32px L/R padding */
   margin: -28px -32px 16px;       /* hug the top of the rail */
-  /* Wider crop than 16/10 — keeps the rail compact so the whole map +
-     rail row fits in roughly one screen on a typical laptop. */
-  aspect-ratio: 21 / 9;
+  /* 3:2 lets the photo breathe — coastlines, mountains, and golf
+     valleys keep recognisable horizon detail that the previous 21/9
+     crop was eating. Subject sits at 40% from the top so horizon
+     stays in the upper third (per editorial photography norm). */
+  aspect-ratio: 3 / 2;
   overflow: hidden;
   background: var(--sm-cream);
 }
 .sm-areas-rail .r-photo img {
   object-fit: cover;
+  object-position: 50% 40%;
   transition: transform 600ms cubic-bezier(.2,.7,.2,1);
 }
 /* When the rail has a photo, drop the gold side rail below the image. */
