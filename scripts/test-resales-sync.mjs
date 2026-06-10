@@ -236,7 +236,28 @@ console.log('\n— own-property detection (filter membership) —');
     'planBatch insert carries MLS pending flags');
 }
 
-// ───────────────────────────── 7. reconciliation diff
+// ───────────────────────────── 7. curated-surface guard (featured)
+console.log('\n— curation guard: featured is admin-owned —');
+{
+  // The mapper must never emit curation flags — inserts land on the DB
+  // default (is_featured=false), keeping Resales rows off curated
+  // surfaces until an admin whitelists them.
+  const row = mapToRow(raw).row;
+  assert(!('is_featured' in row) && !('featured_order' in row),
+    'mapper emits no is_featured / featured_order');
+
+  // Even if a future mapper change emitted them, updates must strip them.
+  const stripped = stripProtectedFields({ ...row, is_featured: true, featured_order: 3 });
+  assert(!('is_featured' in stripped) && !('featured_order' in stripped),
+    'update payloads strip is_featured / featured_order');
+
+  // Admin featuring a row must not dirty its hash (no phantom updates).
+  const featuredCopy = { ...row, is_featured: true, featured_order: 1 };
+  assert(hashContent(featuredCopy) === hashContent(row),
+    'featuring a row does not change its content hash');
+}
+
+// ───────────────────────────── 8. reconciliation diff
 console.log('\n— reconcile diff —');
 {
   const now = new Date('2026-06-10T03:00:00Z');

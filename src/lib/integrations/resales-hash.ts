@@ -30,6 +30,11 @@ export const HASH_EXCLUDED_FIELDS: ReadonlySet<string> = new Set([
   'published',
   'rejected',
   'hide_price_drop',
+  // Curation is admin-owned (Alessio's rule: Resales rows never reach
+  // curated surfaces unless explicitly whitelisted) — featuring a row
+  // must not make it look "changed" to the next sync.
+  'is_featured',
+  'featured_order',
 ]);
 
 /**
@@ -52,6 +57,10 @@ export const SYNC_PROTECTED_FIELDS: ReadonlySet<string> = new Set([
   'slug',
   'price_drop_at',
   'removed_at',
+  // Curated-surface whitelist flags — the sync must never write these
+  // (the mapper doesn't emit them today; this guards future drift).
+  'is_featured',
+  'featured_order',
 ]);
 
 /** Deterministic JSON: objects get sorted keys, recursively. */

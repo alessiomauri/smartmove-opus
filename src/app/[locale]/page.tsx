@@ -8,10 +8,19 @@ import { getCachedPublishedProperties, getCachedDefaultSort } from '@/lib/cache'
 export const revalidate = 3600;
 
 export default async function Home() {
-  const [properties, defaultSort] = await Promise.all([
+  const [allPublished, defaultSort] = await Promise.all([
     getCachedPublishedProperties(),
     getCachedDefaultSort(),
   ]);
+
+  // CURATED-SURFACE GATE (Alessio's rule): Resales-sourced rows never
+  // appear on the homepage — auto-publish only makes them part of the
+  // full-search inventory — UNLESS an admin explicitly whitelists one
+  // by featuring it. Without this gate the full import would flood the
+  // "Featured this week" grid with thousands of MLS rows.
+  const properties = allPublished.filter(
+    (p) => p.source !== 'resales_online' || p.is_featured
+  );
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
 
