@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
 export const alt = 'Collection Image';
 export const size = {
   width: 1200,
@@ -9,7 +8,9 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-export default async function Image({ params }: { params: { slug: string } }) {
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  // Next 16: params is a Promise.
+  const { slug } = await params;
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -18,7 +19,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
   const { data: collection } = await supabase
     .from('collections')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .eq('is_published', true)
     .single();
 
@@ -28,13 +29,13 @@ export default async function Image({ params }: { params: { slug: string } }) {
         <div
           style={{
             fontSize: 48,
-            background: 'linear-gradient(135deg, var(--sm-paper) 0%, #f0ede8 100%)',
+            background: 'linear-gradient(135deg, #F7F3EC 0%, #f0ede8 100%)',
             width: '100%',
             height: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--sm-gold)',
+            color: '#cbaa65',
             fontFamily: 'Georgia, serif',
           }}
         >
@@ -138,7 +139,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
               style={{
                 width: '40px',
                 height: '2px',
-                backgroundColor: 'var(--sm-gold)',
+                backgroundColor: '#cbaa65',
               }}
             />
             <span
@@ -146,7 +147,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
                 fontSize: '16px',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: 'var(--sm-gold)',
+                color: '#cbaa65',
                 fontWeight: 500,
               }}
             >

@@ -1,6 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
 export const alt = 'Smartmove Marbella - Luxury Real Estate in Marbella, Costa del Sol';
 export const size = {
   width: 1200,
@@ -14,7 +13,7 @@ export default async function Image() {
       <div
         style={{
           fontSize: 48,
-          background: 'linear-gradient(135deg, var(--sm-paper) 0%, #f0ede8 100%)',
+          background: 'linear-gradient(135deg, #F7F3EC 0%, #f0ede8 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -57,7 +56,7 @@ export default async function Image() {
             left: 0,
             right: 0,
             height: 6,
-            background: 'linear-gradient(90deg, var(--sm-gold) 0%, var(--sm-gold-soft) 50%, var(--sm-gold) 100%)',
+            background: 'linear-gradient(90deg, #cbaa65 0%, #e8d4a2 50%, #cbaa65 100%)',
           }}
         />
 
@@ -76,7 +75,7 @@ export default async function Image() {
             style={{
               fontSize: 72,
               fontWeight: 400,
-              color: 'var(--sm-gold)',
+              color: '#cbaa65',
               letterSpacing: '-0.02em',
               marginBottom: 20,
               fontFamily: 'serif',
@@ -127,7 +126,7 @@ export default async function Image() {
                   background: 'rgba(60, 155, 167, 0.1)',
                   borderRadius: 50,
                   fontSize: 16,
-                  color: 'var(--sm-gold)',
+                  color: '#cbaa65',
                   fontWeight: 500,
                   border: '1px solid rgba(60, 155, 167, 0.2)',
                 }}

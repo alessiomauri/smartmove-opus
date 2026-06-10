@@ -22,9 +22,10 @@ export default function robots(): MetadataRoute.Robots {
           '/admin/*',
           '/api/',
           '/api/*',
-          '/_next/',
-          '/_next/*',
-          '/favourites/*', // share pages only — keep individual share URLs out of search
+          // NOTE: /_next/ is deliberately NOT disallowed — rendering
+          // crawlers need the JS/CSS to evaluate pages.
+          '/favourites/', // personal page + share URLs (EN)
+          '/favoritos/',  // …and the Spanish route
         ],
       },
       // Google - prioritize for main search
@@ -41,7 +42,7 @@ export default function robots(): MetadataRoute.Robots {
           '/*.png$',
           '/*.webp$',
         ],
-        disallow: ['/admin/', '/api/', '/favourites/*'],
+        disallow: ['/admin/', '/api/', '/favourites/', '/favoritos/'],
       },
       // Google Images - allow all images
       {
@@ -59,7 +60,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'Bingbot',
         allow: ['/', '/property/*', '/new-developments/*'],
-        disallow: ['/admin/', '/api/', '/favourites/*'],
+        disallow: ['/admin/', '/api/', '/favourites/', '/favoritos/'],
       },
       // DuckDuckGo
       {
@@ -96,6 +97,5 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'DotBot', disallow: '/' },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
   };
 }

@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
 export const alt = 'Property Image';
 export const size = {
   width: 1200,
@@ -9,8 +8,10 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-export default async function Image({ params }: { params: { slug: string } }) {
-  // Create Supabase client for edge runtime
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  // Next 16: params is a Promise — reading .slug synchronously broke
+  // every property OG card.
+  const { slug } = await params;
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -18,8 +19,8 @@ export default async function Image({ params }: { params: { slug: string } }) {
 
   const { data: property } = await supabase
     .from('properties')
-    .select('*')
-    .eq('slug', params.slug)
+    .select('name,location,price,price_on_request,bedrooms,bathrooms,interior_size,hero_image')
+    .eq('slug', slug)
     .eq('published', true)
     .single();
 
@@ -30,13 +31,13 @@ export default async function Image({ params }: { params: { slug: string } }) {
         <div
           style={{
             fontSize: 48,
-            background: 'linear-gradient(135deg, var(--sm-paper) 0%, #f0ede8 100%)',
+            background: 'linear-gradient(135deg, #F7F3EC 0%, #f0ede8 100%)',
             width: '100%',
             height: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--sm-gold)',
+            color: '#cbaa65',
             fontFamily: 'Georgia, serif',
           }}
         >
@@ -169,7 +170,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
                 fontSize: '32px',
                 fontWeight: 500,
                 color: 'white',
-                backgroundColor: 'rgba(60, 155, 167, 0.9)',
+                backgroundColor: 'rgba(203, 170, 101, 0.92)',
                 padding: '12px 24px',
                 borderRadius: '8px',
               }}

@@ -6,7 +6,10 @@ export const metadata: Metadata = {
   title: 'Saved Properties | Your Luxury Property Collection',
   description:
     'View and manage your saved luxury properties in Marbella. Share your collection of villas, apartments, and penthouses with friends and family.',
-  robots: { index: true, follow: true },
+  // Personal, localStorage-driven page (and the [shareId] share pages
+  // beneath it): zero search value, and shared lists shouldn't be
+  // indexable. follow stays on so link equity flows to the cards.
+  robots: { index: false, follow: true },
   alternates: { canonical: `${baseUrl}/favourites` },
   openGraph: {
     title: 'Saved Properties | Smartmove Marbella',
