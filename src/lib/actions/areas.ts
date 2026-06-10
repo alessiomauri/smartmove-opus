@@ -128,14 +128,22 @@ export async function toggleAreaPublished(slug: string, published: boolean) {
 }
 
 /**
- * One-time seed from the static TS data. Idempotent via upsert on slug.
+ * Seed/refresh areas from the static TS data. Idempotent on slug.
+ *
+ * IMAGE-SAFE: existing rows are updated WITHOUT the image columns.
+ * The old blind upsert carried `hero_image: ''` for every row, so one
+ * click of the admin seed button wiped all 40+ uploaded area photos
+ * site-wide (live regression, 2026-06-10). Images are owned by the
+ * upload pipeline (scripts/upload-area-photos.mjs + the admin area
+ * form), never by the seed. Also preserved on update: `published` —
+ * an admin unpublish must survive a re-seed.
  */
 export async function seedAreasFromStatic() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  const rows = COSTA_DEL_SOL_AREAS.map((a, i) => ({
+  const contentRow = (a: (typeof COSTA_DEL_SOL_AREAS)[number], i: number) => ({
     slug: a.slug,
     name: a.name,
     region: a.region,
@@ -153,23 +161,40 @@ export async function seedAreasFromStatic() {
     keywords: a.keywords,
     is_micro_location: a.isMicroLocation,
     parent_area: a.parentArea ?? null,
-    hero_image: '',
-    hero_image_alt: `${a.name} property for sale on the Costa del Sol`,
     display_order: i,
-    published: true,
     pin_category: PIN_CATEGORY_BY_SLUG[a.slug] ?? 'micro',
-  }));
+  });
 
-  const { error } = await supabase
-    .from('areas')
-    .upsert(rows, { onConflict: 'slug' });
+  const { data: existing, error: exErr } = await supabase.from('areas').select('slug');
+  if (exErr) throw new Error(`Seed failed reading existing areas: ${exErr.message}`);
+  const existingSlugs = new Set((existing ?? []).map((r) => r.slug));
 
-  if (error) {
-    console.error('Seed error:', error);
-    throw new Error(`Seed failed: ${error.message}`);
+  // New areas: full insert (image columns start empty until the photo
+  // pipeline fills them).
+  const newRows = COSTA_DEL_SOL_AREAS
+    .map((a, i) => ({ a, i }))
+    .filter(({ a }) => !existingSlugs.has(a.slug))
+    .map(({ a, i }) => ({
+      ...contentRow(a, i),
+      hero_image: '',
+      hero_image_alt: `${a.name} property for sale on the Costa del Sol`,
+      published: true,
+    }));
+  if (newRows.length > 0) {
+    const { error } = await supabase.from('areas').insert(newRows);
+    if (error) throw new Error(`Seed insert failed: ${error.message}`);
+  }
+
+  // Existing areas: content-only update — images + published untouched.
+  let updated = 0;
+  for (const [i, a] of COSTA_DEL_SOL_AREAS.entries()) {
+    if (!existingSlugs.has(a.slug)) continue;
+    const { error } = await supabase.from('areas').update(contentRow(a, i)).eq('slug', a.slug);
+    if (error) throw new Error(`Seed update failed for ${a.slug}: ${error.message}`);
+    updated += 1;
   }
 
   revalidatePath('/admin/areas');
-  revalidatePath('/areas');
-  return { count: rows.length };
+  updateTag(AREAS_TAG);
+  return { count: newRows.length + updated, inserted: newRows.length, updated };
 }

@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { Property, SortOption } from '@/types/property';
 import { Development } from '@/types/development';
-import { PROPERTY_LIST_COLUMNS } from '@/lib/list-columns';
+import { PROPERTY_LIST_COLUMNS, AREA_STAT_COLUMNS, type AreaStatRow } from '@/lib/list-columns';
 import { withPriceDropFlag } from '@/lib/price-drop';
 
 /**
@@ -69,13 +69,14 @@ export const getCachedPublishedProperties = unstable_cache(
  * largest over-fetch on the site. Four columns, editorial rows only.
  */
 export const getCachedAreaPropertyStats = unstable_cache(
-  async (): Promise<
-    Array<{ source: string; area: string | null; micro_location: string | null; price: number | null }>
-  > => {
+  async (): Promise<AreaStatRow[]> => {
     const supabase = createStaticSupabaseClient();
+    // AREA_STAT_COLUMNS is compile-time-checked against the Property
+    // type in src/lib/list-columns.ts — see the field-coverage notes
+    // there before narrowing further.
     const { data, error } = await supabase
       .from('properties')
-      .select('source,area,micro_location,price')
+      .select(AREA_STAT_COLUMNS)
       .eq('published', true)
       .neq('source', 'resales_online');
 
@@ -83,7 +84,7 @@ export const getCachedAreaPropertyStats = unstable_cache(
       console.error('getCachedAreaPropertyStats error:', error);
       return [];
     }
-    return data ?? [];
+    return (data ?? []) as unknown as AreaStatRow[];
   },
   ['area-property-stats'],
   { tags: [PROPERTIES_TAG], revalidate: 600 }
