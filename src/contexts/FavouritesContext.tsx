@@ -6,6 +6,8 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
+  useRef,
   ReactNode,
 } from 'react';
 
@@ -36,6 +38,9 @@ const FavouritesContext = createContext<FavouritesContextType | undefined>(
 export function FavouritesProvider({ children }: { children: ReactNode }) {
   const [favourites, setFavourites] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  // Ref mirror of isLoaded so mutator callbacks can stay reference-stable
+  // (no isLoaded dep) while still refusing pre-hydration writes.
+  const loadedRef = useRef(false);
 
   // Load favourites from localStorage on mount
   useEffect(() => {
@@ -50,6 +55,7 @@ export function FavouritesProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error loading favourites:', error);
     }
+    loadedRef.current = true;
     setIsLoaded(true);
   }, []);
 
@@ -64,7 +70,12 @@ export function FavouritesProvider({ children }: { children: ReactNode }) {
     }
   }, [favourites, isLoaded]);
 
+  // Every mutator gates on loadedRef: a click that lands before the
+  // localStorage read completes would otherwise mutate the empty initial
+  // array, and the save effect would then persist that truncated list —
+  // silently wiping the user's saved properties.
   const addFavourite = useCallback((propertyId: string) => {
+    if (!loadedRef.current) return;
     setFavourites((prev) => {
       if (prev.includes(propertyId)) return prev;
       return [...prev, propertyId];
@@ -72,10 +83,12 @@ export function FavouritesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const removeFavourite = useCallback((propertyId: string) => {
+    if (!loadedRef.current) return;
     setFavourites((prev) => prev.filter((id) => id !== propertyId));
   }, []);
 
   const toggleFavourite = useCallback((propertyId: string) => {
+    if (!loadedRef.current) return;
     setFavourites((prev) => {
       if (prev.includes(propertyId)) {
         return prev.filter((id) => id !== propertyId);
@@ -92,6 +105,7 @@ export function FavouritesProvider({ children }: { children: ReactNode }) {
   );
 
   const clearFavourites = useCallback(() => {
+    if (!loadedRef.current) return;
     setFavourites([]);
   }, []);
 
@@ -104,20 +118,34 @@ export function FavouritesProvider({ children }: { children: ReactNode }) {
     return `/favourites/${encoded}`;
   }, [favourites]);
 
+  // Memoized so consumers only re-render when favourites/isLoaded change,
+  // not on every provider render.
+  const value = useMemo(
+    () => ({
+      favourites,
+      favouriteCount: favourites.length,
+      isLoaded,
+      addFavourite,
+      removeFavourite,
+      toggleFavourite,
+      isFavourite,
+      clearFavourites,
+      generateShareLink,
+    }),
+    [
+      favourites,
+      isLoaded,
+      addFavourite,
+      removeFavourite,
+      toggleFavourite,
+      isFavourite,
+      clearFavourites,
+      generateShareLink,
+    ]
+  );
+
   return (
-    <FavouritesContext.Provider
-      value={{
-        favourites,
-        favouriteCount: favourites.length,
-        isLoaded,
-        addFavourite,
-        removeFavourite,
-        toggleFavourite,
-        isFavourite,
-        clearFavourites,
-        generateShareLink,
-      }}
-    >
+    <FavouritesContext.Provider value={value}>
       {children}
     </FavouritesContext.Provider>
   );

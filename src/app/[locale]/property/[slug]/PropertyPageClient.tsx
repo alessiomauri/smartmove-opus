@@ -1,5 +1,6 @@
-'use client';
-
+// Server component (no hooks here): the interactive pieces are the child
+// components, which each carry their own 'use client'. Keeping the
+// composition + footer on the server trims the hydration payload.
 import PropertyHeader from '@/components/property/PropertyHeader';
 import HeroSection from '@/components/property/HeroSection';
 import FeaturesSection from '@/components/property/FeaturesSection';

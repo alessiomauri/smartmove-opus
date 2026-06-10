@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { Property, STATUS_LABELS } from '@/types/property';
@@ -26,7 +27,7 @@ interface PropertyCardProps {
  * Featured properties get the gold badge variant. Sold/under-offer use
  * a subtle desaturate without changing the card chrome.
  */
-export default function PropertyCard({ property, priority = false }: PropertyCardProps) {
+function PropertyCard({ property, priority = false }: PropertyCardProps) {
   const isFeatured = property.is_featured && property.status === 'available';
   const isUnavailable =
     property.status === 'sold' ||
@@ -39,15 +40,8 @@ export default function PropertyCard({ property, priority = false }: PropertyCar
   const { isFavourite, toggleFavourite, isLoaded } = useFavourites();
   const saved = isFavourite(property.id);
 
-  // Warm the cache for the property's hero image when the user hovers.
-  const preloadHero = () => {
-    if (typeof window === 'undefined' || !property.hero_image) return;
-    const img = new window.Image();
-    img.src = property.hero_image;
-  };
-
   return (
-    <article className="sm-card" onMouseEnter={preloadHero} onTouchStart={preloadHero}>
+    <article className="sm-card">
       <Link
         href={{ pathname: '/property/[slug]', params: { slug: property.slug } }}
         className="sm-card__photo"
@@ -154,6 +148,11 @@ export default function PropertyCard({ property, priority = false }: PropertyCar
     </article>
   );
 }
+
+// memo: with dozens of cards in the grid, parent re-renders (filter
+// keystrokes, favourites changes) shouldn't reconcile every card —
+// only cards whose props actually changed.
+export default memo(PropertyCard);
 
 /** Loading skeleton matching the new card geometry. */
 export function PropertyCardSkeleton() {

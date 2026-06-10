@@ -47,17 +47,36 @@ export default function HomeHero({ featured }: HomeHeroProps) {
   return (
     <>
       <section className="sm-hero">
-        {/* Background image + gradient overlays */}
-        <div
-          className="sm-hero__bg"
-          style={{
-            backgroundImage: `
-              linear-gradient(180deg, rgba(28,26,23,.40) 0%, rgba(28,26,23,.10) 28%, rgba(28,26,23,.55) 70%, rgba(28,26,23,.85) 100%),
-              linear-gradient(100deg, rgba(28,26,23,.45) 0%, rgba(28,26,23,0) 55%),
-              url('/hero/marbella-living-2023.jpg')
-            `,
-          }}
-        />
+        {/* Background image + gradient overlays.
+            The photo is a real next/image (priority) instead of a CSS
+            background: the 2MB source JPEG was the homepage LCP element
+            with no AVIF/WebP conversion, no srcset, and late discovery.
+            Layering is identical — the gradient stack sits in an overlay
+            child above the photo, and both live inside .sm-hero__bg so
+            the slow-zoom animation moves them together. */}
+        <div className="sm-hero__bg">
+          <Image
+            src="/hero/marbella-living-2023.jpg"
+            alt=""
+            fill
+            priority
+            fetchPriority="high"
+            quality={70}
+            sizes="100vw"
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+          />
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: `
+                linear-gradient(180deg, rgba(28,26,23,.40) 0%, rgba(28,26,23,.10) 28%, rgba(28,26,23,.55) 70%, rgba(28,26,23,.85) 100%),
+                linear-gradient(100deg, rgba(28,26,23,.45) 0%, rgba(28,26,23,0) 55%)
+              `,
+            }}
+          />
+        </div>
 
         <div className="sm-hero__topbar">
           {/* Mobile hamburger — hidden on desktop via CSS */}
@@ -85,6 +104,9 @@ export default function HomeHero({ featured }: HomeHeroProps) {
               width={520}
               height={160}
               priority
+              // Rendered at 160px tall (110px mobile) → ~520px/358px wide.
+              // Without sizes, the preload grabs a desktop-width candidate.
+              sizes="(max-width: 900px) 358px, 520px"
               className="sm-hero__brand-img"
             />
           </Link>

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Toaster } from "sonner";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
@@ -74,7 +73,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: baseUrl,
     languages: {
-      "en": `${baseUrl}/en`,
+      // localePrefix is 'as-needed': /en redirects to /, so hreflang
+      // must target the final URLs, not the redirecting prefix.
+      "en": baseUrl,
       "es": `${baseUrl}/es`,
       "x-default": baseUrl,
     },
@@ -206,7 +207,8 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <FavouritesProvider>{children}</FavouritesProvider>
         </NextIntlClientProvider>
-        <Toaster position="top-right" richColors />
+        {/* Toaster mounts per-route where toasts are actually fired
+            (collection pages, admin) — not globally. */}
         <SpeedInsights />
         <Analytics />
         <CookieBanner />

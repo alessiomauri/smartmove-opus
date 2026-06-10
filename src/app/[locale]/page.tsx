@@ -104,7 +104,6 @@ export default async function Home() {
         <HomeListingsClient
           initialProperties={sorted}
           defaultSort={defaultSort}
-          showHeader={false}
         />
       </section>
 

@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link } from '@/i18n/navigation';
+import { useState, useCallback, useMemo, useDeferredValue } from 'react';
 import FilterBar from '@/components/FilterBar';
 import PropertyGrid from '@/components/PropertyGrid';
-import { useFavourites } from '@/hooks/useFavourites';
 import { Property, PropertyFilters, SortOption, PropertyType } from '@/types/property';
 
 type QuickPrice = 'under3' | '3to6' | '6plus' | null;
@@ -18,28 +16,22 @@ const PRICE_RANGES: Record<Exclude<QuickPrice, null>, { min?: number; max?: numb
 interface HomeClientProps {
   initialProperties: Property[];
   defaultSort: SortOption;
-  /**
-   * When false, the embedded sticky header + hero band is hidden — used when
-   * this component is composed below the new HomeHero (which has its own topbar).
-   * Defaults to true to preserve the standalone listings page behaviour.
-   */
-  showHeader?: boolean;
 }
 
-export default function HomeClient({ initialProperties, defaultSort, showHeader = true }: HomeClientProps) {
+export default function HomeClient({ initialProperties, defaultSort }: HomeClientProps) {
   const [filters, setFilters] = useState<PropertyFilters>({});
   const [quickPrice, setQuickPrice] = useState<QuickPrice>(null);
   const [quickType, setQuickType] = useState<PropertyType | null>(null);
   const [sort, setSort] = useState<SortOption | null>(null);
-  const { favouriteCount } = useFavourites();
 
   // Use admin default sort until user explicitly changes it
   const activeSort = sort ?? defaultSort;
 
-  // Ensure page starts at top on mount (fixes mobile scroll restoration issue)
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Defer the filter inputs: keystrokes in the search field update the
+  // input immediately while the O(N) filter+sort over the full list (and
+  // the grid reconciliation) lags one frame behind — keeps typing
+  // responsive as inventory grows.
+  const deferredFilters = useDeferredValue(filters);
 
   // Handle quick price toggle
   const handleQuickPrice = useCallback((key: Exclude<QuickPrice, null>) => {
@@ -89,6 +81,7 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
   // Apply filters & sort client-side over the initial server-rendered list.
   // No network calls — instant filtering, no Supabase round-trip per visitor.
   const properties = useMemo(() => {
+    const filters = deferredFilters;
     let result = [...initialProperties];
 
     if (filters.status && filters.status !== 'all') {
@@ -160,110 +153,10 @@ export default function HomeClient({ initialProperties, defaultSort, showHeader 
     });
 
     return result;
-  }, [initialProperties, filters, activeSort]);
+  }, [initialProperties, deferredFilters, activeSort]);
 
   return (
-    <div className={showHeader ? "min-h-screen" : ""} style={{ background: 'var(--sm-paper)' }}>
-      {showHeader && (
-      <>
-      {/* Premium Header - Ultra Modern Glass Design */}
-      <header className="sticky top-0 z-50 header-glass">
-        {/* Animated gradient border at top */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] header-gradient-border" />
-
-        {/* Floating orb accents - decorative */}
-        <div className="absolute -top-20 -left-20 w-40 h-40 bg-gold/[0.08] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-10 right-1/4 w-32 h-32 bg-gold-soft/[0.06] rounded-full blur-2xl pointer-events-none animate-float-slow" />
-
-        {/* Inner shimmer effect */}
-        <div className="absolute inset-0 header-shimmer pointer-events-none" />
-
-        {/* Single Row - Brand, Filters & Favorites */}
-        <div className="hidden lg:block max-w-[1600px] mx-auto px-8 lg:px-12 relative">
-          <div className="flex items-center gap-10 h-[72px]">
-            {/* Logo */}
-            <Link href="/" className="group relative shrink-0">
-              <span className="text-[26px] tracking-[-0.02em] font-display text-gold transition-all duration-500 group-hover:text-gold-deep">
-                Smartmove Marbella
-              </span>
-              <span className="absolute -bottom-0.5 left-0 h-[1px] w-0 bg-gradient-to-r from-gold to-gold-soft transition-all duration-500 ease-out group-hover:w-full" />
-            </Link>
-
-            {/* Divider */}
-            <div className="w-[1px] h-7 bg-gradient-to-b from-transparent via-ink/10 to-transparent shrink-0" />
-
-            {/* Filters - takes remaining space */}
-            <div className="flex-1">
-              <FilterBar
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                sort={activeSort}
-                onSortChange={setSort}
-                resultCount={properties.length}
-                inline={true}
-              />
-            </div>
-
-            {/* Divider */}
-            <div className="w-[1px] h-7 bg-gradient-to-b from-transparent via-ink/10 to-transparent shrink-0" />
-
-            {/* Favorites */}
-            <Link
-              href="/favourites"
-              className="group flex items-center gap-2 px-4 py-2 rounded-full text-ink/60 transition-all duration-400 hover:text-gold hover:bg-gold/[0.06] hover:shadow-[0_2px_12px_-3px_rgba(60,155,167,0.15)] shrink-0"
-            >
-              <div className="relative">
-                <svg
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="transition-transform duration-400 group-hover:scale-110"
-                >
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-                {favouriteCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] flex items-center justify-center text-[9px] font-bold text-white bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-sm">
-                    {favouriteCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] font-semibold tracking-[0.08em] uppercase">Saved</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Mobile - Logo only */}
-        <div className="lg:hidden max-w-[1600px] mx-auto px-6 relative">
-          <div className="flex items-center justify-between h-[60px]">
-            <Link href="/" className="group relative">
-              <span className="text-[24px] tracking-[-0.02em] font-display text-gold">
-                Smartmove Marbella
-              </span>
-            </Link>
-            <Link
-              href="/favourites"
-              className="relative p-2.5 text-ink/60 rounded-full hover:bg-gold/[0.06] transition-colors duration-300"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-              </svg>
-              {favouriteCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold text-white bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-sm">
-                  {favouriteCount}
-                </span>
-              )}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Sleek divider line */}
-      <div className="header-divider" />
-      </>
-      )}
+    <div style={{ background: 'var(--sm-paper)' }}>
 
       {/* Quick Filter Buttons */}
       <div className="max-w-[1600px] mx-auto px-6 lg:px-10 pt-4 lg:pt-6">

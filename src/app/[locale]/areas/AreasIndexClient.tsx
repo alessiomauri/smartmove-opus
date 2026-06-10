@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/navigation';
@@ -201,6 +201,31 @@ export default function AreasIndexClient({
   const [sortMode, setSortMode] = useState<'region' | 'alpha' | 'price'>('region');
   // Macro pin clicked? Drives the rail. null = "Costa del Sol" overview.
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+
+  // Leaflet (~150KB of JS) only mounts once the map section approaches
+  // the viewport — keeps the chunk off the critical path on first load.
+  const mapWrapRef = useRef<HTMLDivElement>(null);
+  const [mapInView, setMapInView] = useState(false);
+  useEffect(() => {
+    const el = mapWrapRef.current;
+    if (!el || mapInView) return;
+    // No IntersectionObserver (ancient browser)? Mount on next tick.
+    if (typeof IntersectionObserver === 'undefined') {
+      const t = setTimeout(() => setMapInView(true), 0);
+      return () => clearTimeout(t);
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setMapInView(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '800px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [mapInView]);
 
   // Drop the airport — it's a transit pin on the map, not an area to browse.
   const propertyAreas = useMemo(
@@ -467,12 +492,16 @@ export default function AreasIndexClient({
         </div>
 
         <div className="stage">
-          <div className="sm-areas-map-wrap">
-            <AreasLeafletMap
-              areas={mappedAreas}
-              selectedSlug={selectedSlug}
-              onAreaSelect={(slug) => setSelectedSlug(slug)}
-            />
+          <div className="sm-areas-map-wrap" ref={mapWrapRef}>
+            {mapInView ? (
+              <AreasLeafletMap
+                areas={mappedAreas}
+                selectedSlug={selectedSlug}
+                onAreaSelect={(slug) => setSelectedSlug(slug)}
+              />
+            ) : (
+              <MapPlaceholder />
+            )}
           </div>
 
           <aside className="sm-areas-rail">
