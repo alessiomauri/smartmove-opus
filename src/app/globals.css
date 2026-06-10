@@ -2628,7 +2628,9 @@ select:focus {
 .sm-areas-rail {
   background: var(--sm-paper);
   color: var(--sm-ink);
-  padding: 24px 32px 22px;
+  /* Lighter top + bottom padding — the photo and CTA already provide
+     visual anchors, the rail itself doesn't need a fat frame. */
+  padding: 22px 32px 20px;
   display: flex; flex-direction: column;
   position: relative;
 }
@@ -2639,18 +2641,18 @@ select:focus {
 .sm-areas-rail .r-eyebrow {
   font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase;
   font-weight: 600; color: var(--sm-gold-deep);
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 .sm-areas-rail h3 {
   font-family: var(--sm-font-display);
   font-size: 32px; font-weight: 300; line-height: 1.02;
   letter-spacing: -0.022em;
-  margin: 0 0 12px;
+  margin: 0 0 9px;
   color: var(--sm-ink); text-wrap: balance;
 }
 .sm-areas-rail h3 em { font-style: italic; color: var(--sm-gold-deep); font-weight: 400; }
 .sm-areas-rail .r-tags {
-  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 11px;
 }
 .sm-areas-rail .r-tags span {
   font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
@@ -2661,15 +2663,15 @@ select:focus {
   background: var(--sm-gold); color: var(--sm-ink);
 }
 .sm-areas-rail .r-blurb {
-  font-size: 13px; line-height: 1.65; color: var(--sm-ink-soft);
-  margin: 0 0 16px;
-  border-top: 1px solid var(--sm-line); padding-top: 14px;
+  font-size: 13px; line-height: 1.6; color: var(--sm-ink-soft);
+  margin: 0 0 12px;
+  border-top: 1px solid var(--sm-line); padding-top: 11px;
 }
 .sm-areas-rail .r-stats {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px 18px;
+  gap: 9px 18px;
   border-top: 1px solid var(--sm-line);
-  padding-top: 14px; margin-bottom: 16px;
+  padding-top: 11px; margin-bottom: 12px;
 }
 .sm-areas-rail .r-stats .lbl {
   font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase;
@@ -3050,12 +3052,13 @@ select:focus {
 .sm-areas-rail .r-photo {
   position: relative;
   width: calc(100% + 64px);       /* break out of the 32px L/R padding */
-  margin: -28px -32px 16px;       /* hug the top of the rail */
-  /* 3:2 lets the photo breathe — coastlines, mountains, and golf
-     valleys keep recognisable horizon detail that the previous 21/9
-     crop was eating. Subject sits at 40% from the top so horizon
-     stays in the upper third (per editorial photography norm). */
-  aspect-ratio: 3 / 2;
+  margin: -26px -32px 13px;       /* hug the top of the rail; tighter gap below */
+  /* 16:9 reads taller than the old 21:9 strip (subject breathes) but
+     leaves the rail composition lighter than 3:2 — the section can
+     still be taken in as a single editorial unit at a glance.
+     object-position with a slight upward bias keeps horizons and
+     mountain peaks in the upper third (see img rule below). */
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--sm-cream);
 }
