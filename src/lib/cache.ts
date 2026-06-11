@@ -24,9 +24,15 @@ export const COLLECTIONS_TAG = 'collections';
 const LIST_COLUMNS = PROPERTY_LIST_COLUMNS;
 
 /**
- * Cached fetch for every published property — the grid source of truth
- * for `/` and `/areas/[slug]`. Deduplicated per build/revalidate window
- * (10 min) AND invalidated instantly when admin edits via `updateTag`.
+ * Cached fetch of the CURATED published universe — the grid source of
+ * truth for `/` and `/areas/[slug]`: every non-Resales row plus any
+ * Resales row an admin explicitly featured. The publish-gate bulk
+ * inventory (thousands of auto-published MLS rows) is filtered OUT at
+ * the SQL level: every consumer of this cache discards it anyway
+ * (homepage curated gate, area pages' editorial filter), and including
+ * it pushed the entry past unstable_cache's 2MB limit — which silently
+ * disabled caching for every page reading it. A future full-search
+ * surface must query SQL directly (filtered + paginated), not this.
  *
  * Rows carry the computed `price_drop` flag, double-gated by the
  * site-wide toggle and the per-listing opt-out (src/lib/price-drop.ts).
@@ -41,6 +47,8 @@ export const getCachedPublishedProperties = unstable_cache(
         .from('properties')
         .select(LIST_COLUMNS)
         .eq('published', true)
+        // Curated universe only — see the docblock.
+        .or('source.neq.resales_online,is_featured.eq.true')
         .order('created_at', { ascending: false }),
       supabase
         .from('site_settings')
@@ -100,8 +108,10 @@ export const getCachedAreaPropertyStats = unstable_cache(
  * unsorted MLS rows of varying quality. Bulk inventory has its own home
  * (the broader listings index, when that surface lands).
  *
- * If `includeResales: true` is passed, the filter is dropped — useful when
- * the same helper drives a non-editorial surface in the future.
+ * If `includeResales: true` is passed, the source gate is dropped — but
+ * note the underlying cache is now the CURATED universe (featured
+ * Resales rows only). A surface that needs the full bulk inventory must
+ * query SQL directly with filters/pagination; this helper can't serve it.
  */
 export async function getPropertiesForArea(opts: {
   areaName?: string;
