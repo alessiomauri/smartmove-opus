@@ -7,6 +7,7 @@ import FeaturesSection from '@/components/property/FeaturesSection';
 import GallerySection from '@/components/property/GallerySection';
 import FloorPlanSection from '@/components/property/FloorPlanSection';
 import LocationSection from '@/components/property/LocationSection';
+import LeadCaptureSection from '@/components/property/LeadCaptureSection';
 import { Property } from '@/types/property';
 
 interface PropertyPageClientProps {
@@ -30,6 +31,9 @@ export default function PropertyPageClient({ property }: PropertyPageClientProps
       <HeroSection property={property} />
       <FeaturesSection property={property} />
       <GallerySection property={property} />
+      {/* Lead capture directly after the gallery (mobile reads it under
+          the photos; desktop gets the sticky form column). */}
+      <LeadCaptureSection property={property} />
       {/* Floor plans only for our own / scraper-imported curated listings —
           Resales bulk inventory doesn't carry plans. */}
       {!isPartnerListing && <FloorPlanSection property={property} />}

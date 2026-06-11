@@ -7,6 +7,7 @@ import { localizedAlternates, localizedUrl } from '@/lib/seo';
 import type { Locale } from '@/i18n/routing';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { DEVELOPMENT_STATUS_LABELS } from '@/types/development';
+import DevLeadActions from '@/components/leads/DevLeadActions';
 import { NEW_DEVELOPMENTS_PUBLIC } from '../feature-flag';
 
 export const revalidate = 3600;
@@ -119,6 +120,17 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
           {dev.total_units && <Stat label="Total units" value={String(dev.total_units)} />}
         </section>
 
+        <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-16 lg:items-start">
+        <div className="min-w-0">
+        {/* Mobile: actions card right after the stats, before the longform */}
+        <div className="lg:hidden mb-16">
+          <DevLeadActions
+            reference={dev.source_id || dev.slug}
+            developmentId={dev.id}
+            brochureUrl={dev.brochure_pdf}
+          />
+        </div>
+
         {/* Description */}
         {dev.description && (
           <section className="max-w-3xl mb-16">
@@ -157,19 +169,8 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
           </section>
         )}
 
-        {/* Brochure */}
-        {dev.brochure_pdf && (
-          <section className="mb-16">
-            <a
-              href={dev.brochure_pdf}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-white text-[13px] font-semibold tracking-[0.05em] uppercase rounded-full hover:bg-gold-deep transition-colors"
-            >
-              Download brochure
-            </a>
-          </section>
-        )}
+        {/* Brochure is email-gated — it lives behind the "Download the
+            brochure" intent in the actions card, not as an open link. */}
 
         <Link
           href="/new-developments"
@@ -177,6 +178,17 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
         >
           ← Back to all developments
         </Link>
+        </div>
+
+        {/* Desktop: sticky actions rail */}
+        <aside className="hidden lg:block lg:sticky lg:top-24">
+          <DevLeadActions
+            reference={dev.source_id || dev.slug}
+            developmentId={dev.id}
+            brochureUrl={dev.brochure_pdf}
+          />
+        </aside>
+        </div>
       </main>
     </div>
   );

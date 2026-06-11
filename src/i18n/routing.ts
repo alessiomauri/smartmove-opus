@@ -54,6 +54,12 @@ export const routing = defineRouting({
       es: '/coleccion/[slug]',
     },
 
+    // Contact
+    '/contact': {
+      en: '/contact',
+      es: '/contacto',
+    },
+
     // Favourites
     '/favourites': {
       en: '/favourites',

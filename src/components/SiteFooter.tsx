@@ -1,4 +1,6 @@
 import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
+import LeadForm from '@/components/leads/LeadForm';
 
 /**
  * Site-wide footer. Beyond brand chrome, it ships **internal links** to the
@@ -19,11 +21,14 @@ const TOP_AREAS: { slug: string; name: string }[] = [
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
+  // useTranslations works in sync server components AND when this
+  // footer is pulled into a client tree (AreaPageClient imports it).
+  const t = useTranslations('leadForm');
 
   return (
     <footer className="bg-paper border-t border-ink/[0.06] mt-16">
       <div className="max-w-[1600px] mx-auto px-6 lg:px-12 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div>
             <Link href="/" className="group relative inline-block">
@@ -83,8 +88,22 @@ export default function SiteFooter() {
                   Saved
                 </Link>
               </li>
+              <li>
+                <Link href="/contact" className="text-ink/70 hover:text-gold transition-colors">
+                  Contact
+                </Link>
+              </li>
             </ul>
           </nav>
+
+          {/* Slim enquiry form — same pipeline as the contact page */}
+          <div className="md:pl-6 lg:pl-0">
+            <h3 className="text-[10px] font-semibold tracking-[0.14em] uppercase text-ink/50 mb-4">
+              {t('footerHeading')}
+            </h3>
+            <p className="text-[13px] text-ink/60 mb-4">{t('footerSub')}</p>
+            <LeadForm variant="contact-slim" source="contact-form" sourceDetail="footer" />
+          </div>
         </div>
 
         <div className="border-t border-ink/[0.06] pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">

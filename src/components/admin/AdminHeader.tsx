@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Home, Plus, LogOut, LayoutList, MapPin, BookOpen, Building2, Eye } from 'lucide-react';
+import { LayoutDashboard, Home, Plus, LogOut, LayoutList, MapPin, BookOpen, Building2, Eye, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from '@/lib/actions/auth';
 
@@ -20,6 +20,7 @@ export default function AdminHeader() {
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/developments', label: 'Developments', icon: Building2 },
     { href: '/admin/collections', label: 'Collections', icon: LayoutList },
+    { href: '/admin/leads', label: 'Leads', icon: Users },
     { href: '/admin/properties/new', label: 'Add Property', icon: Plus },
     // Public-side previews (only meaningful while listings are gated;
     // becomes redundant once PROPERTIES_PUBLIC = true)

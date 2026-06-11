@@ -2,6 +2,11 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { createLead as createMondayLead } from '@/lib/integrations/monday';
+import {
+  HONEYPOT_FIELD,
+  isRateLimited,
+  verifySubmitToken,
+} from '@/lib/lead-protection';
 
 /**
  * Service-role Supabase client used by this route only.
@@ -74,9 +79,32 @@ const LeadSchema = z.object({
   utm_campaign: z.string().max(80).optional(),
   utm_id: z.string().max(80).optional(),
   language: z.enum(['en', 'es', 'de', 'fr', 'ru', 'nl', 'da', 'sv', 'pl', 'no', 'tr', 'fi', 'hu', 'it']).optional(),
+  // ── Anti-spam (stripped before insert) ──
+  // Signed mount-time token from /api/leads/token.
+  _ts: z.string().max(200).optional(),
+  // Honeypot — hidden input humans never see.
+  [HONEYPOT_FIELD]: z.string().max(200).optional(),
 });
 
+/** Bot-facing success: identical shape to the real one, writes nothing. */
+function fakeSuccess() {
+  return NextResponse.json({ ok: true, leadId: crypto.randomUUID() });
+}
+
 export async function POST(req: NextRequest) {
+  // 1. Rate limit (Upstash sliding window per IP; skipped when not
+  // configured, fails open on Redis trouble — a lead beats a limit).
+  if (await isRateLimited(req)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "You're going a little fast — please wait a minute and try again, or email us directly.",
+      },
+      { status: 429 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -97,6 +125,24 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+
+  // 2. Honeypot filled ⇒ bot. Pretend it worked; drop silently.
+  if ((data[HONEYPOT_FIELD] ?? '').trim() !== '') {
+    return fakeSuccess();
+  }
+
+  // 3. Mount-time token: forged/missing ⇒ hard reject; younger than the
+  // human floor (2s from form render) ⇒ silent drop.
+  const verdict = verifySubmitToken(data._ts);
+  if (verdict === 'invalid') {
+    return NextResponse.json(
+      { ok: false, error: 'Form session expired — please reload the page and try again.' },
+      { status: 400 }
+    );
+  }
+  if (verdict === 'too-fast') {
+    return fakeSuccess();
+  }
   const supabase = getServiceRoleClient();
 
   // 1. Always write to local DB first. This is the durable record.

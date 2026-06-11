@@ -65,5 +65,43 @@
   "site": {
     "name": "Smartmove Marbella",
     "shortName": "Smartmove"
+  },
+  "leadForm": {
+    "eyebrowViewing": "Arrange a visit",
+    "headingViewing": "Request a viewing",
+    "subViewing": "Tell us when suits you — we reply the same day, usually within the hour.",
+    "eyebrowBrochure": "Full details",
+    "headingBrochure": "Download the brochure",
+    "subBrochure": "Leave your email and we will send the full brochure for this property.",
+    "headingContact": "Talk to us",
+    "subContact": "A real person reads this — typically we call back the same day.",
+    "footerHeading": "Quick enquiry",
+    "footerSub": "Question about a property or the coast? Send it here.",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "your@email.com",
+    "phonePlaceholder": "Phone (optional)",
+    "preferredDate": "Preferred date",
+    "messagePlaceholder": "Anything we should know? (optional)",
+    "submitViewing": "Request viewing",
+    "submitBrochure": "Email me the brochure",
+    "submitContact": "Send enquiry",
+    "sending": "Sending…",
+    "successViewing": "Thank you — your request is in.",
+    "successBrochure": "Thank you — the brochure is on its way.",
+    "successFollowup": "We typically respond within the hour during business hours.",
+    "downloadNow": "Download now",
+    "privacyNote": "By submitting you agree to be contacted about this enquiry. No newsletters, no sharing your details.",
+    "errorFields": "Please add your name and a valid email address.",
+    "errorGeneric": "Something went wrong — please try again, or email us directly.",
+    "honeypotLabel": "Company (leave blank)",
+    "devIntents": {
+      "register": "Register early interest",
+      "brochure": "Download the brochure",
+      "virtual": "Book a virtual presentation",
+      "viewing": "Schedule a viewing"
+    },
+    "devSidebarEyebrow": "This development",
+    "devSidebarHeading": "Interested in this project?",
+    "backToActions": "← All options"
   }
 }

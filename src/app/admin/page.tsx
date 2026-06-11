@@ -14,6 +14,7 @@ import {
   ArrowUpDown,
   Star,
   Settings2,
+  Mail,
 } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
@@ -21,6 +22,8 @@ import { STATUS_LABELS, STATUS_COLORS, PropertyStatus, SortOption } from '@/type
 import { formatPrice, cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { buildEmailSelection } from '@/lib/actions/leads';
+import { copySelectionToClipboard } from '@/components/admin/copy-email-selection';
 
 type AdminSort = 'newest' | 'oldest' | 'price_desc' | 'price_asc' | 'name' | 'location';
 
@@ -46,6 +49,36 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<AdminSort>('newest');
   const [defaultSort, setDefaultSort] = useState<SortOption>('newest');
   const [showSortSettings, setShowSortSettings] = useState(false);
+  // Multi-select for the copy-card-to-email workflow (selection emails).
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [copying, setCopying] = useState(false);
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function copySelectedForEmail() {
+    if (selected.size === 0) return;
+    setCopying(true);
+    try {
+      const ids = [...selected];
+      const count = await copySelectionToClipboard(() => buildEmailSelection({ ids }));
+      toast.success(`${count} card${count === 1 ? '' : 's'} copied for email`, {
+        description: 'Paste into your email client — cards stack vertically, links carry tracking.',
+        duration: 7000,
+      });
+      setSelected(new Set());
+    } catch (e) {
+      toast.error('Copy failed', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setCopying(false);
+    }
+  }
 
   // Fetch all properties (including unpublished) for admin
   const { properties, loading, deleteProperty, togglePublished, refetch } = useAdminProperties();
@@ -290,6 +323,17 @@ export default function AdminDashboard() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
+                    <th className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all for email copy"
+                        checked={filteredProperties.length > 0 && selected.size === filteredProperties.length}
+                        onChange={(e) =>
+                          setSelected(e.target.checked ? new Set(filteredProperties.map((p) => p.id)) : new Set())
+                        }
+                        className="accent-[#cbaa65] w-4 h-4 cursor-pointer"
+                      />
+                    </th>
                     <th
                       className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3 cursor-pointer hover:text-gray-700 transition-colors select-none"
                       onClick={() => setSortBy(sortBy === 'name' ? 'newest' : 'name')}
@@ -328,7 +372,16 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredProperties.map((property) => (
-                    <tr key={property.id} className="hover:bg-gray-50">
+                    <tr key={property.id} className={cn('hover:bg-gray-50', selected.has(property.id) && 'bg-amber-50/60')}>
+                      <td className="px-4 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${property.name} for email copy`}
+                          checked={selected.has(property.id)}
+                          onChange={() => toggleSelected(property.id)}
+                          className="accent-[#cbaa65] w-4 h-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
                           <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-gray-100">
@@ -467,6 +520,29 @@ export default function AdminDashboard() {
           ))}
         </div>
       </main>
+
+      {/* Floating copy bar — appears while a selection is active */}
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-gray-900 text-white rounded-full pl-5 pr-2 py-2 shadow-2xl">
+          <span className="text-sm">
+            {selected.size} propert{selected.size === 1 ? 'y' : 'ies'} selected
+          </span>
+          <button
+            onClick={copySelectedForEmail}
+            disabled={copying}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#cbaa65] hover:bg-[#b3934f] rounded-full text-sm font-semibold transition-colors disabled:opacity-60"
+          >
+            <Mail className="w-4 h-4" />
+            {copying ? 'Copying…' : 'Copy for email'}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="px-3 py-2 text-sm text-white/70 hover:text-white transition-colors"
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 }
