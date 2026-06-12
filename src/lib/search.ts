@@ -25,9 +25,60 @@ export interface SearchFilters {
   beds?: number;
   minp?: number;
   maxp?: number;
+  /** Comma-separated feature slugs (see FEATURE_TOKENS) — AND semantics. */
   feat?: string;
+  /** Free-text: name / location / reference. */
+  q?: string;
+  /** Listing status (omitted = all). */
+  status?: 'available' | 'sold' | 'reserved' | 'under_offer' | 'coming_soon';
   sort: SearchSort;
   page: number;
+}
+
+/**
+ * FEATURE_OPTIONS label → URL slug → substring tokens. Matching must
+ * cover BOTH dialects in features_text: manual rows carry bare labels
+ * ('Private Pool'), MLS rows carry 'Category: Value' strings
+ * ('Pool: Private', 'Views: Sea', 'Features: Guest Apartment') —
+ * vocabulary verified against the live DB. Each selected feature ORs
+ * its tokens; multiple selected features AND together. Unknown slugs
+ * fall back to a raw substring (keeps the broad golf facet working).
+ */
+export const FEATURE_TOKENS: Record<string, { label: string; tokens: string[] }> = {
+  'sea-view': { label: 'Sea View', tokens: ['Sea View', 'Views: Sea'] },
+  'mountain-view': { label: 'Mountain View', tokens: ['Mountain View', 'Views: Mountain'] },
+  'golf-view': { label: 'Golf View', tokens: ['Golf View', 'Views: Golf'] },
+  'private-pool': { label: 'Private Pool', tokens: ['Private Pool', 'Pool: Private', 'Pool: Heated'] },
+  'communal-pool': { label: 'Communal Pool', tokens: ['Communal Pool', 'Pool: Communal'] },
+  gym: { label: 'Gym', tokens: ['Gym'] },
+  spa: { label: 'Spa', tokens: ['Spa', 'Sauna'] },
+  'tennis-court': { label: 'Tennis Court', tokens: ['Tennis'] },
+  'cinema-room': { label: 'Cinema Room', tokens: ['Cinema'] },
+  'wine-cellar': { label: 'Wine Cellar', tokens: ['Wine Cellar'] },
+  'guest-house': { label: 'Guest House', tokens: ['Guest House', 'Guest Apartment'] },
+  'staff-quarters': { label: 'Staff Quarters', tokens: ['Staff Quarters', 'Staff Accommodation'] },
+  lift: { label: 'Lift', tokens: ['Lift', 'Elevator'] },
+  'smart-home': { label: 'Smart Home', tokens: ['Smart Home', 'Domotics'] },
+  'underfloor-heating': { label: 'Underfloor Heating', tokens: ['Underfloor'] },
+  'air-conditioning': { label: 'Air Conditioning', tokens: ['Air Conditioning', 'Climate Control'] },
+  garden: { label: 'Garden', tokens: ['Garden'] },
+  jacuzzi: { label: 'Jacuzzi', tokens: ['Jacuzzi'] },
+};
+
+export function featureLabelToSlug(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+/** feat param → FilterBar labels (unknown slugs pass through raw). */
+export function featSlugsToLabels(feat: string | undefined): string[] {
+  if (!feat) return [];
+  return feat
+    .split(',')
+    .filter(Boolean)
+    .map((slug) => FEATURE_TOKENS[slug]?.label ?? slug);
+}
+export function featureLabelsToFeatParam(labels: string[] | undefined): string | undefined {
+  if (!labels || labels.length === 0) return undefined;
+  return labels.map(featureLabelToSlug).join(',');
 }
 
 const TYPES: PropertyType[] = ['villa', 'apartment', 'townhouse', 'penthouse', 'plot_with_project'];
@@ -52,7 +103,11 @@ export function parseSearchParams(sp: RawParams): SearchFilters {
     beds: posInt(one(sp.beds)),
     minp: posInt(one(sp.minp)),
     maxp: posInt(one(sp.maxp)),
-    feat: one(sp.feat)?.slice(0, 40) || undefined,
+    feat: one(sp.feat)?.slice(0, 200) || undefined,
+    q: one(sp.q)?.slice(0, 60) || undefined,
+    status: (['available','sold','reserved','under_offer','coming_soon'] as const).find(
+      (v) => v === one(sp.status)
+    ),
     sort: sort && SEARCH_SORTS.includes(sort) ? sort : 'new',
     page: posInt(one(sp.page)) ?? 1,
   };
@@ -67,6 +122,8 @@ export function searchParamsString(f: Partial<SearchFilters>): string {
   if (f.minp) p.set('minp', String(f.minp));
   if (f.maxp) p.set('maxp', String(f.maxp));
   if (f.feat) p.set('feat', f.feat);
+  if (f.q) p.set('q', f.q);
+  if (f.status) p.set('status', f.status);
   if (f.sort && f.sort !== 'new') p.set('sort', f.sort);
   if (f.page && f.page > 1) p.set('page', String(f.page));
   const s = p.toString();
@@ -128,11 +185,30 @@ async function runPropertyQuery(f: Partial<SearchFilters>, page: number, pageSiz
     }
   }
   if (f.type) q = q.eq('property_type', f.type);
+  if (f.status) q = q.eq('status', f.status);
   if (f.beds) q = q.gte('bedrooms', f.beds);
   if (f.minp) q = q.gte('price', f.minp);
   if (f.maxp) q = q.lte('price', f.maxp);
-  // features_text: generated flat projection of the features text[].
-  if (f.feat) q = q.ilike('features_text', `%${f.feat.replaceAll('%', '')}%`);
+  // Features: each selected slug ORs its dialect tokens over the
+  // generated features_text projection; multiple selections AND
+  // (chained .or() calls AND together in PostgREST).
+  if (f.feat) {
+    for (const slug of f.feat.split(',').filter(Boolean).slice(0, 8)) {
+      const tokens = FEATURE_TOKENS[slug]?.tokens ?? [slug.replaceAll('-', ' ')];
+      q = q.or(
+        tokens
+          .map((t) => `features_text.ilike.%${t.replaceAll('%', '').replaceAll(',', '')}%`)
+          .join(',')
+      );
+    }
+  }
+  // Free-text: name / location / area / reference.
+  if (f.q) {
+    const safe = f.q.replaceAll('%', '').replaceAll(',', '');
+    q = q.or(
+      `name.ilike.%${safe}%,location.ilike.%${safe}%,area.ilike.%${safe}%,source_id.ilike.%${safe}%`
+    );
+  }
 
   const sort = f.sort ?? 'new';
   if (sort === 'price_asc') q = q.order('price', { ascending: true, nullsFirst: false });

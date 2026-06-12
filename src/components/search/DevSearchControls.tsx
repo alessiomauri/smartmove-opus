@@ -18,7 +18,7 @@ export default function DevSearchControls({ filters }: { filters: DevSearchFilte
   useEffect(() => setLocal(filters), [filters]);
 
   const push = useCallback(
-    (next: DevSearchFilters, immediate = false) => {
+    (next: DevSearchFilters, opts: { immediate?: boolean; replace?: boolean } = {}) => {
       setLocal(next);
       if (debounce.current) clearTimeout(debounce.current);
       const go = () =>
@@ -30,9 +30,12 @@ export default function DevSearchControls({ filters }: { filters: DevSearchFilte
           if (next.maxp) p.set('maxp', String(next.maxp));
           if (next.sort !== 'new') p.set('sort', next.sort);
           // page intentionally reset on any filter change
-          router.replace(`${pathname}${p.size ? `?${p}` : ''}`, { scroll: false });
+          const url = `${pathname}${p.size ? `?${p}` : ''}`;
+          // Selects push (back-button walks states); typing replaces.
+          if (opts.replace) router.replace(url, { scroll: false });
+          else router.push(url, { scroll: false });
         });
-      if (immediate) go();
+      if (opts.immediate) go();
       else debounce.current = setTimeout(go, 350);
     },
     [router, pathname]
@@ -49,14 +52,14 @@ export default function DevSearchControls({ filters }: { filters: DevSearchFilte
       <input
         type="text"
         value={local.location ?? ''}
-        onChange={(e) => push({ ...local, location: e.target.value || undefined, page: 1 })}
+        onChange={(e) => push({ ...local, location: e.target.value || undefined, page: 1 }, { replace: true })}
         placeholder="Location (e.g. Estepona)"
         aria-label="Location"
         className={`${sel} w-56 placeholder:text-ink/35`}
       />
       <select
         value={local.beds ?? ''}
-        onChange={(e) => push({ ...local, beds: Number(e.target.value) || undefined, page: 1 }, true)}
+        onChange={(e) => push({ ...local, beds: Number(e.target.value) || undefined, page: 1 }, { immediate: true })}
         aria-label="Bedrooms"
         className={sel}
       >
@@ -67,7 +70,7 @@ export default function DevSearchControls({ filters }: { filters: DevSearchFilte
       </select>
       <select
         value={local.minp ?? ''}
-        onChange={(e) => push({ ...local, minp: Number(e.target.value) || undefined, page: 1 }, true)}
+        onChange={(e) => push({ ...local, minp: Number(e.target.value) || undefined, page: 1 }, { immediate: true })}
         aria-label="Min price"
         className={sel}
       >
@@ -78,7 +81,7 @@ export default function DevSearchControls({ filters }: { filters: DevSearchFilte
       </select>
       <select
         value={local.maxp ?? ''}
-        onChange={(e) => push({ ...local, maxp: Number(e.target.value) || undefined, page: 1 }, true)}
+        onChange={(e) => push({ ...local, maxp: Number(e.target.value) || undefined, page: 1 }, { immediate: true })}
         aria-label="Max price"
         className={sel}
       >
@@ -89,7 +92,7 @@ export default function DevSearchControls({ filters }: { filters: DevSearchFilte
       </select>
       <select
         value={local.sort}
-        onChange={(e) => push({ ...local, sort: e.target.value as DevSearchFilters['sort'], page: 1 }, true)}
+        onChange={(e) => push({ ...local, sort: e.target.value as DevSearchFilters['sort'], page: 1 }, { immediate: true })}
         aria-label="Sort"
         className={sel}
       >

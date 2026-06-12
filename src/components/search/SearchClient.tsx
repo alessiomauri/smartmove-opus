@@ -6,7 +6,13 @@ import { toast } from 'sonner';
 import FilterBar from '@/components/FilterBar';
 import PropertyGrid from '@/components/PropertyGrid';
 import Pagination from '@/components/search/Pagination';
-import { searchParamsString, type SearchFilters, type SearchResult } from '@/lib/search';
+import {
+  searchParamsString,
+  featSlugsToLabels,
+  featureLabelsToFeatParam,
+  type SearchFilters,
+  type SearchResult,
+} from '@/lib/search';
 import type { Property, PropertyFilters, SortOption } from '@/types/property';
 
 /**
@@ -33,45 +39,65 @@ export default function SearchClient({ filters, result, basePath }: Props) {
   useEffect(() => setLocal(filters), [filters]);
 
   const push = useCallback(
-    (next: SearchFilters, immediate = false) => {
+    (next: SearchFilters, opts: { immediate?: boolean; replace?: boolean } = {}) => {
       setLocal(next);
       if (debounce.current) clearTimeout(debounce.current);
       const go = () =>
         startTransition(() => {
-          router.replace(`${basePath}${searchParamsString(next)}`, { scroll: false });
+          const url = `${basePath}${searchParamsString(next)}`;
+          // Discrete changes (chips, selects) PUSH so the back button
+          // walks filter states; continuous input (typing) REPLACES so
+          // keystrokes don't spam history.
+          if (opts.replace) router.replace(url, { scroll: false });
+          else router.push(url, { scroll: false });
         });
-      if (immediate) go();
+      if (opts.immediate) go();
       else debounce.current = setTimeout(go, 350);
     },
     [router, basePath]
   );
 
-  // ── FilterBar adapter (its props speak PropertyFilters/SortOption) ──
+  // ── FilterBar adapter (its props speak PropertyFilters/SortOption).
+  // EVERY FilterBar field must round-trip here — the feature chips were
+  // the bug: they write filters.features[], which wasn't mapped, so
+  // clicks neither selected nor touched the URL. ──
   const fbFilters: PropertyFilters = {
+    status: local.status ?? 'all',
     area: local.area,
     propertyType: local.type,
     minBedrooms: local.beds,
     minPrice: local.minp,
     maxPrice: local.maxp,
-    search: local.feat,
+    features: featSlugsToLabels(local.feat),
+    search: local.q,
   };
   const fbSort: SortOption =
     local.sort === 'price_asc' ? 'price_asc' : local.sort === 'price_desc' ? 'price_desc' : 'newest';
 
   function onFiltersChange(f: PropertyFilters) {
-    push({
+    const next: SearchFilters = {
       ...local,
       area: f.area || undefined,
+      status: f.status && f.status !== 'all' ? f.status : undefined,
       type: f.propertyType || undefined,
       beds: f.minBedrooms || undefined,
       minp: f.minPrice || undefined,
       maxp: f.maxPrice && f.maxPrice < 15_000_000 ? f.maxPrice : undefined,
-      feat: f.search || undefined,
+      feat: featureLabelsToFeatParam(f.features),
+      q: f.search || undefined,
       page: 1, // any filter change resets pagination
-    });
+    };
+    // Typing in the free-text box is the only continuous input —
+    // everything else is a discrete choice that deserves history.
+    const onlyTyping =
+      searchParamsString({ ...next, q: undefined }) === searchParamsString({ ...local, q: undefined, page: 1 });
+    push(next, { replace: onlyTyping });
   }
   function onSortChange(s: SortOption) {
-    push({ ...local, sort: s === 'price_asc' ? 'price_asc' : s === 'price_desc' ? 'price_desc' : 'new', page: 1 }, true);
+    push(
+      { ...local, sort: s === 'price_asc' ? 'price_asc' : s === 'price_desc' ? 'price_desc' : 'new', page: 1 },
+      { immediate: true }
+    );
   }
 
   // Visible manual fallback — clipboard can fail (Safari focus rules,
