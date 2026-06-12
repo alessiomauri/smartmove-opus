@@ -18,6 +18,7 @@ export const SITE_SETTINGS_TAG = 'site_settings';
 export const DEVELOPMENTS_TAG = 'developments';
 export const BLOG_TAG = 'blog';
 export const COLLECTIONS_TAG = 'collections';
+export const QUIZZES_TAG = 'quizzes';
 
 // Columns we need for listing / card rendering — shared with the client
 // favourites hook via src/lib/list-columns.ts.
@@ -204,4 +205,38 @@ export const getCachedDefaultSort = unstable_cache(
   },
   ['site-default-sort'],
   { tags: [SITE_SETTINGS_TAG], revalidate: 3600 }
+);
+
+/**
+ * Live quizzes (Prompt 6). Definitions are data — the renderer consumes
+ * whatever's here; the homepage entry cards render one per live row.
+ */
+export const getCachedLiveQuizzes = unstable_cache(
+  async (): Promise<Array<{ slug: string; title: string; intro: Record<string, unknown>; result: Record<string, unknown> }>> => {
+    const supabase = createStaticSupabaseClient();
+    const { data, error } = await supabase
+      .from('quizzes')
+      .select('slug, title, intro, result')
+      .eq('status', 'live')
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('getCachedLiveQuizzes error:', error);
+      return [];
+    }
+    return data ?? [];
+  },
+  ['live-quizzes'],
+  { tags: [QUIZZES_TAG], revalidate: 600 }
+);
+
+export const getCachedQuizBySlug = unstable_cache(
+  async (slug: string) => {
+    const supabase = createStaticSupabaseClient();
+    // Anon RLS only exposes live rows — drafts come back null here
+    // (admin preview re-fetches with the cookie client in the page).
+    const { data } = await supabase.from('quizzes').select('*').eq('slug', slug).maybeSingle();
+    return data;
+  },
+  ['quiz-by-slug'],
+  { tags: [QUIZZES_TAG], revalidate: 600 }
 );

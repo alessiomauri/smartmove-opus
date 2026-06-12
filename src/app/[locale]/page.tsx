@@ -3,6 +3,7 @@ import HomeListingsClient from './HomeListingsClient';
 import AwardsBlock from '@/components/AwardsBlock';
 import SearchPill from '@/components/SearchPill';
 import PinnedFeaturedCard from '@/components/PinnedFeaturedCard';
+import QuizEntryCards from '@/components/QuizEntryCards';
 import { getCachedPublishedProperties, getCachedDefaultSort } from '@/lib/cache';
 
 export const revalidate = 3600;
@@ -115,6 +116,8 @@ export default async function Home() {
           defaultSort={defaultSort}
         />
       </section>
+
+      <QuizEntryCards />
 
       <AwardsBlock />
     </>

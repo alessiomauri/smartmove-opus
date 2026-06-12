@@ -56,6 +56,8 @@ const LeadSchema = z.object({
     'email-selection-click',
     'newsletter',
     'two-step-landing',
+    'quiz-area',
+    'quiz-dev',
     'other',
   ]),
   source_detail: z.string().max(120).optional(),

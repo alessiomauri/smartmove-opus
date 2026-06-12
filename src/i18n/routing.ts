@@ -60,6 +60,9 @@ export const routing = defineRouting({
       es: '/contacto',
     },
 
+    // Lead-gen quizzes ("quiz" reads fine in both languages)
+    '/quiz/[slug]': '/quiz/[slug]',
+
     // Favourites
     '/favourites': {
       en: '/favourites',
