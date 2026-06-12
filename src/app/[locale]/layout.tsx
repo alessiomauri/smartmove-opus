@@ -8,6 +8,7 @@ import "../globals.css";
 import { FavouritesProvider } from "@/contexts/FavouritesContext";
 import { cn } from "@/lib/utils";
 import Analytics from "@/components/Analytics";
+import { Toaster } from "sonner";
 import PostHogInit from "@/components/PostHogInit";
 import CookieBanner from "@/components/CookieBanner";
 import { routing } from "@/i18n/routing";
@@ -208,8 +209,10 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <FavouritesProvider>{children}</FavouritesProvider>
         </NextIntlClientProvider>
-        {/* Toaster mounts per-route where toasts are actually fired
-            (collection pages, admin) — not globally. */}
+        {/* Global Toaster: share buttons, lead forms and quizzes fire
+            toasts from arbitrary public routes — per-route mounting left
+            silent no-ops (the /properties share bug). */}
+        <Toaster position="top-right" richColors />
         <SpeedInsights />
         <Analytics />
         <PostHogInit />

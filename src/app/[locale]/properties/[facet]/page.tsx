@@ -5,6 +5,7 @@ import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
 import PropertyGrid from '@/components/PropertyGrid';
 import { FACETS, getFacet, siblingFacets } from '@/lib/facets';
+import CopyUrlButton from '@/components/search/CopyUrlButton';
 import { searchPropertiesPaged, searchParamsString, type SearchFilters } from '@/lib/search';
 import { localizedAlternates, localizedUrl } from '@/lib/seo';
 import type { Locale } from '@/i18n/routing';
@@ -130,14 +131,17 @@ export default async function FacetPage({ params }: Props) {
           <p className="text-[15.5px] text-ink/75 leading-relaxed">
             {copy.intro}
           </p>
-          <p className="text-[13.5px] text-ink/55 mt-3">
-            <strong className="text-ink">{result.total.toLocaleString(locale === 'es' ? 'es-ES' : 'en-US')}</strong>{' '}
-            {locale === 'es' ? 'propiedades disponibles' : 'currently for sale'} {dated}
-            {cheapest(result.rows) && (
-              <> · {locale === 'es' ? 'desde' : 'from'} €{cheapest(result.rows)!.toLocaleString('en-US')}</>
-            )}
-            .
-          </p>
+          <div className="flex items-end justify-between gap-4 mt-3 flex-wrap">
+            <p className="text-[13.5px] text-ink/55">
+              <strong className="text-ink">{result.total.toLocaleString(locale === 'es' ? 'es-ES' : 'en-US')}</strong>{' '}
+              {locale === 'es' ? 'propiedades disponibles' : 'currently for sale'} {dated}
+              {cheapest(result.rows) && (
+                <> · {locale === 'es' ? 'desde' : 'from'} €{cheapest(result.rows)!.toLocaleString('en-US')}</>
+              )}
+              .
+            </p>
+            <CopyUrlButton label={locale === 'es' ? 'Compartir esta página' : 'Share this page'} />
+          </div>
         </header>
 
         <PropertyGrid properties={result.rows} />

@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import { getCollectionBySlugCached, bumpCollectionViews } from '@/lib/queries';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
-import { Toaster } from 'sonner';
 import CollectionPageClient from './CollectionPageClient';
 
 interface CollectionPageProps {
@@ -95,12 +94,6 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   // an un-awaited promise in the render body could.
   after(() => bumpCollectionViews(slug));
 
-  return (
-    <>
-      <CollectionPageClient collection={collection} />
-      {/* Share buttons fire toasts; the Toaster lives here instead of the
-          root layout so other public pages don't pay for sonner. */}
-      <Toaster position="top-right" richColors />
-    </>
-  );
+  // Toaster mounts globally in the locale layout.
+  return <CollectionPageClient collection={collection} />;
 }

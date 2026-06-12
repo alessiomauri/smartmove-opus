@@ -74,7 +74,16 @@ export default function SearchClient({ filters, result, basePath }: Props) {
     push({ ...local, sort: s === 'price_asc' ? 'price_asc' : s === 'price_desc' ? 'price_desc' : 'new', page: 1 }, true);
   }
 
+  // Visible manual fallback — clipboard can fail (Safari focus rules,
+  // permissions); the share flow must NEVER fail silently.
+  const [manualShareUrl, setManualShareUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+
   async function shareSearch() {
+    setSharing(true);
+    setManualShareUrl(null);
+    // 1. Mint the short link (fall back to the long URL if minting fails).
+    let url = window.location.href;
     try {
       const target = `${basePath}${searchParamsString(local)}`;
       const res = await fetch('/api/short-links', {
@@ -83,14 +92,19 @@ export default function SearchClient({ filters, result, basePath }: Props) {
         body: JSON.stringify({ target, kind: 'search' }),
       });
       const json = await res.json();
-      if (!res.ok || !json.code) throw new Error(json.error || 'mint failed');
-      const url = `${window.location.origin}/s/${json.code}`;
-      await navigator.clipboard.writeText(url);
-      toast.success('Share link copied', { description: url });
+      if (res.ok && json.code) url = `${window.location.origin}/s/${json.code}`;
     } catch {
-      // Fallback: copy the long URL — still shareable.
-      await navigator.clipboard.writeText(window.location.href).catch(() => {});
-      toast.success('Link copied');
+      /* long URL is still a working share */
+    }
+    // 2. Copy — and on ANY clipboard failure, show the link to copy by hand.
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied ✓', { description: url, duration: 6000 });
+    } catch {
+      setManualShareUrl(url);
+      toast.info('Copy the link below', { description: 'Your browser blocked automatic copying.' });
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -124,11 +138,32 @@ export default function SearchClient({ filters, result, basePath }: Props) {
         <button
           type="button"
           onClick={shareSearch}
-          className="text-[11px] font-semibold tracking-[0.1em] uppercase text-gold hover:text-gold-deep transition-colors"
+          disabled={sharing}
+          className="text-[11px] font-semibold tracking-[0.1em] uppercase text-gold hover:text-gold-deep transition-colors disabled:opacity-60"
         >
-          Share this search
+          {sharing ? 'Creating link…' : 'Share this search'}
         </button>
       </div>
+
+      {/* Manual-copy fallback — clipboard rejected, link still usable */}
+      {manualShareUrl && (
+        <div className="flex items-center gap-2 mb-5 px-4 py-3 bg-white border border-gold/30 rounded-2xl">
+          <input
+            readOnly
+            value={manualShareUrl}
+            onFocus={(e) => e.currentTarget.select()}
+            aria-label="Share link"
+            className="flex-1 text-[13px] font-mono text-ink bg-transparent focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setManualShareUrl(null)}
+            className="text-[11px] text-ink/45 hover:text-gold"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Zero-state: closest matches, never a dead end */}
       {showingClosest && (
