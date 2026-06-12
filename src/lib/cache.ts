@@ -240,3 +240,36 @@ export const getCachedQuizBySlug = unstable_cache(
   ['quiz-by-slug'],
   { tags: [QUIZZES_TAG], revalidate: 600 }
 );
+
+/**
+ * Area filter index for search (area-resolve.ts): the area tree +
+ * approved location mappings, projected to exact `location` strings.
+ * AREAS_TAG-invalidated; mapping edits land within revalidate.
+ */
+export const getCachedAreaFilterIndex = unstable_cache(
+  async () => {
+    const supabase = createStaticSupabaseClient();
+    const [{ data: areas }, { data: mappings }] = await Promise.all([
+      supabase.from('areas').select('slug, name, parent_area'),
+      supabase
+        .from('resales_location_mapping')
+        .select('location, sublocation, proposed_area_slug, approved')
+        .eq('approved', true)
+        .not('proposed_area_slug', 'is', null),
+    ]);
+    const { buildAreaFilterIndex } = await import('@/lib/area-resolve');
+    // Serialize as plain data (unstable_cache can't hold a Map) — the
+    // search layer rebuilds the index from these rows.
+    return {
+      areas: (areas ?? []) as Array<{ slug: string; name: string; parent_area: string | null }>,
+      mappings: (mappings ?? []) as Array<{ location: string; sublocation: string; proposed_area_slug: string | null; approved: boolean }>,
+      // entries computed here purely so callers can also use them directly
+      entries: buildAreaFilterIndex(
+        (areas ?? []) as never,
+        (mappings ?? []) as never
+      ).entries,
+    };
+  },
+  ['area-filter-index'],
+  { tags: [AREAS_TAG], revalidate: 600 }
+);

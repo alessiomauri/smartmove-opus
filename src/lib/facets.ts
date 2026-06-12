@@ -35,7 +35,7 @@ const f = (
 ): FacetDef => ({ slug, filters, en, es });
 
 export const FACETS: FacetDef[] = [
-  f('villas-in-marbella', { type: 'villa', area: 'Marbella' }, {
+  f('villas-in-marbella', { type: 'villa', area: 'marbella' }, {
     title: 'Villas for Sale in Marbella',
     h1: 'Villas for sale in Marbella',
     meta: 'Every villa currently for sale in Marbella — Golden Mile, Sierra Blanca, Nagüeles and the hills. Live inventory, updated nightly from the local MLS.',
@@ -50,7 +50,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Todas las villas a la venta en Marbella — Milla de Oro, Sierra Blanca y las colinas. Inventario en vivo, actualizado cada noche.',
     intro: 'Las villas de Marbella se concentran en la Milla de Oro, Sierra Blanca y la ladera de Nagüeles, con precios desde aproximadamente €1,5M. El inventario se sincroniza cada noche con la MLS de la Costa del Sol.',
   }),
-  f('apartments-in-marbella', { type: 'apartment', area: 'Marbella' }, {
+  f('apartments-in-marbella', { type: 'apartment', area: 'marbella' }, {
     title: 'Apartments for Sale in Marbella',
     h1: 'Apartments for sale in Marbella',
     meta: 'Apartments for sale across Marbella — old town, Golden Mile beachside and the hills. Live MLS inventory with prices and floor areas.',
@@ -61,7 +61,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Apartamentos a la venta en Marbella — casco antiguo, Milla de Oro y las colinas. Inventario MLS en vivo.',
     intro: 'Los apartamentos en Marbella van desde el casco antiguo hasta los complejos junto a la playa en la Milla de Oro. Las unidades de dos dormitorios parten de unos €350–450k en el centro.',
   }),
-  f('penthouses-in-marbella', { type: 'penthouse', area: 'Marbella' }, {
+  f('penthouses-in-marbella', { type: 'penthouse', area: 'marbella' }, {
     title: 'Penthouses for Sale in Marbella',
     h1: 'Penthouses for sale in Marbella',
     meta: 'Marbella penthouses with terraces and sea views — live inventory from the local MLS, updated nightly.',
@@ -72,7 +72,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Áticos en Marbella con terrazas y vistas al mar — inventario en vivo, actualizado cada noche.',
     intro: 'Los áticos son la categoría más escasa de Marbella: terrazas amplias y vistas al mar, concentrados cerca de la Milla de Oro. Desde unos €700k en el centro.',
   }),
-  f('apartments-puerto-banus', { type: 'apartment', area: 'Puerto Banús' }, {
+  f('apartments-puerto-banus', { type: 'apartment', area: 'puerto-banus' }, {
     title: 'Apartments for Sale in Puerto Banús',
     h1: 'Apartments for sale in Puerto Banús',
     meta: 'Marina-side and second-line apartments in Puerto Banús — live inventory with prices, updated nightly from the MLS.',
@@ -83,7 +83,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Apartamentos en primera línea del puerto y segunda línea en Puerto Banús — inventario en vivo.',
     intro: 'Los apartamentos de Puerto Banús se dividen entre la primera línea del puerto y la segunda línea hacia Nueva Andalucía. Dos dormitorios en segunda línea desde unos €450–600k.',
   }),
-  f('penthouses-puerto-banus', { type: 'penthouse', area: 'Puerto Banús' }, {
+  f('penthouses-puerto-banus', { type: 'penthouse', area: 'puerto-banus' }, {
     title: 'Penthouses for Sale in Puerto Banús',
     h1: 'Penthouses for sale in Puerto Banús',
     meta: 'Penthouses over the marina and beach in Puerto Banús — live MLS inventory, updated nightly.',
@@ -94,7 +94,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Áticos sobre el puerto y la playa de Puerto Banús — inventario en vivo.',
     intro: 'Un ático en Banús compra el horizonte del puerto. La oferta es escasa y los precios parten de unos €900k en segunda línea.',
   }),
-  f('villas-nueva-andalucia', { type: 'villa', area: 'Nueva Andalucía' }, {
+  f('villas-nueva-andalucia', { type: 'villa', area: 'nueva-andalucia' }, {
     title: 'Villas for Sale in Nueva Andalucía',
     h1: 'Villas for sale in Nueva Andalucía',
     meta: 'Golf Valley villas in Nueva Andalucía — Los Naranjos, Las Brisas and Aloha. Live inventory updated nightly.',
@@ -108,7 +108,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Villas del Valle del Golf en Nueva Andalucía — Los Naranjos, Las Brisas y Aloha. Inventario en vivo.',
     intro: 'Nueva Andalucía es el Valle del Golf: villas alrededor de Las Brisas, Los Naranjos y Aloha a diez minutos de Banús. Villas familiares desde €1,5–2M.',
   }),
-  f('apartments-nueva-andalucia', { type: 'apartment', area: 'Nueva Andalucía' }, {
+  f('apartments-nueva-andalucia', { type: 'apartment', area: 'nueva-andalucia' }, {
     title: 'Apartments for Sale in Nueva Andalucía',
     h1: 'Apartments for sale in Nueva Andalucía',
     meta: 'Golf Valley apartments in Nueva Andalucía with course and mountain views — live MLS inventory.',
@@ -119,7 +119,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Apartamentos del Valle del Golf con vistas — inventario en vivo.',
     intro: 'Vivir en apartamento en el Valle del Golf significa urbanizaciones cerradas con jardines maduros a cinco–diez minutos de Puerto Banús. Dos dormitorios entre €350–700k.',
   }),
-  f('villas-in-estepona', { type: 'villa', area: 'Estepona' }, {
+  f('villas-in-estepona', { type: 'villa', area: 'estepona' }, {
     title: 'Villas for Sale in Estepona',
     h1: 'Villas for sale in Estepona',
     meta: 'Villas across Estepona — town outskirts, the New Golden Mile and the hills. Live inventory, better value than central Marbella.',
@@ -130,7 +130,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Villas en Estepona — afueras del pueblo, Nueva Milla de Oro y las colinas. Mejor valor que Marbella centro.',
     intro: 'Estepona ofrece el mejor valor por metro en villas de la costa: desde unos €700k hacia el interior y €1,2M+ cerca de las playas de la Nueva Milla de Oro.',
   }),
-  f('apartments-in-estepona', { type: 'apartment', area: 'Estepona' }, {
+  f('apartments-in-estepona', { type: 'apartment', area: 'estepona' }, {
     title: 'Apartments for Sale in Estepona',
     h1: 'Apartments for sale in Estepona',
     meta: 'Apartments in Estepona old town, the port and the New Golden Mile — live MLS inventory updated nightly.',
@@ -141,7 +141,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Apartamentos en el casco antiguo, el puerto y la Nueva Milla de Oro de Estepona — inventario en vivo.',
     intro: 'Los apartamentos de Estepona abarcan el casco antiguo, el puerto y la Nueva Milla de Oro. Precios de entrada desde unos €250k.',
   }),
-  f('villas-in-benahavis', { type: 'villa', area: 'Benahavís' }, {
+  f('villas-in-benahavis', { type: 'villa', area: 'benahavis' }, {
     title: 'Villas for Sale in Benahavís',
     h1: 'Villas for sale in Benahavís',
     meta: 'Hillside and gated-community villas in Benahavís — La Zagaleta, El Madroñal, Los Flamingos. Live inventory.',
@@ -155,7 +155,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Villas en las colinas y urbanizaciones cerradas de Benahavís — La Zagaleta, El Madroñal, Los Flamingos.',
     intro: 'Benahavís es el municipio de las colinas detrás del Triángulo de Oro: La Zagaleta, El Madroñal y Los Flamingos. Villas desde €1,5M.',
   }),
-  f('penthouses-nueva-andalucia', { type: 'penthouse', area: 'Nueva Andalucía' }, {
+  f('penthouses-nueva-andalucia', { type: 'penthouse', area: 'nueva-andalucia' }, {
     title: 'Penthouses for Sale in Nueva Andalucía',
     h1: 'Penthouses for sale in Nueva Andalucía',
     meta: 'Golf Valley penthouses with terrace views over the courses — live inventory updated nightly.',
@@ -166,7 +166,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Áticos del Valle del Golf con terrazas sobre los campos — inventario en vivo.',
     intro: 'Los áticos del Valle del Golf combinan terrazas amplias con vistas a La Concha, normalmente entre €500k y €2M.',
   }),
-  f('villas-under-2m-marbella', { type: 'villa', area: 'Marbella', maxp: 2_000_000 }, {
+  f('villas-under-2m-marbella', { type: 'villa', area: 'marbella', maxp: 2_000_000 }, {
     title: 'Villas under €2M in Marbella',
     h1: 'Villas under €2 million in Marbella',
     meta: 'Every detached villa under €2M currently for sale in Marbella — live inventory, updated nightly.',
@@ -177,7 +177,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Todas las villas independientes por debajo de 2M€ a la venta en Marbella — inventario en vivo.',
     intro: 'Por debajo de €2M, las villas de Marbella se agrupan en Marbella Este y las zonas altas del municipio. Es el segmento donde el conocimiento local más importa.',
   }),
-  f('villas-under-3m-marbella', { type: 'villa', area: 'Marbella', maxp: 3_000_000 }, {
+  f('villas-under-3m-marbella', { type: 'villa', area: 'marbella', maxp: 3_000_000 }, {
     title: 'Villas under €3M in Marbella',
     h1: 'Villas under €3 million in Marbella',
     meta: 'Detached villas under €3M for sale across Marbella — live MLS inventory with prices and plots.',
@@ -188,7 +188,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Villas independientes por debajo de 3M€ en Marbella — inventario MLS en vivo.',
     intro: 'La franja de €2–3M es el punto dulce de Marbella: villas familiares renovadas y entradas a zonas que revenden bien.',
   }),
-  f('villas-under-2m-estepona', { type: 'villa', area: 'Estepona', maxp: 2_000_000 }, {
+  f('villas-under-2m-estepona', { type: 'villa', area: 'estepona', maxp: 2_000_000 }, {
     title: 'Villas under €2M in Estepona',
     h1: 'Villas under €2 million in Estepona',
     meta: 'Detached villas under €2M in Estepona and the New Golden Mile — the coast’s strongest villa value.',
@@ -199,7 +199,7 @@ export const FACETS: FacetDef[] = [
     meta: 'Villas independientes por debajo de 2M€ en Estepona y la Nueva Milla de Oro.',
     intro: 'Estepona por debajo de €2M compra lo que cuesta el doble en Marbella centro: villas con piscina cerca de la Nueva Milla de Oro.',
   }),
-  f('apartments-under-2m-puerto-banus', { type: 'apartment', area: 'Puerto Banús', maxp: 2_000_000 }, {
+  f('apartments-under-2m-puerto-banus', { type: 'apartment', area: 'puerto-banus', maxp: 2_000_000 }, {
     title: 'Apartments under €2M in Puerto Banús',
     h1: 'Apartments under €2 million in Puerto Banús',
     meta: 'Puerto Banús apartments under €2M — second-line and select marina addresses. Live inventory.',
@@ -244,8 +244,10 @@ export function nearestFacet(filters: {
   maxp?: number;
   feat?: string;
 }): FacetDef | null {
-  const norm = (s?: string) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  const areaMatch = (fa?: string) => !!fa && norm(filters.area).includes(norm(fa).split(' ')[0]);
+  const norm = (s?: string) =>
+    (s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
+  // Facet areas are canonical slugs; the param may be a slug or a name.
+  const areaMatch = (fa?: string) => !!fa && norm(filters.area) === norm(fa);
 
   let best: FacetDef | null = null;
   let bestScore = 0;

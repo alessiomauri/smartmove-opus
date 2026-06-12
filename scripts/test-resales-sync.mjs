@@ -445,5 +445,57 @@ console.log('\n— publish gate —');
     'gate fields excluded from the content hash');
 }
 
+// ───────────────────────────── 10. canonical area filtering (search)
+console.log('\n— area filter resolves through the location-nesting system —');
+{
+  const { buildAreaFilterIndex, resolveAreaEntry } =
+    await import('../src/lib/area-resolve.ts');
+
+  const areas = [
+    { slug: 'marbella', name: 'Marbella', parent_area: null },
+    { slug: 'marbella-east', name: 'Marbella East', parent_area: 'marbella' },
+    { slug: 'elviria', name: 'Elviria', parent_area: 'marbella-east' },
+    { slug: 'nueva-andalucia', name: 'Nueva Andalucía', parent_area: 'marbella' },
+    { slug: 'benahavis', name: 'Benahavís', parent_area: null },
+  ];
+  const mappings = [
+    { location: 'Marbella', sublocation: '', proposed_area_slug: 'marbella', approved: true },
+    { location: 'La Mairena', sublocation: '', proposed_area_slug: 'marbella-east', approved: true },
+    { location: 'Marbella', sublocation: 'Elviria Alta', proposed_area_slug: 'elviria', approved: true },
+    { location: 'Nueva Andalucía', sublocation: '', proposed_area_slug: 'nueva-andalucia', approved: true },
+    { location: 'Benahavís', sublocation: '', proposed_area_slug: 'benahavis', approved: true },
+    // rejected/unapproved rows must never leak into the filter
+    { location: 'Ronda', sublocation: '', proposed_area_slug: 'marbella', approved: false },
+    { location: 'Istán', sublocation: '', proposed_area_slug: null, approved: true },
+  ];
+  const index = buildAreaFilterIndex(areas, mappings);
+
+  // NESTED custom area returns its mapped rows (the reported bug).
+  const east = resolveAreaEntry(index, 'marbella-east');
+  assert(east?.locationStrings.includes('La Mairena'),
+    'nested area (Marbella East) resolves to its mapped feed locations');
+  assert(east?.locationStrings.includes('Marbella, Elviria Alta'),
+    'descendant micro mappings are included (sublocation pair → exact location string)');
+  assert(east?.areaNames.includes('Marbella East') && east?.areaNames.includes('Elviria'),
+    'curated/manual rows match via nested area NAMES');
+
+  // Parent pulls everything under it.
+  const marbella = resolveAreaEntry(index, 'marbella');
+  assert(marbella?.locationStrings.includes('La Mairena') &&
+         marbella?.locationStrings.includes('Nueva Andalucía'),
+    'parent area (Marbella) includes all descendant mappings');
+
+  // Accent/diacritic-safe lookups, by slug OR display name.
+  assert(resolveAreaEntry(index, 'Benahavís')?.slug === 'benahavis', 'accented name resolves');
+  assert(resolveAreaEntry(index, 'benahavis')?.slug === 'benahavis', 'bare slug resolves');
+  assert(resolveAreaEntry(index, 'Nueva Andalucia')?.slug === 'nueva-andalucia',
+    'unaccented name resolves to the accented area');
+
+  // Hygiene: unapproved mappings never leak; unknown params return null
+  // (search falls back to free-text ilike).
+  assert(!marbella?.locationStrings.includes('Ronda'), 'unapproved mapping rows excluded');
+  assert(resolveAreaEntry(index, 'atlantis') === null, 'unknown area → null (ilike fallback)');
+}
+
 console.log(failures === 0 ? '\nAll sync tests passed ✓' : `\n${failures} FAILURE(S)`);
 process.exit(failures === 0 ? 0 : 1);

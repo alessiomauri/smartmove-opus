@@ -9,6 +9,8 @@
  */
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { PROPERTY_LIST_COLUMNS } from '@/lib/list-columns';
+import { getCachedAreaFilterIndex } from '@/lib/cache';
+import { buildAreaFilterIndex, resolveAreaEntry, type AreaFilterEntry } from '@/lib/area-resolve';
 import type { Property, PropertyType } from '@/types/property';
 import type { Development } from '@/types/development';
 
@@ -80,6 +82,28 @@ export interface SearchResult {
   closest?: { dropped: string[] };
 }
 
+/** PostgREST `or=` value quoting (values may contain commas/spaces). */
+function pgQuoted(values: string[]): string {
+  return values.map((v) => `"${v.replaceAll('"', '')}"`).join(',');
+}
+
+/**
+ * CANONICAL AREA FILTERING — an area param means "everything mapped
+ * under this area" via the location-nesting system (the same one the
+ * map and /areas pages use), never a raw match on the feed's Location:
+ *  - resales rows match when their exact `location` string is in the
+ *    area's approved mapping set (incl. all descendant areas);
+ *  - curated/manual rows match when their `area` carries one of the
+ *    nested curated area NAMES.
+ * Unrecognized params (free text that is no area) fall back to ilike
+ * so exploratory searches still work.
+ */
+async function resolveAreaFilter(param: string): Promise<AreaFilterEntry | null> {
+  const { areas, mappings } = await getCachedAreaFilterIndex();
+  const index = buildAreaFilterIndex(areas, mappings);
+  return resolveAreaEntry(index, param);
+}
+
 async function runPropertyQuery(f: Partial<SearchFilters>, page: number, pageSize = PAGE_SIZE) {
   const supabase = createStaticSupabaseClient();
   let q = supabase
@@ -87,7 +111,22 @@ async function runPropertyQuery(f: Partial<SearchFilters>, page: number, pageSiz
     .select(PROPERTY_LIST_COLUMNS, { count: 'exact' })
     .eq('published', true);
 
-  if (f.area) q = q.ilike('area', `%${f.area.replaceAll('%', '')}%`);
+  if (f.area) {
+    const entry = await resolveAreaFilter(f.area);
+    if (entry) {
+      const ors: string[] = [];
+      if (entry.locationStrings.length > 0) {
+        ors.push(`location.in.(${pgQuoted(entry.locationStrings)})`);
+      }
+      if (entry.areaNames.length > 0) {
+        ors.push(`area.in.(${pgQuoted(entry.areaNames)})`);
+      }
+      if (ors.length > 0) q = q.or(ors.join(','));
+      else q = q.eq('id', '00000000-0000-0000-0000-000000000000'); // mapped to nothing yet
+    } else {
+      q = q.ilike('area', `%${f.area.replaceAll('%', '')}%`);
+    }
+  }
   if (f.type) q = q.eq('property_type', f.type);
   if (f.beds) q = q.gte('bedrooms', f.beds);
   if (f.minp) q = q.gte('price', f.minp);
