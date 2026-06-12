@@ -4,14 +4,22 @@ import AwardsBlock from '@/components/AwardsBlock';
 import SearchPill from '@/components/SearchPill';
 import PinnedFeaturedCard from '@/components/PinnedFeaturedCard';
 import QuizEntryCards from '@/components/QuizEntryCards';
+import { Link } from '@/i18n/navigation';
 import { getCachedPublishedProperties, getCachedDefaultSort } from '@/lib/cache';
+import { createStaticSupabaseClient } from '@/lib/supabase-static';
 
 export const revalidate = 3600;
 
 export default async function Home() {
-  const [allPublished, defaultSort] = await Promise.all([
+  const [allPublished, defaultSort, { count: inventoryCount }] = await Promise.all([
     getCachedPublishedProperties(),
     getCachedDefaultSort(),
+    // Full-inventory size for the search CTA — the grid itself stays
+    // curated; the whole inventory lives on /properties (Prompt 3).
+    createStaticSupabaseClient()
+      .from('properties')
+      .select('id', { count: 'exact', head: true })
+      .eq('published', true),
   ]);
 
   // CURATED-SURFACE GATE (Alessio's rule): Resales-sourced rows never
@@ -115,6 +123,19 @@ export default async function Home() {
           initialProperties={sorted}
           defaultSort={defaultSort}
         />
+
+        {/* The grid above is the curated showcase; the FULL inventory
+            lives on the server-paginated search (Prompt 3). */}
+        {(inventoryCount ?? 0) > sorted.length && (
+          <div className="text-center mt-10">
+            <Link
+              href={'/properties' as never}
+              className="inline-block px-8 py-4 text-[12.5px] font-semibold tracking-[0.1em] uppercase bg-white text-ink border border-ink/15 rounded-full hover:border-gold hover:text-gold transition-colors"
+            >
+              Search all {Number(inventoryCount).toLocaleString('en-US')} properties →
+            </Link>
+          </div>
+        )}
       </section>
 
       <QuizEntryCards />

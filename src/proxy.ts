@@ -14,6 +14,13 @@ export default async function proxy(request: NextRequest) {
     return adminAuth(request);
   }
 
+  // Short-link redirects (/s/{code}, /c/{code}) are locale-agnostic
+  // route handlers — the i18n middleware must not rewrite them into
+  // the locale tree.
+  if (pathname.startsWith('/s/') || pathname.startsWith('/c/')) {
+    return NextResponse.next();
+  }
+
   // All other public routes go through the i18n middleware (locale detection,
   // localized pathname rewrites, hreflang headers).
   return intlMiddleware(request);

@@ -103,6 +103,13 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
     })),
   ];
 
+  // TWO-TIER INDEX POLICY (decided 10 Jun): MLS resale pages are Tier-2
+  // — fully functional for visitors arriving via our search, but
+  // noindex,follow (syndicated content duplicated across the MLS
+  // network; facet pages are the indexed wrappers). Featured listings
+  // are admin-curated → Tier-1, fully indexed.
+  const tier1 = !(property.source === 'resales_online' && !property.is_featured);
+
   return {
     title,
     description,
@@ -111,10 +118,10 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
     creator: 'Smartmove Marbella',
     publisher: 'Smartmove Marbella',
     robots: {
-      index: true,
+      index: tier1,
       follow: true,
       googleBot: {
-        index: true,
+        index: tier1,
         follow: true,
         'max-video-preview': -1,
         'max-image-preview': 'large',

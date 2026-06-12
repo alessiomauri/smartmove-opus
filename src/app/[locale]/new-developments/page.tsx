@@ -2,11 +2,19 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
-import { getCachedPublishedDevelopments } from '@/lib/cache';
+import DevSearchControls from '@/components/search/DevSearchControls';
+import Pagination from '@/components/search/Pagination';
+import { parseDevSearchParams, searchDevelopmentsPaged } from '@/lib/search';
 import { DEVELOPMENT_STATUS_LABELS } from '@/types/development';
+import type { Development } from '@/types/development';
 import { NEW_DEVELOPMENTS_PUBLIC } from './feature-flag';
 
-export const revalidate = 600;
+/**
+ * Development search — same URL-synced, server-paginated pattern as
+ * /properties (?location=&beds=&minp=&maxp=&sort=&page=). Numbered
+ * pagination, results line, closest-matches zero-state. Still behind
+ * NEW_DEVELOPMENTS_PUBLIC.
+ */
 
 export const metadata: Metadata = {
   // Always noindex while feature flag is off, even if someone hits the URL directly
@@ -23,11 +31,27 @@ function formatPriceFrom(n: number | null) {
   return `from €${(n / 1000).toFixed(0)}K`;
 }
 
-export default async function NewDevelopmentsPage() {
+export default async function NewDevelopmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   // Hard-block public access while the feature is off
   if (!NEW_DEVELOPMENTS_PUBLIC) notFound();
 
-  const items = await getCachedPublishedDevelopments();
+  const filters = parseDevSearchParams(await searchParams);
+  const result = await searchDevelopmentsPaged(filters);
+
+  const hrefFor = (page: number) => {
+    const p = new URLSearchParams();
+    if (filters.location) p.set('location', filters.location);
+    if (filters.beds) p.set('beds', String(filters.beds));
+    if (filters.minp) p.set('minp', String(filters.minp));
+    if (filters.maxp) p.set('maxp', String(filters.maxp));
+    if (filters.sort !== 'new') p.set('sort', filters.sort);
+    if (page > 1) p.set('page', String(page));
+    return `/new-developments${p.size ? `?${p}` : ''}`;
+  };
 
   return (
     <div className="min-h-screen bg-paper">
@@ -41,18 +65,46 @@ export default async function NewDevelopmentsPage() {
         <h1 className="font-display text-[44px] md:text-[64px] text-gold leading-tight tracking-tight mt-6 mb-4">
           New Developments
         </h1>
-        <p className="text-[15px] md:text-[17px] text-ink/70 max-w-2xl leading-relaxed">
+        <p className="text-[15px] md:text-[17px] text-ink/70 max-w-2xl leading-relaxed mb-8">
           New-build luxury projects across Marbella and the Costa del Sol. Off-plan, under
           construction, and key-ready.
         </p>
+        <DevSearchControls filters={filters} />
       </header>
 
       <main className="max-w-[1600px] mx-auto px-6 lg:px-12 pb-16">
-        {items.length === 0 ? (
+        {/* Results line */}
+        <p className="text-[13px] text-ink/60 mb-6">
+          {result.closest ? (
+            'No exact matches'
+          ) : (
+            <>
+              <strong className="text-ink">{result.total.toLocaleString('en-US')}</strong>{' '}
+              {result.total === 1 ? 'development' : 'developments'}
+              {result.pages > 1 && <span className="text-ink/45"> · page {result.page} of {result.pages}</span>}
+            </>
+          )}
+        </p>
+
+        {/* Zero-state: closest matches, never a dead end */}
+        {result.closest && result.rows.length > 0 && (
+          <div className="mb-6 px-5 py-4 bg-gold/[0.06] border border-gold/25 rounded-2xl">
+            <p className="text-[14px] text-ink">
+              Nothing matches everything you asked for — these are the closest{' '}
+              {result.rows.length === 1 ? 'match' : 'matches'}
+              {result.closest.dropped.length > 0 && (
+                <span className="text-ink/55"> (we relaxed: {result.closest.dropped.join(', ')})</span>
+              )}
+              .
+            </p>
+          </div>
+        )}
+
+        {result.rows.length === 0 ? (
           <div className="text-center py-16 text-ink/50">No developments published yet.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {items.map((d) => (
+            {result.rows.map((d: Development) => (
               <Link
                 key={d.id}
                 href={{ pathname: '/new-developments/[slug]', params: { slug: d.slug } }}
@@ -106,6 +158,8 @@ export default async function NewDevelopmentsPage() {
             ))}
           </div>
         )}
+
+        <Pagination page={result.page} pages={result.pages} hrefFor={hrefFor} />
       </main>
     </div>
   );

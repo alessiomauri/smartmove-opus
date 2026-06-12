@@ -75,6 +75,7 @@ import { getSyncState, setSyncState, WATERMARK_KEY, OWN_REFS_KEY } from './sync-
 import { revalidateTag } from 'next/cache';
 import { PROPERTIES_TAG, DEVELOPMENTS_TAG } from '@/lib/cache';
 import { pingIndexNow, entityUrls } from '@/lib/indexnow';
+import { NEW_DEVELOPMENTS_PUBLIC } from '@/app/[locale]/new-developments/feature-flag';
 
 export type SyncTrigger =
   | 'cron'
@@ -215,6 +216,8 @@ export interface ExistingRow {
   pending_review?: boolean | null;
   published?: boolean | null;
   removed_at?: string | null;
+  /** Tier-1 marker — IndexNow only pings featured listings. */
+  is_featured?: boolean | null;
 }
 
 export interface PlannedUpdate {
@@ -588,7 +591,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
         // re-check (properties only).
         const cols =
           kind === 'p'
-            ? 'id, source_id, slug, content_hash, rejected, price, status, source_image_urls, pending_review, published, removed_at'
+            ? 'id, source_id, slug, content_hash, rejected, price, status, source_image_urls, pending_review, published, removed_at, is_featured'
             : 'id, source_id, slug, content_hash, rejected, source_image_urls';
         const { data: existingRows, error: exErr } = await opts.supabase
           .from(table)
@@ -641,9 +644,16 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           for (const r of rows) {
             if (r.pending_review) pendingCount += 1;
             else approvedCount += 1;
-            // Only published rows have a public URL worth pinging —
-            // pending inserts would 404 at the search engine.
-            if (r.published === true && typeof r.slug === 'string') {
+            // IndexNow RESCOPE (two-tier policy): ping Tier-1 only.
+            // Property inserts are never featured at birth → never
+            // pinged; development pages are Tier-1 once their surface
+            // is public.
+            if (
+              kind === 'd' &&
+              NEW_DEVELOPMENTS_PUBLIC &&
+              r.published === true &&
+              typeof r.slug === 'string'
+            ) {
               changedUrls.push(...entityUrls(kind, r.slug));
             }
           }
@@ -669,7 +679,15 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           continue;
         }
         rowsUpdated += 1;
-        if (u.slug) changedUrls.push(...entityUrls(u.kind, u.slug));
+        // Tier-1 pings only: featured listings + (public) dev pages.
+        if (u.slug) {
+          const existingRow = existingBySourceId.get(`${u.kind}:${u.reference}`);
+          if (u.kind === 'p' && existingRow?.is_featured) {
+            changedUrls.push(...entityUrls('p', u.slug));
+          } else if (u.kind === 'd' && NEW_DEVELOPMENTS_PUBLIC) {
+            changedUrls.push(...entityUrls('d', u.slug));
+          }
+        }
 
         if (u.priceChange) {
           priceChanges += 1;
@@ -723,7 +741,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
       if (soldTailRefs.length > 0) {
         const { data: tailRows } = await opts.supabase
           .from('properties')
-          .select('id, source_id, slug, status')
+          .select('id, source_id, slug, status, is_featured')
           .eq('source', 'resales_online')
           .in('source_id', soldTailRefs);
         const toFlip = (tailRows ?? []).filter((r) => r.status !== 'sold');
@@ -744,7 +762,7 @@ export async function runResalesSync(opts: SyncOpts): Promise<SyncReport> {
           }
           soldTailHits += 1;
           statusChanges += 1;
-          if (r.slug) changedUrls.push(...entityUrls('p', r.slug));
+          if (r.slug && r.is_featured) changedUrls.push(...entityUrls('p', r.slug));
           await opts.supabase.from('property_status_history').insert({
             property_id: r.id,
             old_status: r.status,

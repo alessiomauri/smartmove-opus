@@ -4,7 +4,6 @@ import { revalidateTag } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runPublishGateBacklog } from '@/lib/integrations/resales-publish-gate';
 import { PROPERTIES_TAG } from '@/lib/cache';
-import { pingIndexNow, entityUrls } from '@/lib/indexnow';
 
 // 8k rows = a handful of grouped batch updates — finishes in seconds.
 export const maxDuration = 300;
@@ -60,14 +59,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...report });
   }
 
-  // Newly published rows: invalidate the inventory caches and ping
-  // IndexNow with exactly those URLs (env-gated, never throws).
-  let indexnowPinged = 0;
+  // Newly published rows: invalidate the inventory caches. NO IndexNow
+  // ping — gate-published MLS rows are Tier-2 (noindex, out of sitemap);
+  // pinging them would invite indexing of pages we deliberately hide.
+  const indexnowPinged = 0;
   if (!report.dryRun && report.published > 0) {
     revalidateTag(PROPERTIES_TAG, 'max');
-    indexnowPinged = await pingIndexNow(
-      report.publishedSlugs.flatMap((slug) => entityUrls('p', slug))
-    );
   }
 
   const message =

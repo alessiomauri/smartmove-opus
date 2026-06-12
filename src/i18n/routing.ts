@@ -24,6 +24,16 @@ export const routing = defineRouting({
       es: '/propiedad/[slug]',
     },
 
+    // Full-inventory search + curated facet landings
+    '/properties': {
+      en: '/properties',
+      es: '/propiedades',
+    },
+    '/properties/[facet]': {
+      en: '/properties/[facet]',
+      es: '/propiedades/[facet]',
+    },
+
     // Areas
     '/areas': {
       en: '/areas',

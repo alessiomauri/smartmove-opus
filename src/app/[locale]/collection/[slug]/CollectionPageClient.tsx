@@ -22,26 +22,89 @@ const WhatsAppIcon = () => (
 export default function CollectionPageClient({ collection }: CollectionPageClientProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Short share handle (/c/{code}) \u2014 minted lazily on first share, then
+  // reused (the API dedupes by target). Admins additionally get a
+  // custom-slug field for big community sends.
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [customSlug, setCustomSlug] = useState('');
 
   useEffect(() => {
     setIsVisible(true);
+    // Admin detection only toggles the custom-slug field; minting custom
+    // codes is enforced server-side regardless.
+    import('@/lib/supabase').then(({ createClient }) => {
+      createClient()
+        .auth.getUser()
+        .then(({ data }) => setIsAdmin(!!data.user))
+        .catch(() => {});
+    });
   }, []);
 
   const isPersonal = collection.type === 'personal';
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://smartmove.live';
   const collectionUrl = `${baseUrl}/collection/${collection.slug}`;
 
+  /** Mint (or reuse) the /c/ short code for this collection. */
+  const mintShortUrl = async (code?: string): Promise<string> => {
+    if (shortUrl && !code) return shortUrl;
+    const res = await fetch('/api/short-links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        target: `/collection/${collection.slug}`,
+        kind: 'collection',
+        context: { collection: collection.slug },
+        ...(code ? { code } : {}),
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.code) throw new Error(json.error || 'Could not create link');
+    const url = `${baseUrl}/c/${json.code}`;
+    setShortUrl(url);
+    return url;
+  };
+
   const copyLink = async () => {
-    await navigator.clipboard.writeText(collectionUrl);
+    try {
+      const url = await mintShortUrl();
+      await navigator.clipboard.writeText(url);
+      toast.success('Share link copied', { description: url });
+    } catch {
+      await navigator.clipboard.writeText(collectionUrl);
+      toast.success('Link copied');
+    }
     setCopied(true);
-    toast.success('Link copied');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareWhatsApp = () => {
+  const copyCustomLink = async () => {
+    const slug = customSlug.trim();
+    if (!/^[a-z0-9-]{3,40}$/.test(slug)) {
+      toast.error('Slug: 3\u201340 chars, lowercase letters, numbers, hyphens');
+      return;
+    }
+    try {
+      const url = await mintShortUrl(slug);
+      await navigator.clipboard.writeText(url);
+      toast.success('Custom link ready', { description: url });
+    } catch (e) {
+      toast.error('Could not mint that slug', {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    }
+  };
+
+  const shareWhatsApp = async () => {
+    let url = collectionUrl;
+    try {
+      url = await mintShortUrl();
+    } catch {
+      /* long URL still works */
+    }
     const text = isPersonal
-      ? `Properties selected for you by Smartmove Marbella\n\n${collectionUrl}`
-      : `${collection.title} \u2014 Curated by Smartmove Marbella\n\n${collectionUrl}`;
+      ? `Properties selected for you by Smartmove Marbella\n\n${url}`
+      : `${collection.title} \u2014 Curated by Smartmove Marbella\n\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -185,6 +248,28 @@ export default function CollectionPageClient({ collection }: CollectionPageClien
                   </button>
                 </div>
               </div>
+
+              {/* Admin-only: custom short slug for big community sends
+                  (e.g. /c/sierra-blanca-collection). Server enforces the
+                  admin requirement regardless of this UI. */}
+              {isAdmin && (
+                <div className="hidden sm:flex items-center gap-2 mt-1">
+                  <span className="text-[11px] text-ink/40 font-mono">/c/</span>
+                  <input
+                    type="text"
+                    value={customSlug}
+                    onChange={(e) => setCustomSlug(e.target.value.toLowerCase())}
+                    placeholder="custom-slug (admin)"
+                    className="px-3 py-1.5 text-[12px] font-mono bg-white border border-ink/15 rounded-full focus:outline-none focus:border-gold transition-colors w-56"
+                  />
+                  <button
+                    onClick={copyCustomLink}
+                    className="px-3.5 py-1.5 text-[10px] tracking-[0.08em] uppercase font-semibold border border-ink/15 rounded-full text-ink/60 hover:border-gold hover:text-gold transition-colors"
+                  >
+                    Mint & copy
+                  </button>
+                </div>
+              )}
 
               {/* Community intro message */}
               {collection.message && (

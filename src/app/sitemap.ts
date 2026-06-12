@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { routing } from '@/i18n/routing';
+import { FACETS } from '@/lib/facets';
 import { NEW_DEVELOPMENTS_PUBLIC } from '@/app/[locale]/new-developments/feature-flag';
 
 /**
@@ -68,6 +69,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('properties')
       .select('slug, updated_at, hero_image, gallery_images, status')
       .eq('published', true)
+      // TWO-TIER INDEX POLICY: MLS resale pages are Tier-2 (noindex,
+      // out of the sitemap). Only curated/featured listings are listed.
+      .or('source.neq.resales_online,is_featured.eq.true')
       .order('updated_at', { ascending: false }),
     // Areas come from the DB (not the static TS file) so unpublishing an
     // area in admin actually removes it from the sitemap.
@@ -98,7 +102,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static top-level pages. /favourites is a personal localStorage page
   // (noindexed) — advertising it in the sitemap contradicted that.
   result.push(...withAlternates('/', undefined, baseUrl, now, 'daily', 1.0));
+  result.push(...withAlternates('/properties', undefined, baseUrl, now, 'daily', 0.95));
+  result.push(...withAlternates('/contact', undefined, baseUrl, now, 'monthly', 0.6));
   result.push(...withAlternates('/areas', undefined, baseUrl, now, 'weekly', 0.9));
+
+  // Curated facet landing pages — the indexed wrappers over the full
+  // inventory (Prompt 3). Config-driven: new facets appear automatically.
+  for (const facet of FACETS) {
+    result.push(
+      ...withAlternates('/properties/[facet]', { facet: facet.slug }, baseUrl, now, 'daily', 0.9)
+    );
+  }
   result.push(...withAlternates('/blog', undefined, baseUrl, now, 'daily', 0.9));
   if (NEW_DEVELOPMENTS_PUBLIC) {
     result.push(...withAlternates('/new-developments', undefined, baseUrl, now, 'daily', 0.9));

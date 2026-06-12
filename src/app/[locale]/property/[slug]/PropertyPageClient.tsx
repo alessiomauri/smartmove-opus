@@ -8,6 +8,7 @@ import GallerySection from '@/components/property/GallerySection';
 import FloorPlanSection from '@/components/property/FloorPlanSection';
 import LocationSection from '@/components/property/LocationSection';
 import LeadCaptureSection from '@/components/property/LeadCaptureSection';
+import SimilarProperties from '@/components/property/SimilarProperties';
 import { Property } from '@/types/property';
 
 interface PropertyPageClientProps {
@@ -40,6 +41,9 @@ export default function PropertyPageClient({ property }: PropertyPageClientProps
       {/* Location: full pin for our own listings, generalised area-only for
           partner listings (Resales properties shouldn't expose exact pins). */}
       <LocationSection property={property} />
+
+      {/* Similar properties — geo-ranked when coords exist (Prompt 3). */}
+      <SimilarProperties property={property} />
 
       <footer className="py-16 lg:py-20 bg-paper relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-gold/[0.02] rounded-full blur-3xl pointer-events-none" />
