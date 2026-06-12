@@ -15,6 +15,16 @@ declare global {
   }
 }
 
+/** Mirror any client event to PostHog when it's mounted; silent no-op
+ * otherwise. Lead forms + quiz steps share this seam. */
+export function phCapture(event: string, props?: Record<string, unknown>): void {
+  try {
+    window.posthog?.capture(event, props);
+  } catch {
+    /* analytics must never break the page */
+  }
+}
+
 const runId =
   typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now());
 
@@ -43,9 +53,5 @@ export function trackQuiz(
   } catch {
     /* analytics must never break the quiz */
   }
-  try {
-    window.posthog?.capture(`quiz_${event}`, { quiz: quizSlug, ...extra });
-  } catch {
-    /* ditto */
-  }
+  phCapture(`quiz_${event}`, { quiz: quizSlug, ...extra });
 }

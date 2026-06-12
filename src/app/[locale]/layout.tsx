@@ -8,6 +8,7 @@ import "../globals.css";
 import { FavouritesProvider } from "@/contexts/FavouritesContext";
 import { cn } from "@/lib/utils";
 import Analytics from "@/components/Analytics";
+import PostHogInit from "@/components/PostHogInit";
 import CookieBanner from "@/components/CookieBanner";
 import { routing } from "@/i18n/routing";
 
@@ -211,6 +212,7 @@ export default async function LocaleLayout({
             (collection pages, admin) — not globally. */}
         <SpeedInsights />
         <Analytics />
+        <PostHogInit />
         <CookieBanner />
       </body>
     </html>

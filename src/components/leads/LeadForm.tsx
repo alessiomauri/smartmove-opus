@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, FormEvent } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { phCapture } from '@/lib/quiz-track';
 
 /**
  * The one lead form. Every capture surface (property viewing request,
@@ -92,6 +93,8 @@ export default function LeadForm({
       } catch {
         /* tracking must never break the form */
       }
+      // Mirror to PostHog (contact-screen drop-off = view − submit).
+      phCapture('lead_form_view', { form: source, detail: sourceDetail });
     }
   }, [source, sourceDetail]);
 
@@ -139,9 +142,11 @@ export default function LeadForm({
       if (!res.ok) {
         setState('idle');
         setError(json.error || t('errorGeneric'));
+        phCapture('lead_form_error', { form: source, detail: sourceDetail, status: res.status });
         return;
       }
       setState('done');
+      phCapture('lead_form_submit', { form: source, detail: sourceDetail, intent });
     } catch {
       setState('idle');
       setError(t('errorGeneric'));
