@@ -202,12 +202,23 @@ async function runPropertyQuery(f: Partial<SearchFilters>, page: number, pageSiz
       );
     }
   }
-  // Free-text: name / location / area / reference.
+  // Free-text: name / location / area / reference — and when the text
+  // IS one of our areas (any accents), expand through the canonical
+  // resolver so "benahavis" matches 'Benahavís' rows.
   if (f.q) {
     const safe = f.q.replaceAll('%', '').replaceAll(',', '');
-    q = q.or(
-      `name.ilike.%${safe}%,location.ilike.%${safe}%,area.ilike.%${safe}%,source_id.ilike.%${safe}%`
-    );
+    const ors = [
+      `name.ilike.%${safe}%`,
+      `location.ilike.%${safe}%`,
+      `area.ilike.%${safe}%`,
+      `source_id.ilike.%${safe}%`,
+    ];
+    const entry = await resolveAreaFilter(f.q);
+    if (entry) {
+      if (entry.locationStrings.length > 0) ors.push(`location.in.(${pgQuoted(entry.locationStrings)})`);
+      if (entry.areaNames.length > 0) ors.push(`area.in.(${pgQuoted(entry.areaNames)})`);
+    }
+    q = q.or(ors.join(','));
   }
 
   const sort = f.sort ?? 'new';

@@ -36,6 +36,8 @@ export default function SearchClient({ filters, result, basePath }: Props) {
   // Local mirror so typing feels instant; URL follows debounced.
   const [local, setLocal] = useState<SearchFilters>(filters);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Typing-burst tracker: first keystroke pushes history, the rest replace.
+  const lastWriteWasTyping = useRef(false);
   useEffect(() => setLocal(filters), [filters]);
 
   const push = useCallback(
@@ -87,11 +89,15 @@ export default function SearchClient({ filters, result, basePath }: Props) {
       q: f.search || undefined,
       page: 1, // any filter change resets pagination
     };
-    // Typing in the free-text box is the only continuous input —
-    // everything else is a discrete choice that deserves history.
+    // Typing in the free-text box is the only continuous input. A
+    // typing BURST gets one history entry: the first keystroke pushes
+    // (so back undoes the whole burst, not each character), the rest
+    // replace.
     const onlyTyping =
       searchParamsString({ ...next, q: undefined }) === searchParamsString({ ...local, q: undefined, page: 1 });
-    push(next, { replace: onlyTyping });
+    const replace = onlyTyping && lastWriteWasTyping.current;
+    lastWriteWasTyping.current = onlyTyping;
+    push(next, { replace });
   }
   function onSortChange(s: SortOption) {
     push(

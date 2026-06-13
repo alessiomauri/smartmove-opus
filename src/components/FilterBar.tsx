@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, X, SlidersHorizontal } from 'lucide-react';
-import { PropertyFilters, SortOption, AREAS, STATUS_LABELS, PropertyStatus, FEATURE_OPTIONS } from '@/types/property';
+import { PropertyFilters, SortOption, AREAS, STATUS_LABELS, PropertyStatus, FEATURE_OPTIONS, PROPERTY_TYPE_LABELS, PropertyType } from '@/types/property';
 import { cn } from '@/lib/utils';
 
 interface FilterBarProps {
@@ -303,6 +303,20 @@ export default function FilterBar({
           </div>
 
           <div className="p-4 space-y-6">
+            {/* Search */}
+            <div>
+              <label className="block text-sm font-medium text-ink mb-2">
+                Search
+              </label>
+              <input
+                type="text"
+                placeholder="Name, area or reference…"
+                value={filters.search || ''}
+                onChange={(e) => updateFilter('search', e.target.value || undefined)}
+                className="w-full px-4 py-3 border border-gray-300 rounded text-sm bg-white placeholder:text-ink/35"
+              />
+            </div>
+
             {/* Location */}
             <div>
               <label className="block text-sm font-medium text-ink mb-2">
@@ -320,6 +334,46 @@ export default function FilterBar({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Type + Beds */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-ink mb-2">
+                  Type
+                </label>
+                <select
+                  value={filters.propertyType || ''}
+                  onChange={(e) =>
+                    updateFilter('propertyType', (e.target.value || undefined) as PropertyType | undefined)
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded text-sm bg-white"
+                >
+                  <option value="">All types</option>
+                  {Object.entries(PROPERTY_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-2">
+                  Beds
+                </label>
+                <select
+                  value={filters.minBedrooms || ''}
+                  onChange={(e) => updateFilter('minBedrooms', Number(e.target.value) || undefined)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded text-sm bg-white"
+                >
+                  <option value="">Any</option>
+                  {[1, 2, 3, 4, 5, 6].map((b) => (
+                    <option key={b} value={b}>
+                      {b}+
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Availability */}
