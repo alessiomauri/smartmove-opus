@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { Boxes, ClipboardList, Star, Users, Building2, HelpCircle } from 'lucide-react';
 import DefaultSortControl from './DefaultSortControl';
 import NotificationEmailControl from './NotificationEmailControl';
+import HomepageFiguresControl from '@/components/admin/HomepageFiguresControl';
+import type { HomepageStats } from '@/lib/home-stats';
 
 // Admin command center (admin-only — the proxy bounces agents to /agent).
 export const dynamic = 'force-dynamic';
@@ -19,7 +21,7 @@ export default async function AdminCommandCenter() {
     prop().eq('source', 'resales_online').eq('pending_review', true).eq('rejected', false),
     prop().eq('is_featured', true),
     prop().eq('source', 'resales_online'),
-    sb.from('site_settings').select('default_sort, notification_email').eq('id', 1).maybeSingle(),
+    sb.from('site_settings').select('default_sort, notification_email, homepage_stats').eq('id', 1).maybeSingle(),
   ]);
 
   const kpis = [
@@ -82,6 +84,15 @@ export default async function AdminCommandCenter() {
             </div>
           </section>
         </div>
+
+        <section id="homepage-figures" className="mt-6 bg-white rounded-xl border border-gray-200 p-5 scroll-mt-24">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Homepage figures</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            Editorial proof numbers on the public homepage. Dynamic counts (villas, developments,
+            neighbourhoods) come from live data automatically; these are the editable ones.
+          </p>
+          <HomepageFiguresControl current={(settings.data?.homepage_stats ?? {}) as HomepageStats} />
+        </section>
       </main>
     </div>
   );
