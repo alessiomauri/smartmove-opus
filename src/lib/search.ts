@@ -236,6 +236,29 @@ async function runPropertyQuery(f: Partial<SearchFilters>, page: number, pageSiz
 }
 
 /**
+ * Count published properties for an area param — the SAME area-resolve +
+ * published filter as `/properties?area=…` (no price/type/beds), so a homepage
+ * region-tile number EQUALS the click-through result count. Descendants are
+ * included by the resolver (Marbella pulls Nueva Andalucía etc. → overlap).
+ */
+export async function countPublishedInArea(areaParam: string): Promise<number> {
+  const supabase = createStaticSupabaseClient();
+  let q = supabase.from('properties').select('id', { count: 'exact', head: true }).eq('published', true);
+  const entry = await resolveAreaFilter(areaParam);
+  if (entry) {
+    const ors: string[] = [];
+    if (entry.locationStrings.length > 0) ors.push(`location.in.(${pgQuoted(entry.locationStrings)})`);
+    if (entry.areaNames.length > 0) ors.push(`area.in.(${pgQuoted(entry.areaNames)})`);
+    if (ors.length > 0) q = q.or(ors.join(',')); else return 0;
+  } else {
+    q = q.ilike('area', `%${areaParam.replaceAll('%', '')}%`);
+  }
+  const { count, error } = await q;
+  if (error) { console.error('countPublishedInArea:', error.message); return 0; }
+  return count ?? 0;
+}
+
+/**
  * Main search. Zero results never dead-ends: progressively relax
  * (features → beds → price → type) and surface 3 "closest matches",
  * reporting which constraints were dropped.

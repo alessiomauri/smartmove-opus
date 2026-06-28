@@ -5,7 +5,7 @@
  */
 import Link from 'next/link';
 
-export default function SiteFooter() {
+export default function SiteFooter({ foundedYear = '', years = null }: { foundedYear?: string; years?: number | null }) {
   return (
     <footer className="sm-f">
       <div className="inner">
@@ -70,10 +70,10 @@ export default function SiteFooter() {
             <img src="/sm/award-top100-lreb.png" alt="LREB Top 100" />
             {/* eslint-enable @next/next/no-img-element */}
           </div>
-          <div className="stat"><strong>17 years</strong> · Marbella, since 2009</div>
+          {foundedYear && years ? (<div className="stat"><strong>{years} years</strong> · Marbella, since {foundedYear}</div>) : null}
         </div>
         <div className="legal">
-          <div>© 2026 Smartmove Marbella S.L. · CIF B-12345678 · Reg. Mercantil de Málaga</div>
+          <div>© {new Date().getFullYear()} Smartmove Marbella S.L. · CIF B-12345678 · Reg. Mercantil de Málaga</div>
           <div className="socials">
             <Link href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".7" fill="currentColor" /></svg></Link>
             <Link href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v4H4zM4 10h4v10H4zM10 10h4v1.5c.7-1 2-1.8 3.5-1.8 3 0 4.5 2 4.5 5V20h-4v-4.5c0-1.5-.5-2.5-2-2.5s-2 1-2 2.5V20h-4z" /></svg></Link>

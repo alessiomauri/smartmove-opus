@@ -41,10 +41,12 @@ export const GUIDES_FALLBACK: GuideCard[] = [
 ];
 
 /** Five fixed regions for the Areas tease — each links to /areas/[slug]. */
+// Counts are computed live (countPublishedInArea) so the tile equals the
+// /properties?area=… click-through; no hardcoded per-tile numbers here.
 export const REGIONS = [
-  { slug: 'marbella', bg: 'r-marbella', index: 'I · ', indexEm: 'flagship', name: 'Marbella ', nameEm: 'Centro & Golden Mile', count: '187', feature: true },
-  { slug: 'estepona', bg: 'r-estepona', index: 'II', indexEm: '', name: 'Estepona', nameEm: '', count: '78', feature: false },
-  { slug: 'mijas', bg: 'r-sotogrande', index: 'III', indexEm: '', name: 'Mijas ', nameEm: '& East', count: '54', feature: false },
-  { slug: 'benahavis', bg: 'r-benahavis', index: 'IV', indexEm: '', name: 'Benahavís', nameEm: '', count: '62', feature: false },
-  { slug: 'nueva-andalucia', bg: 'r-fuengirola', index: 'V', indexEm: '', name: 'Nueva ', nameEm: 'Andalucía', count: '31', feature: false },
+  { slug: 'marbella', bg: 'r-marbella', index: 'I · ', indexEm: 'flagship', name: 'Marbella ', nameEm: 'Centro & Golden Mile', feature: true },
+  { slug: 'estepona', bg: 'r-estepona', index: 'II', indexEm: '', name: 'Estepona', nameEm: '', feature: false },
+  { slug: 'mijas', bg: 'r-sotogrande', index: 'III', indexEm: '', name: 'Mijas ', nameEm: '& East', feature: false },
+  { slug: 'benahavis', bg: 'r-benahavis', index: 'IV', indexEm: '', name: 'Benahavís', nameEm: '', feature: false },
+  { slug: 'nueva-andalucia', bg: 'r-fuengirola', index: 'V', indexEm: '', name: 'Nueva ', nameEm: 'Andalucía', feature: false },
 ] as const;

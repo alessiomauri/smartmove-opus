@@ -17,11 +17,13 @@ import type { EntitySummary, FeaturedItem, CuratedListData } from './types';
 const TEAL = '#0f6c74';
 
 export default function CurationClient({
-  featured, propsList, devsList,
+  featured, propsList, devsList, exploreVillas, exploreDevs,
 }: {
   featured: FeaturedItem[];
   propsList: CuratedListData;
   devsList: CuratedListData;
+  exploreVillas: CuratedListData;
+  exploreDevs: CuratedListData;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -99,6 +101,40 @@ export default function CurationClient({
             onReorder={(ids) => run(() => reorderCuratedList(ids), 'Order saved')}
             onRemove={(itemId) => run(() => removeCuratedItem(itemId), 'Removed')}
             emptyText="No developments in this list yet."
+          />
+        </div>
+      </Section>
+
+      {/* ---- Homepage Explore — Villas (the homepage villa card; rotates daily) ---- */}
+      <Section title={exploreVillas.title} subtitle="The villa card in the homepage Explore section. Add one or more — with several, the homepage rotates daily (server day). Unpublished picks are skipped; with none, the card hides.">
+        <SearchAdd
+          placeholder="Search a property by reference, name or location…"
+          onSearch={searchPropertiesForCuration}
+          onPick={(id) => run(() => addCuratedItem(exploreVillas.slug, id), 'Added to homepage villa picks')}
+        />
+        <div className="mt-4">
+          <DragRankList
+            items={listItems(exploreVillas)}
+            onReorder={(ids) => run(() => reorderCuratedList(ids), 'Order saved')}
+            onRemove={(itemId) => run(() => removeCuratedItem(itemId), 'Removed')}
+            emptyText="No villa picks yet — the homepage villa card stays hidden until you add one."
+          />
+        </div>
+      </Section>
+
+      {/* ---- Homepage Explore — Developments (the homepage development card) ---- */}
+      <Section title={exploreDevs.title} subtitle="The development card in the homepage Explore section. Same rules — add one or more; rotates daily; skips unpublished; hides if none.">
+        <SearchAdd
+          placeholder="Search a development by reference or name…"
+          onSearch={searchDevelopmentsForCuration}
+          onPick={(id) => run(() => addCuratedItem(exploreDevs.slug, id), 'Added to homepage development picks')}
+        />
+        <div className="mt-4">
+          <DragRankList
+            items={listItems(exploreDevs)}
+            onReorder={(ids) => run(() => reorderCuratedList(ids), 'Order saved')}
+            onRemove={(itemId) => run(() => removeCuratedItem(itemId), 'Removed')}
+            emptyText="No development picks yet — the homepage development card stays hidden until you add one."
           />
         </div>
       </Section>

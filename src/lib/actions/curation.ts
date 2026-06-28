@@ -65,6 +65,7 @@ export async function setFeaturedOrder(orderedIds: string[]) {
   updateTag(PROPERTIES_TAG);
   revalidatePath('/');
   revalidatePath('/admin/curation');
+  revalidatePath('/');
   await logEvent({ entityType: 'property', entityId: null, action: 'featured_reordered', meta: { count: orderedIds.length } });
 }
 
@@ -137,6 +138,7 @@ export async function addCuratedItem(slug: string, entityId: string) {
     throw new Error(`addCuratedItem: ${error.message}`);
   }
   revalidatePath('/admin/curation');
+  revalidatePath('/');
   await logEvent({ entityType: list.entity_type, entityId, action: 'curated_added', meta: { list: slug } });
 }
 
@@ -146,6 +148,7 @@ export async function removeCuratedItem(itemId: string) {
   const { error } = await sb.from('curated_list_items').delete().eq('id', itemId);
   if (error) throw new Error(`removeCuratedItem: ${error.message}`);
   revalidatePath('/admin/curation');
+  revalidatePath('/');
   await logEvent({ entityType: 'curated_list_item', entityId: itemId, action: 'curated_removed' });
 }
 
@@ -157,5 +160,6 @@ export async function reorderCuratedList(orderedItemIds: string[]) {
     if (error) throw new Error(`reorderCuratedList: ${error.message}`);
   }
   revalidatePath('/admin/curation');
+  revalidatePath('/');
   await logEvent({ entityType: 'curated_list', entityId: null, action: 'curated_reordered', meta: { count: orderedItemIds.length } });
 }

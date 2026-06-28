@@ -4,6 +4,10 @@ import SiteHeader from '@/components/sm/SiteHeader';
 import SiteFooter from '@/components/sm/SiteFooter';
 import { DubaiCountdown, DubaiWaitlist } from '@/components/sm/DubaiWidgets';
 import { TESTIMONIALS, PRESS, GUIDES_FALLBACK, REGIONS, type GuideCard } from '@/lib/home-content';
+import { getHomepageStats, yearsSince, numberToWords } from '@/lib/home-stats';
+import { countPublishedInArea } from '@/lib/search';
+import { getExplorePicks } from '@/lib/home-explore';
+import { getServiceRoleClient } from '@/lib/supabase-service';
 import '../../styles/sm-skin.css';
 import '../../styles/sm-skin-extra.css';
 
@@ -14,10 +18,39 @@ const ArrowR = ({ w = 14, h = 10 }: { w?: number; h?: number }) => (
 );
 
 export default async function Home() {
+  const sb = createStaticSupabaseClient();
+
+  // DYNAMIC proof numbers — live counts (no hardcoded figures).
+  const [villas, devs, hoods, stats, regionCounts, quizRows, explore] = await Promise.all([
+    sb.from('properties').select('id', { count: 'exact', head: true }).eq('published', true).eq('property_type', 'villa'),
+    sb.from('developments').select('id', { count: 'exact', head: true }).eq('published', true),
+    sb.from('areas').select('slug', { count: 'exact', head: true }).eq('published', true),
+    getHomepageStats(),
+    Promise.all(REGIONS.map((r) => countPublishedInArea(r.slug))),
+    // Service-role: question counts must reflect the real questions length even
+    // for a draft quiz (anon RLS only exposes 'live'). Server-only read.
+    getServiceRoleClient().from('quizzes').select('slug, questions').in('slug', ['which-coast', 'which-development']),
+    getExplorePicks(),
+  ]);
+  const villaCount = villas.count ?? 0;
+  const devCount = devs.count ?? 0;
+  const hoodCount = hoods.count ?? 0;
+  const qLen = (slug: string) => { const q = (quizRows.data ?? []).find((x) => x.slug === slug); return Array.isArray(q?.questions) ? q!.questions.length : 0; };
+  const coastQ = qLen('which-coast');
+  const devQ = qLen('which-development');
+
+  // EDITORIAL figures — unset ⇒ hidden (nothing fake).
+  const sold = stats.soldVolume?.trim() || '';
+  const rating = stats.rating?.trim() || '';
+  const reviews = stats.reviewsCount?.trim() || '';
+  const quizStarts = stats.quizStarts?.trim() || '';
+  const founded = stats.foundedYear?.trim() || '';
+  const years = yearsSince(founded);
+
   // Guides → blog_posts in guide categories; design placeholders if none yet.
   let guides: GuideCard[] = GUIDES_FALLBACK;
   try {
-    const { data } = await createStaticSupabaseClient()
+    const { data } = await sb
       .from('blog_posts')
       .select('slug, title, excerpt, category, cover_image')
       .in('category', ['buying-guide', 'selling-guide', 'area-guide', 'market-report'])
@@ -40,7 +73,7 @@ export default async function Home() {
       <section className="home-hero" data-screen-label="01 Hero">
         <div className="center">
           <div className="hero-lead">
-            <div className="eyebrow">Marbella · Costa del Sol · Est. 2009</div>
+            <div className="eyebrow">Marbella · Costa del Sol{founded ? ` · Est. ${founded}` : ''}</div>
             <h1>Homes that <em>change the rhythm</em><br />of an entire summer.</h1>
           </div>
           <div className="hero-search">
@@ -56,9 +89,9 @@ export default async function Home() {
           </div>
           <div className="hero-quick">
             <span className="hq-l">Or browse</span>
-            <Link href="/properties">412 villas</Link>
+            <Link href="/properties">{villaCount.toLocaleString()} villas</Link>
             <span className="hq-dot">·</span>
-            <Link href="/new-developments">18 new developments</Link>
+            <Link href="/new-developments">{devCount.toLocaleString()} new development{devCount === 1 ? '' : 's'}</Link>
             <span className="hq-dot">·</span>
             <Link href="/properties">Off-market</Link>
           </div>
@@ -73,7 +106,7 @@ export default async function Home() {
             <div className="about-image">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <div className="ai-frame"><img className="ai-photo" src="/sm/team-photo.png" alt="The Smartmove Marbella team" /></div>
-              <div className="ai-meta"><span className="ai-num">Est. <em>2009</em></span><span className="ai-sep" /><span className="ai-loc">Marbella · Costa del Sol</span></div>
+              <div className="ai-meta">{founded && (<><span className="ai-num">Est. <em>{founded}</em></span><span className="ai-sep" /></>)}<span className="ai-loc">Marbella · Costa del Sol</span></div>
             </div>
             <div className="about-body">
               <div className="about-kicker">About Smartmove Marbella</div>
@@ -97,7 +130,9 @@ export default async function Home() {
               <img src="/sm/award-top100-lreb.png" alt="Top 100 LREB" />
               <div className="aa-tx"><div className="n">Top 100 Brokers of the World</div><div className="y">Luxury Real Estate Brokers · 2023 · 2024 · 2025</div><div className="d">Ranked among the world&rsquo;s leading independent luxury brokerages, three years running.</div></div>
             </div>
-            <div className="aa-rating"><div className="stars">★★★★★</div><div className="aa-rt"><strong>4.9 / 5</strong><span>210+ verified buyer reviews</span></div></div>
+            {(rating || reviews) && (
+              <div className="aa-rating">{rating && <div className="stars">★★★★★</div>}<div className="aa-rt">{rating && <strong>{rating} / 5</strong>}{reviews && <span>{reviews} verified buyer reviews</span>}</div></div>
+            )}
           </div>
         </div>
       </section>
@@ -114,32 +149,40 @@ export default async function Home() {
               <div className="qs-eyebrow">★ The easiest way to start</div>
               <div className="qs-t">Not sure yet?</div>
               <p>Take a 2-minute quiz and we&rsquo;ll match you to the right areas and homes. No email needed to see results.</p>
-              <div className="qs-proof"><span className="qs-stars">★★★★★</span><span><strong>2,000+ buyers</strong> started here this year</span></div>
+              {quizStarts && <div className="qs-proof"><span className="qs-stars">★★★★★</span><span><strong>{quizStarts} buyers</strong> started here this year</span></div>}
             </div>
             <Link className="qs-tile" href="/quiz/which-coast">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <span className="qs-thumb"><img src="/sm/coast-quiz.png" alt="" style={{ objectPosition: '80% center' }} /><span className="qs-pill">Area quiz</span></span>
-              <span className="qs-tx"><span className="qs-cat">5 questions · 2 minutes</span><span className="qs-q">Which stretch of coast <em>is for you?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
+              <span className="qs-tx"><span className="qs-cat">{coastQ} questions · 2 minutes</span><span className="qs-q">Which stretch of coast <em>is for you?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
             </Link>
             <Link className="qs-tile" href="/quiz/which-development">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <span className="qs-thumb"><img src="/sm/development-quiz.png" alt="" /><span className="qs-pill">Development quiz</span></span>
-              <span className="qs-tx"><span className="qs-cat">6 questions · 2 minutes</span><span className="qs-q">Which development <em>fits your brief?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
+              <span className="qs-tx"><span className="qs-cat">{devQ} questions · 2 minutes</span><span className="qs-q">Which development <em>fits your brief?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
             </Link>
           </div>
+          {(explore.villa || explore.dev) && (
+          <>
           <div className="explore-or"><span>Or, if you already know</span></div>
           <div className="svd-row">
-            <Link className="svd-card" href="/properties">
+            {explore.villa && (
+            <Link className="svd-card" href={explore.villa.href}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="svd-photo"><img src="/sm/listing-1.jpg" alt="Signature villas across the coast" /><span className="svd-badge"><strong>412</strong> homes</span></div>
-              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>Villas <em>across the coast.</em></h3><p>Every agency, every off-market whisper, in one honest list, walked personally before we ever show you.</p><div className="svd-meta"><span><em>€1.2M</em> entry</span><span><em>44</em> neighbourhoods</span><span><em>Resale</em> &amp; off-market</span></div><span className="svd-go">Browse all villas <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+              <div className="svd-photo">{explore.villa.image && <img src={explore.villa.image} alt={explore.villa.name} />}<span className="svd-badge">Featured villa</span></div>
+              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>{explore.villa.name}</h3><div className="svd-meta">{explore.villa.priceLabel && <span><em>{explore.villa.priceLabel}</em></span>}{explore.villa.beds && <span>{explore.villa.beds}</span>}{explore.villa.location && <span>{explore.villa.location}</span>}</div><span className="svd-go">View this villa <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
             </Link>
-            <Link className="svd-card" href="/new-developments">
+            )}
+            {explore.dev && (
+            <Link className="svd-card" href={explore.dev.href}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="svd-photo"><img src="/sm/dev-marquee.jpg" alt="New developments on the coast" /><span className="svd-badge"><strong>18</strong> active</span></div>
-              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>New <em>developments.</em></h3><p>The coast&rsquo;s most architecturally ambitious builds, often before they reach the open market.</p><div className="svd-meta"><span><em>€650k</em> entry</span><span><em>Off-plan</em> to key-ready</span><span><em>5</em> regions</span></div><span className="svd-go">See new developments <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+              <div className="svd-photo">{explore.dev.image && <img src={explore.dev.image} alt={explore.dev.name} />}<span className="svd-badge">New development</span></div>
+              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>{explore.dev.name}</h3><div className="svd-meta">{explore.dev.priceLabel && <span><em>{explore.dev.priceLabel}</em></span>}{explore.dev.beds && <span>{explore.dev.beds}</span>}{explore.dev.location && <span>{explore.dev.location}</span>}</div><span className="svd-go">View this development <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
             </Link>
+            )}
           </div>
+          </>
+          )}
           <Link className="explore-cta" href="/properties">
             <div className="ec-tx"><span className="ec-k">Prefer to see everything at once?</span><span className="ec-h">Open the <em>full property search</em></span></div>
             <span className="ec-go">Thousands of listings · every region <svg width="20" height="12" viewBox="0 0 20 12" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 6h17M13 1l5 5-5 5" /></svg></span>
@@ -151,15 +194,15 @@ export default async function Home() {
       <section className="areas-tease" data-screen-label="05 Areas">
         <div className="wrap">
           <div className="head">
-            <div><div className="kicker">Across the coast</div><h2>Five regions. <em>Forty-four neighbourhoods.</em></h2></div>
+            <div><div className="kicker">Across the coast</div><h2>Five regions. <em>{numberToWords(hoodCount)} neighbourhoods.</em></h2></div>
             <div><p className="lede">Each region has its own rhythm, its own buyer, its own price floor. The right home almost always starts with the right region.</p><Link href="/areas">Explore the area atlas <ArrowR /></Link></div>
           </div>
           <div className="region-grid">
-            {REGIONS.map((r) => (
-              <Link key={r.slug} className={`region-tile${r.feature ? ' feature' : ''}`} href={`/areas/${r.slug}`}>
+            {REGIONS.map((r, i) => (
+              <Link key={r.slug} className={`region-tile${r.feature ? ' feature' : ''}`} href={`/properties?area=${r.slug}`}>
                 <div className={`bg ${r.bg}`} />
                 <span className="index">{r.index}{r.indexEm && <em>{r.indexEm}</em>}</span>
-                <div className="meta"><h3>{r.name}{r.nameEm && <em>{r.nameEm}</em>}</h3><div className="ct"><strong>{r.count}</strong>listings</div></div>
+                <div className="meta"><h3>{r.name}{r.nameEm && <em>{r.nameEm}</em>}</h3>{regionCounts[i] > 0 && <div className="ct"><strong>{regionCounts[i].toLocaleString()}</strong>listings</div>}</div>
               </Link>
             ))}
           </div>
@@ -184,7 +227,7 @@ export default async function Home() {
             <div className="sell-media">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/sm/listing-3.jpg" alt="A Smartmove-listed home" />
-              <div className="sell-badge"><div className="sb-n">€820M<em>+</em></div><div className="sb-l">placed across the coast since 2009</div></div>
+              {sold && (<div className="sell-badge"><div className="sb-n">{sold}</div><div className="sb-l">placed across the coast{founded ? ` since ${founded}` : ''}</div></div>)}
             </div>
           </div>
         </div>
@@ -214,7 +257,9 @@ export default async function Home() {
         <div className="wrap">
           <div className="voices-head">
             <div><div className="vc-kicker">Trusted, and talked about</div><h2>The opinions that <em>matter most.</em></h2></div>
-            <div className="vc-rating"><div className="stars">★★★★★</div><div className="vc-rt">4.9 / 5 · <span>210+ verified buyer reviews</span></div></div>
+            {(rating || reviews) && (
+              <div className="vc-rating">{rating && <div className="stars">★★★★★</div>}<div className="vc-rt">{rating && <>{rating} / 5{reviews ? ' · ' : ''}</>}{reviews && <span>{reviews} verified buyer reviews</span>}</div></div>
+            )}
           </div>
           <div className="testi-grid">
             {TESTIMONIALS.map((t, i) => (
@@ -258,7 +303,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter foundedYear={founded} years={years} />
     </div>
   );
 }
