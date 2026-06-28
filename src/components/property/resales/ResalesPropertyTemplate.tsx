@@ -47,7 +47,8 @@ export default async function ResalesPropertyTemplate({
   const descParas = resalesDescriptionParas(property, locale);
   const reference = property.source_id || property.slug;
   const badge = resalesStatusBadge(property.status);
-  const place = dedupePlace(property.location) || property.area;
+  const place = dedupePlace(property.location) || property.area || '';
+  const crumbPlace = property.area || place;
   const priceLabel = resalesPriceLabel(property);
   const showReduced = property.status === 'available' && property.price_drop === true;
   const energy = energyLetter(property.energy_rated);
@@ -89,7 +90,13 @@ export default async function ResalesPropertyTemplate({
         ? 'Only the figures the agency supplied are shown. We confirm the rest before any offer.'
         : null;
 
-  const descHeading = property.bedrooms && property.bedrooms > 0 ? 'A closer look.' : 'About this plot.';
+  // Plot heading only for genuine land (no bedrooms AND no interior built area),
+  // or the explicit plot type — so a studio (0 beds, has interior) reads "A closer
+  // look." rather than the design's pure beds>0 heuristic.
+  const hasBeds = !!(property.bedrooms && property.bedrooms > 0);
+  const hasInterior = !!(property.interior_size && property.interior_size > 0);
+  const isPlot = property.property_type === 'plot_with_project' || (!hasBeds && !hasInterior);
+  const descHeading = isPlot ? 'About this plot.' : 'A closer look.';
 
   // Area-guide CTA → real /areas/[slug] via slugified town; hide if unmapped.
   const areaSlug = slugify(property.area || property.location || '');
@@ -105,7 +112,7 @@ export default async function ResalesPropertyTemplate({
       <SiteHeader variant="glass" current="Properties" />
       <ResalesReveal />
 
-      <ResalesGallery photos={photos} alt={`${typeTitle} — ${place}`} />
+      <ResalesGallery photos={photos} alt={place ? `${typeTitle} — ${place}` : typeTitle} />
 
       {/* ───────── TITLE BLOCK ───────── */}
       <div className="rs-titlewrap">
@@ -115,8 +122,12 @@ export default async function ResalesPropertyTemplate({
               <Link href="/">Home</Link>
               <span className="sep">/</span>
               <Link href="/properties">Properties</Link>
-              <span className="sep">/</span>
-              <span className="cur">{property.area || place}</span>
+              {crumbPlace && (
+                <>
+                  <span className="sep">/</span>
+                  <span className="cur">{crumbPlace}</span>
+                </>
+              )}
             </nav>
             <div className="rs-badges">
               <span className={`rs-badge ${badge.cls}`}>{badge.label}</span>
@@ -127,8 +138,12 @@ export default async function ResalesPropertyTemplate({
             <div>
               <h1 className="rs-type">{tm ? (<>{tm[1]}<em>{tm[2]}</em></>) : typeTitle}</h1>
               <div className="rs-place">
-                <span>{place}</span>
-                <span className="dot" />
+                {place && (
+                  <>
+                    <span>{place}</span>
+                    <span className="dot" />
+                  </>
+                )}
                 <span className="ref">Ref {reference}</span>
               </div>
             </div>
