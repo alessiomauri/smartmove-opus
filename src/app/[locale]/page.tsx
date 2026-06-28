@@ -6,7 +6,6 @@ import { DubaiCountdown, DubaiWaitlist } from '@/components/sm/DubaiWidgets';
 import { TESTIMONIALS, PRESS, GUIDES_FALLBACK, REGIONS, type GuideCard } from '@/lib/home-content';
 import { getHomepageStats, yearsSince, numberToWords } from '@/lib/home-stats';
 import { countPublishedInArea } from '@/lib/search';
-import { getExplorePicks } from '@/lib/home-explore';
 import { getServiceRoleClient } from '@/lib/supabase-service';
 import '../../styles/sm-skin.css';
 import '../../styles/sm-skin-extra.css';
@@ -21,7 +20,7 @@ export default async function Home() {
   const sb = createStaticSupabaseClient();
 
   // DYNAMIC proof numbers — live counts (no hardcoded figures).
-  const [villas, devs, hoods, stats, regionCounts, quizRows, explore] = await Promise.all([
+  const [villas, devs, hoods, stats, regionCounts, quizRows] = await Promise.all([
     sb.from('properties').select('id', { count: 'exact', head: true }).eq('published', true).eq('property_type', 'villa'),
     sb.from('developments').select('id', { count: 'exact', head: true }).eq('published', true),
     sb.from('areas').select('slug', { count: 'exact', head: true }).eq('published', true),
@@ -30,7 +29,6 @@ export default async function Home() {
     // Service-role: question counts must reflect the real questions length even
     // for a draft quiz (anon RLS only exposes 'live'). Server-only read.
     getServiceRoleClient().from('quizzes').select('slug, questions').in('slug', ['which-coast', 'which-development']),
-    getExplorePicks(),
   ]);
   const villaCount = villas.count ?? 0;
   const devCount = devs.count ?? 0;
@@ -162,36 +160,25 @@ export default async function Home() {
               <span className="qs-tx"><span className="qs-cat">{devQ} questions · 2 minutes</span><span className="qs-q">Which development <em>fits your brief?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
             </Link>
           </div>
-          {/* Section stays whole. Each slot independently: curated/featured pick,
-              else the DESIGN PLACEHOLDER (build-time stand-in — see CUTOVER.md §6). */}
+          {/* Original Homepage v6 design cards, rendered UNCONDITIONALLY — the
+              guaranteed default, with NO dependency on curated lists or featured
+              items (that dependency previously left both cards blank on staging
+              when the lists were empty). The sample numbers are the design's
+              placeholders, accepted on staging; before public launch these become
+              real curated/featured listings — see CUTOVER.md §6. The curated/
+              featured wiring stays in src/lib/home-explore.ts for re-enabling. */}
           <div className="explore-or"><span>Or, if you already know</span></div>
           <div className="svd-row">
-            {explore.villa ? (
-            <Link className="svd-card" href={explore.villa.href}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="svd-photo">{explore.villa.image && <img src={explore.villa.image} alt={explore.villa.name} />}<span className="svd-badge">Featured villa</span></div>
-              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>{explore.villa.name}</h3><div className="svd-meta">{explore.villa.priceLabel && <span><em>{explore.villa.priceLabel}</em></span>}{explore.villa.beds && <span>{explore.villa.beds}</span>}{explore.villa.location && <span>{explore.villa.location}</span>}</div><span className="svd-go">View this villa <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
-            </Link>
-            ) : (
             <Link className="svd-card" href="/properties">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="svd-photo"><img src="/sm/listing-1.jpg" alt="Signature villas across the coast" /><span className="svd-badge">Villas</span></div>
-              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>Villas <em>across the coast.</em></h3><p>Every agency, every off-market whisper, in one honest list, walked personally before we ever show you.</p><span className="svd-go">Browse all villas <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+              <div className="svd-photo"><img src="/sm/listing-1.jpg" alt="Signature villas across the coast" /><span className="svd-badge"><strong>412</strong> homes</span></div>
+              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>Villas <em>across the coast.</em></h3><p>Every agency, every off-market whisper, in one honest list, walked personally before we ever show you.</p><div className="svd-meta"><span><em>€1.2M</em> entry</span><span><em>44</em> neighbourhoods</span><span><em>Resale</em> &amp; off-market</span></div><span className="svd-go">Browse all villas <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
             </Link>
-            )}
-            {explore.dev ? (
-            <Link className="svd-card" href={explore.dev.href}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="svd-photo">{explore.dev.image && <img src={explore.dev.image} alt={explore.dev.name} />}<span className="svd-badge">New development</span></div>
-              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>{explore.dev.name}</h3><div className="svd-meta">{explore.dev.priceLabel && <span><em>{explore.dev.priceLabel}</em></span>}{explore.dev.beds && <span>{explore.dev.beds}</span>}{explore.dev.location && <span>{explore.dev.location}</span>}</div><span className="svd-go">View this development <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
-            </Link>
-            ) : (
             <Link className="svd-card" href="/new-developments">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="svd-photo"><img src="/sm/dev-marquee.jpg" alt="New developments on the coast" /><span className="svd-badge">New development</span></div>
-              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>New <em>developments.</em></h3><p>The coast&rsquo;s most architecturally ambitious builds, often before they reach the open market.</p><span className="svd-go">See new developments <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+              <div className="svd-photo"><img src="/sm/dev-marquee.jpg" alt="New developments on the coast" /><span className="svd-badge"><strong>18</strong> active</span></div>
+              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>New <em>developments.</em></h3><p>The coast&rsquo;s most architecturally ambitious builds, often before they reach the open market.</p><div className="svd-meta"><span><em>€650k</em> entry</span><span><em>Off-plan</em> to key-ready</span><span><em>5</em> regions</span></div><span className="svd-go">See new developments <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
             </Link>
-            )}
           </div>
           <Link className="explore-cta" href="/properties">
             <div className="ec-tx"><span className="ec-k">Prefer to see everything at once?</span><span className="ec-h">Open the <em>full property search</em></span></div>
