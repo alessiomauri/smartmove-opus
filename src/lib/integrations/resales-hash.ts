@@ -39,6 +39,9 @@ export const HASH_EXCLUDED_FIELDS: ReadonlySet<string> = new Set([
   // row is held must not make its feed content look "changed").
   'publish_gate_failures',
   'publish_gate_checked_at',
+  // Dev-content overrides (admin-owned, Phase E) — never part of feed
+  // content. The mapper doesn't emit it; this guards against future drift.
+  'overrides',
 ]);
 
 /**
@@ -65,6 +68,9 @@ export const SYNC_PROTECTED_FIELDS: ReadonlySet<string> = new Set([
   // (the mapper doesn't emit them today; this guards future drift).
   'is_featured',
   'featured_order',
+  // Dev-content overrides (admin-owned, Phase E) — synced developments'
+  // editable override JSONB. The sync must never clobber it.
+  'overrides',
 ]);
 
 /** Deterministic JSON: objects get sorted keys, recursively. */

@@ -22,6 +22,23 @@ export async function getAllDevelopments(): Promise<Development[]> {
   return (data || []) as Development[];
 }
 
+/** Server-paginated + searchable dev list for the admin (counts grow with sync). */
+export async function getDevelopmentsPage(params: { page?: string; q?: string }): Promise<{ rows: Development[]; total: number; page: number; pageSize: number }> {
+  const supabase = await createServerSupabaseClient();
+  const PAGE = 50;
+  const page = Math.max(1, Number(params.page) || 1);
+  const from = (page - 1) * PAGE;
+  let query = supabase.from('developments').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  if (params.q) {
+    const s = params.q.replace(/[%,()]/g, ' ').trim();
+    if (s) query = query.or(`name.ilike.%${s}%,area.ilike.%${s}%,source_id.ilike.%${s}%`);
+  }
+  query = query.range(from, from + PAGE - 1);
+  const { data, count, error } = await query;
+  if (error) throw new Error('Failed to fetch developments');
+  return { rows: (data || []) as Development[], total: count ?? 0, page, pageSize: PAGE };
+}
+
 // Public reads live in src/lib/queries.ts (static client + DEVELOPMENTS_TAG).
 
 export async function getDevelopmentById(id: string): Promise<Development | null> {
