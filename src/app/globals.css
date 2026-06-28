@@ -86,6 +86,14 @@
   --font-display: var(--sm-font-display);
   --font-body: var(--sm-font-body);
 
+  /* Additive brand type token — `text-md` (18px lead paragraphs) has no
+     Tailwind default, so it extends the scale without overriding anything.
+     The rest of the brand type/spacing/radius/shadow/tracking/leading scale
+     stays as --sm-* custom properties: overriding Tailwind's same-named
+     utilities (text-2xl, rounded-lg, leading-relaxed, …) would restyle
+     existing pages, which Step 0 forbids. Components reference --sm-* directly. */
+  --text-md: var(--sm-text-md);
+
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

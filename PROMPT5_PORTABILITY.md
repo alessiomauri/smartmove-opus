@@ -100,3 +100,14 @@ auto-seeded into selections.
 ## Cleanest "just fix the original's homepage" port (no role/RLS changes)
 Phase A featured-toggle cache fix + Phase B curation tools (featured-by-ref + Top-20). Standalone,
 no auth changes — gives the original real curation without touching its RLS.
+
+⚠️ The homepage "Villa Amara" issue has TWO causes — fixing the original needs both:
+1. **Data:** the manual seed row is `published=true`, and the homepage curated filter
+   (`source != 'resales_online' OR is_featured`) surfaces any published manual row. Unpublish it.
+2. **Code:** `HomeHero.tsx` had a hardcoded `featured ?? { name: 'Villa Amara, Sierra Blanca', … }`
+   fallback, so the hero rendered the placeholder even with curation empty. Removed in Opus
+   (commit `8ac6b28`: hide the hero card when nothing is curated). The **original still has this
+   hardcoded fallback** — port that change too, or its hero shows Villa Amara regardless of the DB.
+
+Cache note: curate via the admin UI (fires `updateTag`, reflects immediately). A direct-DB edit
+bypasses cache invalidation and needs a manual flush/redeploy.

@@ -1,0 +1,21 @@
+/* Homepage header behavior + small integration overrides (scoped to .sm-skin).
+   The design ships a glass .sg-top (over hero) + a solid .solidbar (content
+   pages). Here we make the shared header sticky: glass over the hero, then the
+   solid dark bar once scrolled past it. */
+
+.sm-skin .sg-top {
+  position: fixed;
+  left: 0;
+  right: 0;
+  transition: background 280ms var(--sm-ease), backdrop-filter 280ms var(--sm-ease);
+}
+.sm-skin .sg-top.sg-solid {
+  background: var(--sm-ink);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* The fixed header overlays the top of the hero (sky area) — no layout offset
+   needed; the hero content sits low in the frame by design. */
+.sm-skin .home-hero { isolation: isolate; }

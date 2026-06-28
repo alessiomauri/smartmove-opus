@@ -1,146 +1,264 @@
-import HomeHero from '@/components/HomeHero';
-import HomeListingsClient from './HomeListingsClient';
-import AwardsBlock from '@/components/AwardsBlock';
-import SearchPill from '@/components/SearchPill';
-import PinnedFeaturedCard from '@/components/PinnedFeaturedCard';
-import QuizEntryCards from '@/components/QuizEntryCards';
-import { Link } from '@/i18n/navigation';
-import { getCachedPublishedProperties, getCachedDefaultSort } from '@/lib/cache';
+import Link from 'next/link';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
+import SiteHeader from '@/components/sm/SiteHeader';
+import SiteFooter from '@/components/sm/SiteFooter';
+import { DubaiCountdown, DubaiWaitlist } from '@/components/sm/DubaiWidgets';
+import { TESTIMONIALS, PRESS, GUIDES_FALLBACK, REGIONS, type GuideCard } from '@/lib/home-content';
+import '../../styles/sm-skin.css';
+import '../../styles/sm-skin-extra.css';
 
 export const revalidate = 3600;
 
+const ArrowR = ({ w = 14, h = 10 }: { w?: number; h?: number }) => (
+  <svg width={w} height={h} viewBox="0 0 14 10" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 5h12M9 1l4 4-4 4" /></svg>
+);
+
 export default async function Home() {
-  const [allPublished, defaultSort, { count: inventoryCount }] = await Promise.all([
-    getCachedPublishedProperties(),
-    getCachedDefaultSort(),
-    // Full-inventory size for the search CTA — the grid itself stays
-    // curated; the whole inventory lives on /properties (Prompt 3).
-    createStaticSupabaseClient()
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('published', true),
-  ]);
-
-  // CURATED-SURFACE GATE (Alessio's rule): Resales-sourced rows never
-  // appear on the homepage — auto-publish only makes them part of the
-  // full-search inventory — UNLESS an admin explicitly whitelists one
-  // by featuring it. Without this gate the full import would flood the
-  // "Featured this week" grid with thousands of MLS rows.
-  const properties = allPublished.filter(
-    (p) => p.source !== 'resales_online' || p.is_featured
-  );
-
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartmove.live';
-
-  // Sort properties featured-first, then newest, so the SSR HTML matches
-  // the hydrated state of HomeListingsClient.
-  const sorted = [...properties].sort((a, b) => {
-    if (a.is_featured && !b.is_featured) return -1;
-    if (!a.is_featured && b.is_featured) return 1;
-    if (a.is_featured && b.is_featured) {
-      return (a.featured_order ?? 0) - (b.featured_order ?? 0);
+  // Guides → blog_posts in guide categories; design placeholders if none yet.
+  let guides: GuideCard[] = GUIDES_FALLBACK;
+  try {
+    const { data } = await createStaticSupabaseClient()
+      .from('blog_posts')
+      .select('slug, title, excerpt, category, cover_image')
+      .in('category', ['buying-guide', 'selling-guide', 'area-guide', 'market-report'])
+      .eq('published', true)
+      .order('published_at', { ascending: false })
+      .limit(3);
+    if (data && data.length) {
+      guides = data.map((p) => ({
+        title: p.title, titleEm: '', blurb: p.excerpt ?? '', tag: (p.category ?? 'Guide').replace('-', ' '),
+        image: p.cover_image ?? '/sm/listing-2.jpg', href: `/blog/${p.slug}`,
+      }));
     }
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
-
-  // Pin the top featured property as the "Now Featured" tag in the hero.
-  const heroFeatured = sorted[0];
-  const featuredTag = heroFeatured
-    ? {
-        name: `${heroFeatured.name}, ${heroFeatured.location}`,
-        location: heroFeatured.area || heroFeatured.location,
-        beds: heroFeatured.bedrooms ?? '—',
-        interior: heroFeatured.interior_size ?? '—',
-        priceFrom:
-          heroFeatured.price_on_request || !heroFeatured.price
-            ? 'Price on request'
-            : `From €${(heroFeatured.price / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`,
-        href: `/property/${heroFeatured.slug}`,
-      }
-    : undefined;
-
-  // ItemList JSON-LD (homepage only)
-  const itemListJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: sorted.slice(0, 10).map((p, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      url: `${baseUrl}/property/${p.slug}`,
-      name: p.name,
-      ...(p.price && !p.price_on_request
-        ? {
-            offers: {
-              '@type': 'Offer',
-              price: p.price,
-              priceCurrency: 'EUR',
-              availability:
-                p.status === 'available'
-                  ? 'https://schema.org/InStock'
-                  : 'https://schema.org/OutOfStock',
-            },
-          }
-        : {}),
-    })),
-  };
+  } catch { /* fall back to design placeholders */ }
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
-      />
+    <div className="sm-skin">
+      <SiteHeader variant="glass" />
 
-      <HomeHero featured={featuredTag} />
-
-      {/* Mobile-only widgets (hidden on desktop via CSS): collapsed search pill
-          overlapping the hero, then the pinned featured card. */}
-      <SearchPill />
-      {heroFeatured && (
-        <PinnedFeaturedCard
-          property={{
-            slug: heroFeatured.slug,
-            name: heroFeatured.name,
-            location: heroFeatured.location,
-            area: heroFeatured.area,
-            hero_image: heroFeatured.hero_image,
-            price: heroFeatured.price,
-            price_on_request: heroFeatured.price_on_request,
-          }}
-        />
-      )}
-
-      <section className="sm-section">
-        <header className="sm-section__head">
-          <h2 className="sm-section__title">
-            <span className="sm-section__num">i.&nbsp;</span>
-            Featured <em>this week</em>
-          </h2>
-          <span className="sm-section__num">Hand-picked from current inventory</span>
-        </header>
-        <HomeListingsClient
-          initialProperties={sorted}
-          defaultSort={defaultSort}
-        />
-
-        {/* The grid above is the curated showcase; the FULL inventory
-            lives on the server-paginated search (Prompt 3). */}
-        {(inventoryCount ?? 0) > sorted.length && (
-          <div className="text-center mt-10">
-            <Link
-              href={'/properties' as never}
-              className="inline-block px-8 py-4 text-[12.5px] font-semibold tracking-[0.1em] uppercase bg-white text-ink border border-ink/15 rounded-full hover:border-gold hover:text-gold transition-colors"
-            >
-              Search all {Number(inventoryCount).toLocaleString('en-US')} properties →
+      {/* ================== 01 HERO ================== */}
+      <section className="home-hero" data-screen-label="01 Hero">
+        <div className="center">
+          <div className="hero-lead">
+            <div className="eyebrow">Marbella · Costa del Sol · Est. 2009</div>
+            <h1>Homes that <em>change the rhythm</em><br />of an entire summer.</h1>
+          </div>
+          <div className="hero-search">
+            <div className="hs-field"><span className="l">Where</span><span className="v">All of the coast <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M1 1l4 4 4-4" /></svg></span></div>
+            <span className="hs-sep" />
+            <div className="hs-field"><span className="l">Property type</span><span className="v">Any type <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M1 1l4 4 4-4" /></svg></span></div>
+            <span className="hs-sep" />
+            <div className="hs-field"><span className="l">Budget</span><span className="v">Any price <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M1 1l4 4 4-4" /></svg></span></div>
+            <Link className="hs-go" href="/properties" aria-label="Search">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="9" cy="9" r="6" /><path d="M14 14l4 4" /></svg>
+              <span>Search</span>
             </Link>
           </div>
-        )}
+          <div className="hero-quick">
+            <span className="hq-l">Or browse</span>
+            <Link href="/properties">412 villas</Link>
+            <span className="hq-dot">·</span>
+            <Link href="/new-developments">18 new developments</Link>
+            <span className="hq-dot">·</span>
+            <Link href="/properties">Off-market</Link>
+          </div>
+        </div>
+        <div className="scrolltip">Scroll · Marbella, June 2026</div>
       </section>
 
-      <QuizEntryCards />
+      {/* ================== 02 ABOUT + AWARDS ================== */}
+      <section className="about" data-screen-label="02 About us">
+        <div className="wrap">
+          <div className="about-grid">
+            <div className="about-image">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="ai-frame"><img className="ai-photo" src="/sm/team-photo.png" alt="The Smartmove Marbella team" /></div>
+              <div className="ai-meta"><span className="ai-num">Est. <em>2009</em></span><span className="ai-sep" /><span className="ai-loc">Marbella · Costa del Sol</span></div>
+            </div>
+            <div className="about-body">
+              <div className="about-kicker">About Smartmove Marbella</div>
+              <h2>On the buyer&rsquo;s side of the table, <em>end to end.</em></h2>
+              <p>We don&rsquo;t push a small stable of in-house listings. We help families navigate the <strong>entire coast</strong>: every agency, every off-market whisper, every honest collaboration. Then we stay with you through legal, mortgage, renovation, and the first year of ownership.</p>
+              <div className="about-actions">
+                <Link href="/about" className="btn-gold">Read more <ArrowR /></Link>
+                <Link href="/about" className="btn-link">Meet the team</Link>
+              </div>
+            </div>
+          </div>
+          <div className="about-awards">
+            <div className="aa-cell">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/sm/award-luxury-lifestyle.png" alt="Luxury Lifestyle Awards" />
+              <div className="aa-tx"><div className="n">Best Luxury Real Estate Boutique</div><div className="y">Luxury Lifestyle Awards · Spain · 2024</div><div className="d">Judged on service, discretion and client outcomes across 400+ boutiques.</div></div>
+            </div>
+            <span className="aa-div" />
+            <div className="aa-cell">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/sm/award-top100-lreb.png" alt="Top 100 LREB" />
+              <div className="aa-tx"><div className="n">Top 100 Brokers of the World</div><div className="y">Luxury Real Estate Brokers · 2023 · 2024 · 2025</div><div className="d">Ranked among the world&rsquo;s leading independent luxury brokerages, three years running.</div></div>
+            </div>
+            <div className="aa-rating"><div className="stars">★★★★★</div><div className="aa-rt"><strong>4.9 / 5</strong><span>210+ verified buyer reviews</span></div></div>
+          </div>
+        </div>
+      </section>
 
-      <AwardsBlock />
-    </>
+      {/* ================== 03 EXPLORE ================== */}
+      <section className="explore" data-screen-label="03 Explore">
+        <div className="wrap">
+          <div className="explore-head">
+            <div className="ex-headl"><div className="ex-k">Find your home</div><h2>Two ways <em>in.</em></h2></div>
+            <p className="ex-lede">Take a 2-minute quiz, or go straight to the collection. Either way, a real advisor picks it up from there.</p>
+          </div>
+          <div className="quiz-strip">
+            <div className="qs-lead">
+              <div className="qs-eyebrow">★ The easiest way to start</div>
+              <div className="qs-t">Not sure yet?</div>
+              <p>Take a 2-minute quiz and we&rsquo;ll match you to the right areas and homes. No email needed to see results.</p>
+              <div className="qs-proof"><span className="qs-stars">★★★★★</span><span><strong>2,000+ buyers</strong> started here this year</span></div>
+            </div>
+            <Link className="qs-tile" href="/quiz/which-coast">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <span className="qs-thumb"><img src="/sm/coast-quiz.png" alt="" style={{ objectPosition: '80% center' }} /><span className="qs-pill">Area quiz</span></span>
+              <span className="qs-tx"><span className="qs-cat">5 questions · 2 minutes</span><span className="qs-q">Which stretch of coast <em>is for you?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
+            </Link>
+            <Link className="qs-tile" href="/quiz/which-development">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <span className="qs-thumb"><img src="/sm/development-quiz.png" alt="" /><span className="qs-pill">Development quiz</span></span>
+              <span className="qs-tx"><span className="qs-cat">6 questions · 2 minutes</span><span className="qs-q">Which development <em>fits your brief?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
+            </Link>
+          </div>
+          <div className="explore-or"><span>Or, if you already know</span></div>
+          <div className="svd-row">
+            <Link className="svd-card" href="/properties">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="svd-photo"><img src="/sm/listing-1.jpg" alt="Signature villas across the coast" /><span className="svd-badge"><strong>412</strong> homes</span></div>
+              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>Villas <em>across the coast.</em></h3><p>Every agency, every off-market whisper, in one honest list, walked personally before we ever show you.</p><div className="svd-meta"><span><em>€1.2M</em> entry</span><span><em>44</em> neighbourhoods</span><span><em>Resale</em> &amp; off-market</span></div><span className="svd-go">Browse all villas <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+            </Link>
+            <Link className="svd-card" href="/new-developments">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="svd-photo"><img src="/sm/dev-marquee.jpg" alt="New developments on the coast" /><span className="svd-badge"><strong>18</strong> active</span></div>
+              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>New <em>developments.</em></h3><p>The coast&rsquo;s most architecturally ambitious builds, often before they reach the open market.</p><div className="svd-meta"><span><em>€650k</em> entry</span><span><em>Off-plan</em> to key-ready</span><span><em>5</em> regions</span></div><span className="svd-go">See new developments <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+            </Link>
+          </div>
+          <Link className="explore-cta" href="/properties">
+            <div className="ec-tx"><span className="ec-k">Prefer to see everything at once?</span><span className="ec-h">Open the <em>full property search</em></span></div>
+            <span className="ec-go">Thousands of listings · every region <svg width="20" height="12" viewBox="0 0 20 12" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 6h17M13 1l5 5-5 5" /></svg></span>
+          </Link>
+        </div>
+      </section>
+
+      {/* ================== 05 AREAS ================== */}
+      <section className="areas-tease" data-screen-label="05 Areas">
+        <div className="wrap">
+          <div className="head">
+            <div><div className="kicker">Across the coast</div><h2>Five regions. <em>Forty-four neighbourhoods.</em></h2></div>
+            <div><p className="lede">Each region has its own rhythm, its own buyer, its own price floor. The right home almost always starts with the right region.</p><Link href="/areas">Explore the area atlas <ArrowR /></Link></div>
+          </div>
+          <div className="region-grid">
+            {REGIONS.map((r) => (
+              <Link key={r.slug} className={`region-tile${r.feature ? ' feature' : ''}`} href={`/areas/${r.slug}`}>
+                <div className={`bg ${r.bg}`} />
+                <span className="index">{r.index}{r.indexEm && <em>{r.indexEm}</em>}</span>
+                <div className="meta"><h3>{r.name}{r.nameEm && <em>{r.nameEm}</em>}</h3><div className="ct"><strong>{r.count}</strong>listings</div></div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================== 07 SELL WITH US ================== */}
+      <section className="sell" data-screen-label="07 Sell with us">
+        <div className="wrap">
+          <div className="sell-grid">
+            <div className="sell-body">
+              <div className="sell-kicker">Sell with Smartmove</div>
+              <h2>Quietly placed in front of <em>the right buyer.</em></h2>
+              <p>We list selectively and market discreetly. Your home is shown to a vetted, international network, not broadcast across forty portals. Honest pricing, professional film and stills, and a single advisor from valuation to completion.</p>
+              <div className="sell-points">
+                <div className="sp-pt"><span className="n">01</span><div><strong>Discreet, international reach</strong>Private database of active buyers across Europe, the Gulf and North America.</div></div>
+                <div className="sp-pt"><span className="n">02</span><div><strong>Film, stills &amp; staging</strong>Every home presented to the standard of the listings on this site.</div></div>
+                <div className="sp-pt"><span className="n">03</span><div><strong>One advisor, start to finish</strong>Valuation, legal, negotiation, completion, handled by one person who knows your home.</div></div>
+              </div>
+              <div className="sell-actions"><Link href="/contact" className="btn-gold">Request a valuation <ArrowR /></Link><Link href="/contact" className="btn-link">How we sell</Link></div>
+            </div>
+            <div className="sell-media">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/sm/listing-3.jpg" alt="A Smartmove-listed home" />
+              <div className="sell-badge"><div className="sb-n">€820M<em>+</em></div><div className="sb-l">placed across the coast since 2009</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================== 08 OUR GUIDES ================== */}
+      <section className="guides" data-screen-label="08 Our guides">
+        <div className="wrap">
+          <div className="guides-head">
+            <div><div className="gd-kicker">Buy with your eyes open</div><h2>The guides we <em>wish every buyer read first.</em></h2></div>
+            <p className="gd-lede">Free, no email wall to read them. The honest version of buying on the Costa del Sol, written by the people who do it every week.</p>
+          </div>
+          <div className="guide-grid">
+            {guides.map((g, i) => (
+              <Link key={i} className="guide-card" href={g.href}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <div className="gc-photo"><img src={g.image} alt="" /><span className="gc-tagp">{g.tag}</span></div>
+                <div className="gc-info"><h3>{g.title}{g.titleEm && <em>{g.titleEm}</em>}</h3><p>{g.blurb}</p><span className="gc-go">Read the guide <ArrowR /></span></div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================== 06 TESTIMONIALS + PRESS ================== */}
+      <section className="voices" data-screen-label="06 Testimonials & press">
+        <div className="wrap">
+          <div className="voices-head">
+            <div><div className="vc-kicker">Trusted, and talked about</div><h2>The opinions that <em>matter most.</em></h2></div>
+            <div className="vc-rating"><div className="stars">★★★★★</div><div className="vc-rt">4.9 / 5 · <span>210+ verified buyer reviews</span></div></div>
+          </div>
+          <div className="testi-grid">
+            {TESTIMONIALS.map((t, i) => (
+              <blockquote className="testi" key={i}><div className="stars">★★★★★</div><p>{t.quote}</p><div className="who"><span className="nm">{t.name}</span><span className="loc">{t.loc}</span></div></blockquote>
+            ))}
+          </div>
+          <div className="press">
+            <span className="press-l">As featured in</span>
+            <div className="press-row">
+              {PRESS.map((p, i) => (
+                <Link className="press-item" href={p.href} key={i}><span className="pi-pub">{p.pub}</span><span className="pi-t">{p.quote}</span></Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================== 09 SMARTMOVE DUBAI ================== */}
+      <section className="dubai" data-screen-label="09 Smartmove Dubai">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="dubai-bg" src="/sm/dubai-burj.jpg" alt="Burj Al Arab, Dubai" />
+        <div className="dubai-veil" />
+        <div className="wrap">
+          <div className="dubai-inner">
+            <div className="dubai-body">
+              <div className="dubai-kicker">Smartmove · Coming soon</div>
+              <h2>The same hand on the table, <em>now in Dubai.</em></h2>
+              <p>Our way of buying, honest, buyer-side, end to end, arrives on the Palm and beyond this autumn. Join the waitlist for first access to off-market homes and launch developments.</p>
+              <DubaiCountdown />
+              <div className="cd-target">Launching 1 September 2026</div>
+            </div>
+            <div className="dubai-waitlist">
+              <div className="wl-card">
+                <div className="wl-k">Join the waitlist</div>
+                <h3>Be first <em>through the door.</em></h3>
+                <DubaiWaitlist />
+                <div className="wl-fine">No spam. One note when we open the doors.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
   );
 }
