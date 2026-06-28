@@ -66,3 +66,4 @@ Area photos/
 
 # IndexNow key file (generated at build from INDEXNOW_KEY)
 /public/*.txt
+.env*.local
