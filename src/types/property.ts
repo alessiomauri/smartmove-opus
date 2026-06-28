@@ -62,7 +62,23 @@ export interface Property {
   // Origin (Resales sync, manual, or scraper). Optional on existing rows.
   source?: PropertySource;
   source_id?: string | null;
+  source_agency_ref?: string | null;
   source_image_urls?: string[];
+
+  // Resales-feed extras (written by the sync; present via `select('*')`).
+  // Optional because manual/scraper rows don't carry them.
+  // descriptions / property_type_labels / feature_labels are per-locale
+  // JSONB maps; feature_labels values are "Category: Item" strings.
+  descriptions?: Record<string, string> | null;
+  property_type_labels?: Record<string, string> | null;
+  feature_labels?: Record<string, string[]> | null;
+  own_property?: boolean | null;
+  community_fees_year?: number | null;
+  ibi_fees_year?: number | null;
+  basura_tax_year?: number | null;
+  energy_rated?: string | null;
+  co2_rated?: string | null;
+  built_year?: string | null;
 
   // Price-drop tracking (maintained by the Resales sync).
   // price_drop_at: timestamp of the most recent price decrease.

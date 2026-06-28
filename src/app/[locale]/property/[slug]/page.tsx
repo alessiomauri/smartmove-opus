@@ -151,8 +151,14 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
       // Additional meta tags for real estate
       'og:price:amount': property.price?.toString() || '',
       'og:price:currency': 'EUR',
-      'place:location:latitude': property.latitude?.toString() || '',
-      'place:location:longitude': property.longitude?.toString() || '',
+      // Resales (partner MLS) listings must NOT expose exact coordinates —
+      // emit lat/long only for Smartmove's own (manual / scraper) listings.
+      ...(property.source === 'resales_online'
+        ? {}
+        : {
+            'place:location:latitude': property.latitude?.toString() || '',
+            'place:location:longitude': property.longitude?.toString() || '',
+          }),
     },
   };
 }
@@ -214,7 +220,10 @@ function generatePropertyJsonLd(property: Property, baseUrl: string) {
       name: feature,
       value: true,
     })),
-    geo: property.latitude && property.longitude ? {
+    // Resales (partner MLS) listings must NOT expose exact coordinates in
+    // structured data — only Smartmove's own listings emit geo. (Pre-existing
+    // leak: the OG meta + JSON-LD previously emitted lat/long for all sources.)
+    geo: property.source !== 'resales_online' && property.latitude && property.longitude ? {
       '@type': 'GeoCoordinates',
       latitude: property.latitude,
       longitude: property.longitude,
@@ -287,7 +296,7 @@ function generatePropertyJsonLd(property: Property, baseUrl: string) {
 }
 
 export default async function PropertyPage({ params }: PropertyPageProps) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const property = await getPropertyBySlugCached(slug);
 
   if (!property) {
@@ -309,7 +318,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       ))}
 
       {/* Client Component for Interactive UI */}
-      <PropertyPageClient property={property} />
+      <PropertyPageClient property={property} locale={locale} />
     </>
   );
 }

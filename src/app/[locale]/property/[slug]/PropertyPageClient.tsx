@@ -9,22 +9,30 @@ import FloorPlanSection from '@/components/property/FloorPlanSection';
 import LocationSection from '@/components/property/LocationSection';
 import LeadCaptureSection from '@/components/property/LeadCaptureSection';
 import SimilarProperties from '@/components/property/SimilarProperties';
+import ResalesPropertyTemplate from '@/components/property/resales/ResalesPropertyTemplate';
 import { Property } from '@/types/property';
+import type { Locale } from '@/i18n/routing';
 
 interface PropertyPageClientProps {
   property: Property;
+  locale: Locale;
 }
 
 /**
  * Property detail page composition.
  *
- * Source-aware: Resales-sourced (partner) listings get a tighter template
- * because Resales doesn't provide floor plans, exact GPS coordinates, or
- * editorial copy. Smartmove's hand-curated rows (manual / scraper) get
- * the full template with floor plans + exact map pin.
+ * Source-aware: Resales-sourced (partner) listings render the dedicated
+ * design-ported `ResalesPropertyTemplate` (re-skin only — same leads
+ * pipeline, brochure, favourites, geo-ranked similar). Smartmove's own
+ * (manual / scraper) rows keep their EXACT existing composition below —
+ * the Property v2 own-template port is a later task.
  */
-export default function PropertyPageClient({ property }: PropertyPageClientProps) {
+export default function PropertyPageClient({ property, locale }: PropertyPageClientProps) {
   const isPartnerListing = property.source === 'resales_online';
+
+  if (isPartnerListing) {
+    return <ResalesPropertyTemplate property={property} locale={locale} />;
+  }
 
   return (
     <div className="min-h-screen bg-paper">
