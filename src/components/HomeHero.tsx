@@ -36,13 +36,9 @@ interface HomeHeroProps {
 export default function HomeHero({ featured }: HomeHeroProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const featuredCard = featured ?? {
-    name: 'Villa Amara, Sierra Blanca',
-    beds: 6,
-    interior: 820,
-    priceFrom: 'From €8.95M',
-    href: '/',
-  };
+  // No hardcoded demo fallback — when nothing is curated the "Now Featured"
+  // card is hidden (clean slate) instead of showing a placeholder listing.
+  const featuredCard = featured;
 
   return (
     <>
@@ -168,7 +164,8 @@ export default function HomeHero({ featured }: HomeHeroProps) {
             </div>
           </div>
 
-          {/* Desktop side card. Hidden on mobile (replaced by PinnedFeaturedCard). */}
+          {/* Desktop side card — only when a property is actually curated. */}
+          {featuredCard && (
           <div className="sm-hero__feature">
             <div className="sm-hero__feature-lbl">Now Featured</div>
             <div className="sm-hero__feature-ttl">{featuredCard.name}</div>
@@ -178,6 +175,7 @@ export default function HomeHero({ featured }: HomeHeroProps) {
               <span>{featuredCard.priceFrom}</span>
             </div>
           </div>
+          )}
         </div>
       </section>
 
