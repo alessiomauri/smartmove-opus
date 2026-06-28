@@ -162,27 +162,37 @@ export default async function Home() {
               <span className="qs-tx"><span className="qs-cat">{devQ} questions · 2 minutes</span><span className="qs-q">Which development <em>fits your brief?</em></span><span className="qs-foot"><span className="qs-go">Start the quiz</span><span className="qs-arrow"><svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 6h13M10 1l4.5 5-4.5 5" /></svg></span></span></span>
             </Link>
           </div>
-          {(explore.villa || explore.dev) && (
-          <>
+          {/* Section stays whole. Each slot independently: curated/featured pick,
+              else the DESIGN PLACEHOLDER (build-time stand-in — see CUTOVER.md §6). */}
           <div className="explore-or"><span>Or, if you already know</span></div>
           <div className="svd-row">
-            {explore.villa && (
+            {explore.villa ? (
             <Link className="svd-card" href={explore.villa.href}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <div className="svd-photo">{explore.villa.image && <img src={explore.villa.image} alt={explore.villa.name} />}<span className="svd-badge">Featured villa</span></div>
               <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>{explore.villa.name}</h3><div className="svd-meta">{explore.villa.priceLabel && <span><em>{explore.villa.priceLabel}</em></span>}{explore.villa.beds && <span>{explore.villa.beds}</span>}{explore.villa.location && <span>{explore.villa.location}</span>}</div><span className="svd-go">View this villa <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
             </Link>
+            ) : (
+            <Link className="svd-card" href="/properties">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="svd-photo"><img src="/sm/listing-1.jpg" alt="Signature villas across the coast" /><span className="svd-badge">Villas</span></div>
+              <div className="svd-panel"><div className="svd-k">Resale &amp; signature villas</div><h3>Villas <em>across the coast.</em></h3><p>Every agency, every off-market whisper, in one honest list, walked personally before we ever show you.</p><span className="svd-go">Browse all villas <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+            </Link>
             )}
-            {explore.dev && (
+            {explore.dev ? (
             <Link className="svd-card" href={explore.dev.href}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <div className="svd-photo">{explore.dev.image && <img src={explore.dev.image} alt={explore.dev.name} />}<span className="svd-badge">New development</span></div>
               <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>{explore.dev.name}</h3><div className="svd-meta">{explore.dev.priceLabel && <span><em>{explore.dev.priceLabel}</em></span>}{explore.dev.beds && <span>{explore.dev.beds}</span>}{explore.dev.location && <span>{explore.dev.location}</span>}</div><span className="svd-go">View this development <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
             </Link>
+            ) : (
+            <Link className="svd-card" href="/new-developments">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="svd-photo"><img src="/sm/dev-marquee.jpg" alt="New developments on the coast" /><span className="svd-badge">New development</span></div>
+              <div className="svd-panel"><div className="svd-k">Off-plan &amp; under construction</div><h3>New <em>developments.</em></h3><p>The coast&rsquo;s most architecturally ambitious builds, often before they reach the open market.</p><span className="svd-go">See new developments <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 5.5h12M9 1l4.5 4.5L9 10" /></svg></span></div>
+            </Link>
             )}
           </div>
-          </>
-          )}
           <Link className="explore-cta" href="/properties">
             <div className="ec-tx"><span className="ec-k">Prefer to see everything at once?</span><span className="ec-h">Open the <em>full property search</em></span></div>
             <span className="ec-go">Thousands of listings · every region <svg width="20" height="12" viewBox="0 0 20 12" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M1 6h17M13 1l5 5-5 5" /></svg></span>

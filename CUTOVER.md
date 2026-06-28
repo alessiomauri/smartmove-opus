@@ -68,6 +68,11 @@ Resend is OFF — both intended until productionization.
 ### 6. Curation
 - On the cleaned clone, feature real trophy listings and ensure no demo seed (Villa Amara)
   shows on the homepage.
+- **Homepage "Explore" picks must be curated before public launch.** Each card resolves:
+  `homepage-explore-*` curated list → top `is_featured` villa/development → **build-time DESIGN
+  PLACEHOLDER**. The placeholder must NOT ship to real visitors, so the two `homepage-explore`
+  lists (or featured villa/dev items) must hold real listings before go-live. See the
+  `TODO(go-live)` in `src/lib/home-explore.ts`.
 
 ### 7. Endgame — DEFERRED decision
 If Opus becomes the **real** public site, point `smartmovemarbella.com` at the Opus Vercel
