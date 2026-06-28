@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Home, Plus, LogOut, LayoutList, MapPin, BookOpen, Building2, Eye, Users, HelpCircle } from 'lucide-react';
+import { Home, LogOut, MapPin, BookOpen, Building2, Users, HelpCircle, Boxes, Star, ClipboardList, LayoutDashboard, UserCog, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from '@/lib/actions/auth';
 
@@ -18,17 +18,16 @@ export default function AdminHeader() {
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/developments', label: 'Developments', icon: Building2 },
-    { href: '/admin/collections', label: 'Collections', icon: LayoutList },
     { href: '/admin/leads', label: 'Leads', icon: Users },
+    { href: '/admin/inventory', label: 'Inventory', icon: Boxes },
+    { href: '/admin/listings', label: 'Listings', icon: ClipboardList },
+    { href: '/admin/developments', label: 'Developments', icon: Building2 },
+    { href: '/admin/curation', label: 'Featured / Top-20', icon: Star },
     { href: '/admin/quizzes', label: 'Quizzes', icon: HelpCircle },
-    { href: '/admin/properties/new', label: 'Add Property', icon: Plus },
-    // Public-side previews (only meaningful while listings are gated;
-    // becomes redundant once PROPERTIES_PUBLIC = true)
-    { href: '/', label: 'Listings Preview', icon: Eye, external: true },
-    { href: '/?info=1', label: 'Info-mode Preview', icon: Eye, external: true },
-    { href: '/areas', label: 'Areas', icon: MapPin, external: true },
-    { href: '/blog', label: 'Blog', icon: BookOpen, external: true },
+    { href: '/admin/areas', label: 'Areas', icon: MapPin },
+    { href: '/admin/blog', label: 'Blog', icon: BookOpen },
+    { href: '/admin/team', label: 'Team', icon: UserCog },
+    { href: '/admin#settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -38,7 +37,7 @@ export default function AdminHeader() {
           {/* Logo */}
           <Link href="/admin" className="flex items-center gap-2">
             <span className="text-xl font-semibold">
-              <span className="text-[#76b3a8]">Marbella</span> Live
+              <span className="text-[#76b3a8]">Smartmove</span> Marbella
             </span>
             <span className="text-xs bg-[#0f6c74] px-2 py-0.5 rounded ml-2">
               Admin

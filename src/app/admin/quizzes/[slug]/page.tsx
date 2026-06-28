@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import AdminHeader from '@/components/admin/AdminHeader';
 import QuizEditor from './QuizEditor';
 import type { QuizDefinition } from '@/lib/quiz';
 
@@ -27,9 +28,14 @@ export default async function AdminQuizEditPage({
     .order('name');
 
   return (
-    <QuizEditor
-      initial={quiz as unknown as QuizDefinition}
-      areaOptions={(areas ?? []).map((a) => ({ slug: a.slug, name: a.name }))}
-    />
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <QuizEditor
+          initial={quiz as unknown as QuizDefinition}
+          areaOptions={(areas ?? []).map((a) => ({ slug: a.slug, name: a.name }))}
+        />
+      </main>
+    </div>
   );
 }

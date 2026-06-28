@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
+import AdminHeader from '@/components/admin/AdminHeader';
 import LeadsTable, { type LeadRow } from './LeadsTable';
 
 /**
@@ -32,7 +33,7 @@ export default async function AdminLeadsPage({
   let query = supabase
     .from('leads')
     .select(
-      'id, source, source_detail, name, email, phone, message, property_id, property_reference, development_id, status, submitted_at, language, utm_source, utm_campaign, bedrooms, budget_tier, purchase_timeline, contact_method'
+      'id, source, source_detail, name, email, phone, message, property_id, property_reference, development_id, status, submitted_at, language, utm_source, utm_campaign, bedrooms, budget_tier, purchase_timeline, contact_method, assigned_agent_id, geo_country, geo_country_code, geo_city'
     )
     .order('submitted_at', { ascending: false })
     .limit(300);
@@ -46,7 +47,7 @@ export default async function AdminLeadsPage({
   startOfToday.setHours(0, 0, 0, 0);
   const startOfWeek = new Date(startOfToday);
   startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7)); // Monday
-  const weekAgoIso = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const weekAgoIso = new Date(startOfToday.getTime() - 7 * 86_400_000).toISOString();
 
   const [leads, newToday, newWeek, awaitingCall, views7d, subs7d] = await Promise.all([
     query,
@@ -74,7 +75,12 @@ export default async function AdminLeadsPage({
     }
   }
 
+  const { data: agentsData } = await supabase.from('agents').select('id, name').order('name');
+  const agents = (agentsData ?? []).map((a) => ({ id: a.id, name: a.name }));
+
   return (
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <AdminHeader />
     <main style={{ padding: '40px 32px', maxWidth: 1400, margin: '0 auto' }}>
       <header style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, marginBottom: 6 }}>Leads</h1>
@@ -101,8 +107,10 @@ export default async function AdminLeadsPage({
         leads={(leads.data ?? []) as LeadRow[]}
         refSlugs={refSlugs}
         filters={{ status: sp.status ?? '', source: sp.source ?? '', from: sp.from ?? '', to: sp.to ?? '' }}
+        agents={agents}
       />
     </main>
+    </div>
   );
 }
 

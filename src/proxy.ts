@@ -9,9 +9,9 @@ const intlMiddleware = createIntlMiddleware(routing);
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Admin routes are locale-agnostic and gated by Supabase auth.
-  if (pathname.startsWith('/admin')) {
-    return adminAuth(request);
+  // Admin + agent routes are locale-agnostic and gated by Supabase auth + role.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/agent')) {
+    return authGate(request);
   }
 
   // Short-link redirects (/s/{code}, /c/{code}) are locale-agnostic
@@ -26,7 +26,7 @@ export default async function proxy(request: NextRequest) {
   return intlMiddleware(request);
 }
 
-async function adminAuth(request: NextRequest) {
+async function authGate(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -50,22 +50,39 @@ async function adminAuth(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isLoginPage = request.nextUrl.pathname === '/admin/login';
-
-  if (!isLoginPage && !user) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const path = request.nextUrl.pathname;
+  const isLoginPage = path === '/admin/login';
+  const redirectTo = (p: string) => {
     const url = request.nextUrl.clone();
-    url.pathname = '/admin/login';
+    url.pathname = p;
+    url.search = '';
     return NextResponse.redirect(url);
+  };
+
+  // One cheap role lookup when authenticated (user_roles self-read RLS).
+  let role: string | null = null;
+  if (user) {
+    const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
+    role = data?.role ?? null;
   }
 
-  if (isLoginPage && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/admin';
-    return NextResponse.redirect(url);
+  if (isLoginPage) {
+    // Logged-in users leave login by role; anonymous or role-less users stay.
+    if (user && role === 'admin') return redirectTo('/admin');
+    if (user && role === 'agent') return redirectTo('/agent');
+    return supabaseResponse;
+  }
+
+  if (!user) return redirectTo('/admin/login');
+
+  // /admin/* is admin-only — agents are bounced to their own dashboard.
+  if (path.startsWith('/admin') && role !== 'admin') {
+    return redirectTo(role === 'agent' ? '/agent' : '/admin/login');
+  }
+  // /agent/* needs a role (agent, or admin viewing).
+  if (path.startsWith('/agent') && role !== 'agent' && role !== 'admin') {
+    return redirectTo('/admin/login');
   }
 
   return supabaseResponse;

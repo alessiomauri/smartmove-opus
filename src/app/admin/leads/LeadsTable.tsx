@@ -4,8 +4,11 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { updateLeadStatus, buildEmailSelection } from '@/lib/actions/leads';
+import { assignLead } from '@/lib/actions/team';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS, sourceBadgeColor, type LeadStatus } from '@/lib/lead-status';
 import { copySelectionToClipboard } from '@/components/admin/copy-email-selection';
+import { leadFlag, isoToFlag } from '@/lib/phone-flag';
+import SelectionEditor from './SelectionEditor';
 
 export interface LeadRow {
   id: string;
@@ -27,6 +30,10 @@ export interface LeadRow {
   budget_tier: string | null;
   purchase_timeline: string | null;
   contact_method: string | null;
+  assigned_agent_id: string | null;
+  geo_country: string | null;
+  geo_country_code: string | null;
+  geo_city: string | null;
 }
 
 /**
@@ -45,11 +52,20 @@ export default function LeadsTable({
   leads,
   refSlugs,
   filters,
+  agents,
+  canAssign = true,
+  showFilters = true,
 }: {
   leads: LeadRow[];
   /** Resales reference → public slug (resolved server-side). */
   refSlugs: Record<string, string>;
   filters: { status: string; source: string; from: string; to: string };
+  /** Agents for the assignment dropdown. */
+  agents: { id: string; name: string }[];
+  /** Admins reassign; agents (own leads only) cannot. */
+  canAssign?: boolean;
+  /** The admin filter bar pushes to /admin/leads — hide it on the agent view. */
+  showFilters?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
@@ -71,6 +87,18 @@ export default function LeadsTable({
         router.refresh();
       } catch (e) {
         toast.error('Status update failed', { description: e instanceof Error ? e.message : String(e) });
+      }
+    });
+  }
+
+  function assign(lead: LeadRow, agentId: string) {
+    startTransition(async () => {
+      try {
+        await assignLead(lead.id, agentId || null);
+        toast.success(agentId ? 'Lead assigned' : 'Lead unassigned');
+        router.refresh();
+      } catch (e) {
+        toast.error('Assignment failed', { description: e instanceof Error ? e.message : String(e) });
       }
     });
   }
@@ -99,6 +127,7 @@ export default function LeadsTable({
   return (
     <div>
       {/* Filters */}
+      {showFilters && (
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
         <select value={filters.status} onChange={(e) => setFilter('status', e.target.value)} style={selectStyle}>
           <option value="">All statuses</option>
@@ -121,6 +150,7 @@ export default function LeadsTable({
           </button>
         )}
       </div>
+      )}
 
       {leads.length === 0 ? (
         <p style={{ color: '#666', fontSize: 14, padding: '32px 0' }}>No leads match these filters.</p>
@@ -211,21 +241,25 @@ export default function LeadsTable({
 
                 {/* Expanded: everything submitted + click-to-act */}
                 {expanded && (
-                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '14px 16px 16px', display: 'grid', gridTemplateColumns: 'minmax(280px, 1.4fr) 1fr', gap: 18 }}>
+                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '14px 16px 16px' }}>
+                   <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.4fr) 1fr', gap: 18 }}>
                     <div>
-                      <DetailLine label="Message" value={lead.message} pre />
-                      <DetailLine label="Context" value={lead.source_detail} />
+                      <SubHead>Where it came from</SubHead>
+                      <DetailLine label="Source page" value={deriveOrigin(lead)} />
+                      <DetailLine label="Client location" value={geoLocation(lead)} />
+                      <DetailLine label="UTM" value={[lead.utm_source, lead.utm_campaign].filter(Boolean).join(' / ') || null} />
+                      <SubHead>What they want</SubHead>
                       <DetailLine label="Bedrooms" value={lead.bedrooms} />
                       <DetailLine label="Budget" value={lead.budget_tier} />
                       <DetailLine label="Timeline" value={lead.purchase_timeline} />
                       <DetailLine label="Preferred contact" value={lead.contact_method} />
                       <DetailLine label="Language" value={lead.language} />
-                      <DetailLine label="UTM" value={[lead.utm_source, lead.utm_campaign].filter(Boolean).join(' / ') || null} />
+                      <DetailLine label={lead.source.startsWith('quiz') ? 'Quiz answers' : 'Message'} value={lead.message} pre />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
                       {lead.phone && (
                         <>
-                          <a href={`tel:${lead.phone}`} style={actLink}>📞 Call {lead.phone}</a>
+                          <a href={`tel:${lead.phone}`} style={actLink}>📞 Call {leadFlag(lead.phone, lead.geo_country_code).flag} {lead.phone}</a>
                           {wa && (
                             <a href={wa} target="_blank" rel="noreferrer" style={{ ...actLink, color: '#1faa55' }}>
                               💬 WhatsApp (pre-filled greeting)
@@ -234,6 +268,20 @@ export default function LeadsTable({
                         </>
                       )}
                       <a href={`mailto:${lead.email}`} style={actLink}>✉️ {lead.email}</a>
+                      {canAssign && (
+                        <label style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', marginTop: 8 }}>
+                          Assigned agent
+                          <select
+                            value={lead.assigned_agent_id ?? ''}
+                            onChange={(e) => assign(lead, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ ...selectStyle, display: 'block', marginTop: 4, minWidth: 200 }}
+                          >
+                            <option value="">— Unassigned —</option>
+                            {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                          </select>
+                        </label>
+                      )}
                       {lead.property_reference && (
                         <button
                           type="button"
@@ -257,6 +305,10 @@ export default function LeadsTable({
                         </button>
                       )}
                     </div>
+                   </div>
+                   <div style={{ marginTop: 16 }}>
+                     <SelectionEditor leadId={lead.id} />
+                   </div>
                   </div>
                 )}
               </div>
@@ -285,6 +337,29 @@ function DetailLine({ label, value, pre }: { label: string; value: string | null
       <div style={{ fontSize: 13.5, color: '#333', whiteSpace: pre ? 'pre-wrap' : 'normal' }}>{value}</div>
     </div>
   );
+}
+
+function SubHead({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b3a06a', fontWeight: 700, marginTop: 4, marginBottom: 6 }}>{children}</div>;
+}
+
+function deriveOrigin(lead: LeadRow): string | null {
+  const s = lead.source;
+  if (s === 'viewing-request') return `Property page · viewing request${lead.property_reference ? ` · ${lead.property_reference}` : ''}`;
+  if (s === 'brochure-request') return `Property page · brochure${lead.property_reference ? ` · ${lead.property_reference}` : ''}`;
+  if (s === 'quiz-area') return 'Quiz — Which stretch of coast';
+  if (s === 'quiz-dev') return 'Quiz — Which development';
+  if (s === 'contact-form') return lead.source_detail === 'footer' ? 'Footer contact form' : 'Contact page';
+  if (s === 'newsletter') return 'Newsletter signup';
+  if (s === 'two-step-landing') return 'Two-step landing page';
+  return lead.source_detail ? `${s} · ${lead.source_detail}` : s;
+}
+
+function geoLocation(lead: LeadRow): string | null {
+  const parts = [lead.geo_city, lead.geo_country].filter(Boolean) as string[];
+  if (!parts.length) return null;
+  const f = isoToFlag(lead.geo_country_code);
+  return `${f ? f + ' ' : ''}${parts.join(', ')}`;
 }
 
 const selectStyle: React.CSSProperties = {

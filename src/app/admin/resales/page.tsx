@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
+import AdminHeader from '@/components/admin/AdminHeader';
 import SyncControls from './SyncControls';
 import PriceDropToggle from './PriceDropToggle';
 
@@ -72,6 +73,8 @@ export default async function ResalesAdminPage() {
   const latestCron = runs.data?.find((r) => r.trigger === 'cron');
 
   return (
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <AdminHeader />
     <main style={{ padding: '40px 32px', maxWidth: 1280, margin: '0 auto' }}>
       <header style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, marginBottom: 8 }}>Resales sync</h1>
@@ -266,6 +269,7 @@ export default async function ResalesAdminPage() {
         )}
       </section>
     </main>
+    </div>
   );
 }
 

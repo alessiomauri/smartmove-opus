@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
+import AdminHeader from '@/components/admin/AdminHeader';
 import DuplicateQuizButton from './DuplicateQuizButton';
 
 /**
@@ -44,6 +45,8 @@ export default async function AdminQuizzesPage() {
   }
 
   return (
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <AdminHeader />
     <main style={{ padding: '40px 32px', maxWidth: 1100, margin: '0 auto' }}>
       <header style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, marginBottom: 6 }}>Quizzes</h1>
@@ -127,6 +130,7 @@ export default async function AdminQuizzesPage() {
         })}
       </div>
     </main>
+    </div>
   );
 }
 

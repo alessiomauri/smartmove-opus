@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { createLead as createMondayLead } from '@/lib/integrations/monday';
+import { notifyNewLead } from '@/lib/integrations/notifications';
 import {
   HONEYPOT_FIELD,
   isRateLimited,
@@ -231,6 +232,37 @@ export async function POST(req: NextRequest) {
       console.error('Monday push failed for lead', row.id, e);
     }
   });
+
+  // Coarse client location from Vercel edge geo headers — captured post-response
+  // (after()), so it NEVER blocks or fails the lead write. Absent locally (no
+  // Vercel edge) ⇒ no update, lead still saves. Privacy disclosure → cutover.
+  const geoCode = req.headers.get('x-vercel-ip-country');
+  const geoCity = req.headers.get('x-vercel-ip-city');
+  const geoRegion = req.headers.get('x-vercel-ip-country-region');
+  if (geoCode || geoCity) {
+    after(async () => {
+      try {
+        let countryName: string | null = geoCode;
+        if (geoCode) { try { countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(geoCode) ?? geoCode; } catch { countryName = geoCode; } }
+        await supabase.from('leads').update({
+          geo_country_code: geoCode ?? null,
+          geo_country: countryName,
+          geo_city: [geoCity ? decodeURIComponent(geoCity) : null, geoRegion].filter(Boolean).join(', ') || null,
+        }).eq('id', row.id);
+      } catch (e) { console.error('geo capture failed for lead', row.id, e); }
+    });
+  }
+
+  // New-lead notification — email to the configured admin address. Runs
+  // post-response and is env-gated (no-ops cleanly when RESEND_API_KEY is
+  // unset). Never blocks the form; every send/skip is logged to `events`.
+  after(() =>
+    notifyNewLead({
+      id: row.id, name: data.name, email: data.email, phone: data.phone,
+      source: data.source, source_detail: data.source_detail, property_reference: data.property_reference,
+      budget_tier: data.budget_tier, purchase_timeline: data.purchase_timeline, message: data.message,
+    })
+  );
 
   return NextResponse.json({ ok: true, leadId: row.id });
 }

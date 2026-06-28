@@ -9,6 +9,7 @@ import { createStaticSupabaseClient } from '@/lib/supabase-static';
 import { DEVELOPMENT_STATUS_LABELS } from '@/types/development';
 import DevLeadActions from '@/components/leads/DevLeadActions';
 import { NEW_DEVELOPMENTS_PUBLIC } from '../feature-flag';
+import { resolveDevOverrides } from '@/lib/dev-overrides';
 
 export const revalidate = 3600;
 
@@ -29,8 +30,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  const dev = await getDevelopmentBySlugCached(slug);
-  if (!dev) return { title: 'Not found' };
+  const raw = await getDevelopmentBySlugCached(slug);
+  if (!raw) return { title: 'Not found' };
+  const dev = resolveDevOverrides(raw);
 
   const href = { pathname: '/new-developments/[slug]', params: { slug: dev.slug } } as const;
 
@@ -66,8 +68,9 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
   if (!NEW_DEVELOPMENTS_PUBLIC) notFound();
 
   const { slug } = await params;
-  const dev = await getDevelopmentBySlugCached(slug);
-  if (!dev || !dev.published) notFound();
+  const raw = await getDevelopmentBySlugCached(slug);
+  if (!raw || !raw.published) notFound();
+  const dev = resolveDevOverrides(raw);
 
   return (
     <div className="min-h-screen bg-paper">
@@ -98,11 +101,9 @@ export default async function NewDevelopmentDetailPage({ params }: Props) {
                 {dev.subtitle}
               </p>
             )}
-            {dev.developer && (
-              <p className="text-[11px] uppercase tracking-[0.2em] text-white/60 mt-4">
-                by {dev.developer}
-              </p>
-            )}
+            {/* Brand rule: developer / architect / interior-designer credits
+                stay INTERNAL — never rendered publicly (and there is no
+                JSON-LD on this page that exposes them). */}
           </div>
         </section>
       )}
