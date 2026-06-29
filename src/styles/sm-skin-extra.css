@@ -31,25 +31,23 @@
 
 /* ───────── RESALES-ONLY header (.sg-rs) ─────────
    The resales header sits ABOVE the hero, in NORMAL FLOW (sticky) — so it
-   covers nothing; the full crisp photo starts below it. The homepage keeps the
-   fixed glass header above (no .sg-rs).
-   - at the top: a clean opaque bar (nothing is behind it, so it can't be glass);
-   - on scroll: it sticks and becomes the liquid-glass frosted bar over the photo
-     sliding beneath (the existing glassScroll/.sg-solid toggle, ~8px threshold). */
+   covers nothing; the full crisp photo starts below it. Liquid GLASS in BOTH
+   states: a translucent dark tint + backdrop-blur (NOT a flat solid). At the
+   top it's a subtle glass bar above the image; on scroll the header sticks and
+   the photo passes UNDER it → full liquid glass (blurred photo through it). A
+   subtle text-shadow keeps the white nav legible. The homepage keeps the fixed
+   glass-pane / solid-bar header above (no .sg-rs). */
 .sm-skin .sg-top.sg-rs {
   position: sticky;
   top: 0;
-}
-.sm-skin .sg-top.sg-rs:not(.sg-solid) {
-  background: var(--sm-ink);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  background: rgba(28, 26, 23, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.sm-skin .sg-top.sg-rs.sg-solid {
-  background: rgba(28, 26, 23, 0.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  backdrop-filter: blur(16px) saturate(1.2);
+.sm-skin .sg-top.sg-rs nav a,
+.sm-skin .sg-top.sg-rs .utils {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 /* The fixed header overlays the top of the hero (sky area) — no layout offset
