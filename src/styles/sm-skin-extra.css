@@ -7,18 +7,21 @@
   position: fixed;
   left: 0;
   right: 0;
-  /* Lighter "liquid glass" over the hero — thinner bar + a shorter scrim
-     that fades to transparent so more of the hero image shows, while the
-     top edge keeps enough darkening (+ backdrop-blur) for the white nav to
-     stay legible over both bright and dark heroes. The scrolled state below
-     stays fully solid, so nav legibility off-hero is unaffected. */
   height: 76px;
-  background: linear-gradient(180deg, rgba(28, 26, 23, 0.34) 0%, rgba(28, 26, 23, 0.15) 50%, rgba(28, 26, 23, 0.04) 76%, rgba(28, 26, 23, 0) 100%);
-  -webkit-backdrop-filter: blur(10px) saturate(1.18);
-  backdrop-filter: blur(10px) saturate(1.18);
   border-bottom: none;
-  transition: background 280ms var(--sm-ease), backdrop-filter 280ms var(--sm-ease);
+  transition: background 280ms var(--sm-ease), backdrop-filter 280ms var(--sm-ease), -webkit-backdrop-filter 280ms var(--sm-ease);
+  /* True frosted glass over the hero: a thin EVEN tint (no dark gradient scrim —
+     that scrim is what was cutting the image) + a real backdrop-blur so the
+     blurred hero shows THROUGH. A subtle nav text-shadow keeps the white nav
+     legible over bright heroes. The scrolled .sg-solid state below stays solid. */
+  background: rgba(28, 26, 23, 0.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
 }
+/* nav legibility aid — over-hero only (not the solid scrolled bar) */
+.sm-skin .sg-top:not(.sg-solid) nav a,
+.sm-skin .sg-top:not(.sg-solid) .utils { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4); }
+
 /* Scale the boxed wordmark to the thinner bar (keeps a similar overhang). */
 .sm-skin .sg-top .brand img {
   height: 100px;
