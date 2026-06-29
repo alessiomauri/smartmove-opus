@@ -29,25 +29,43 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* ───────── RESALES-ONLY header (.sg-rs) ─────────
-   The resales header sits ABOVE the hero, in NORMAL FLOW (sticky) — so it
-   covers nothing; the full crisp photo starts below it. Liquid GLASS in BOTH
-   states: a translucent dark tint + backdrop-blur (NOT a flat solid). At the
-   top it's a subtle glass bar above the image; on scroll the header sticks and
-   the photo passes UNDER it → full liquid glass (blurred photo through it). A
-   subtle text-shadow keeps the white nav legible. The homepage keeps the fixed
-   glass-pane / solid-bar header above (no .sg-rs). */
+/* ───────── RESALES-ONLY header (.sg-rs) — immersive overlay glass ─────────
+   The fixed header (position from base .sg-top — NOT sticky) OVERLAYS the top
+   of the hero. Its glass lives on a ::before layer that FADES OUT at its bottom
+   edge, so the tint + backdrop-blur dissolve into the crisp photo with no hard
+   line; the edge-clamp band beneath (sm-resales.css) makes that fade read as
+   the photo's top colour continued. The nav/logo sit ABOVE the glass (z-index
+   1), unfaded, with a text-shadow for legibility. On scroll, the same ::before
+   backdrop-blur frosts the content passing under. Homepage keeps its own fixed
+   glass-pane / solid-bar header (no .sg-rs). */
 .sm-skin .sg-top.sg-rs {
-  position: sticky;
-  top: 0;
-  background: rgba(28, 26, 23, 0.55);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.sm-skin .sg-top.sg-rs::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* tint: darker at the top (so the white nav reads), light then clear toward
+     the bottom (so the photo shows through — no info lost to the header) */
+  background: linear-gradient(to bottom, rgba(28, 26, 23, 0.50) 0%, rgba(28, 26, 23, 0.16) 62%, rgba(28, 26, 23, 0) 100%);
+  -webkit-backdrop-filter: blur(13px) saturate(1.15);
+  backdrop-filter: blur(13px) saturate(1.15);
+  /* fade the whole glass (tint + blur) out before the bottom edge, so it
+     dissolves into the crisp photo with no hard line */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+.sm-skin .sg-top.sg-rs > * {
+  position: relative;
+  z-index: 1;
 }
 .sm-skin .sg-top.sg-rs nav a,
 .sm-skin .sg-top.sg-rs .utils {
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4);
 }
 
 /* The fixed header overlays the top of the hero (sky area) — no layout offset

@@ -21,10 +21,15 @@
 
 /* ============ GALLERY HERO — locked full-bleed carousel ============ */
 .rs-gallery { position: relative; background: var(--sm-ink); }
-/* --rs-hero-h: the hero height. The header sits ABOVE the hero (sticky, in
-   flow), so the whole height shows the crisp photo. Tuned so the header + the
-   full hero photo + the listing NAME + PRICE all fit at 1440×900 (fold rule). */
-.rs-carousel { --rs-hero-h: 80vh; position: relative; height: var(--rs-hero-h); min-height: 560px; background: var(--sm-ink); overflow: hidden; }
+/* spill-guard above the hero: an overscroll-up bounce reveals ink (the hero's
+   own backdrop), never the page's paper background */
+.rs-gallery::before { content: ''; position: absolute; left: 0; right: 0; top: -240px; height: 240px; background: var(--sm-ink); z-index: 0; pointer-events: none; }
+/* --rs-hero-h: the hero height. The fixed header OVERLAYS the top of the hero
+   as immersive glass. The photo fills the WHOLE hero — its top shows softly
+   THROUGH the header's fading glass (nothing cropped, nothing hidden), and the
+   glass dissolves into the crisp photo lower down (no hard line). Tuned so the
+   full photo + NAME + PRICE all fit at 1440×900 (fold rule). */
+.rs-carousel { --rs-hero-h: 74vh; position: relative; height: var(--rs-hero-h); min-height: 540px; background: var(--sm-ink); overflow: hidden; }
 .rs-carousel .rs-carimg { width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .rs-car-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,.4); background: rgba(28,26,23,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; cursor: pointer; display: grid; place-items: center; transition: background 200ms ease; }
 .rs-car-nav:hover { background: rgba(28,26,23,.7); }
@@ -59,7 +64,7 @@
 
 /* ============ TITLE BLOCK ============ */
 .rs-titlewrap { border-bottom: 1px solid var(--sm-line); }
-.rs-utilrow { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 16px; }
+.rs-utilrow { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 10px; }
 .rs-crumbs { padding: 0; font-size: 11px; letter-spacing: 0.12em; color: var(--sm-text-muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .rs-crumbs a { color: var(--sm-text-muted); text-decoration: none; }
 .rs-crumbs a:hover { color: var(--sm-ink); }
@@ -102,7 +107,7 @@
 .rs-spec .k { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--sm-text-muted); font-weight: 600; }
 
 /* ============ MAIN SPLIT ============ */
-.rs-main { display: grid; grid-template-columns: 1fr 400px; gap: 64px; align-items: start; padding: 40px 64px 56px; max-width: 1760px; margin: 0 auto; box-sizing: border-box; }
+.rs-main { display: grid; grid-template-columns: 1fr 400px; gap: 64px; align-items: start; padding: 28px 64px 56px; max-width: 1760px; margin: 0 auto; box-sizing: border-box; }
 .rs-kicker { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--sm-gold-deep); font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; }
 .rs-kicker::before { content: ''; width: 36px; height: 1px; background: var(--sm-gold-deep); }
 

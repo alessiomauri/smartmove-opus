@@ -8,9 +8,9 @@ import Lightbox from '@/components/ui/Lightbox';
  * discreet thumbnail film strip, prev/next, and a "View all photos"
  * button that opens the existing site Lightbox. photoCount is the real
  * photo-array length (no phantom "+N"); images are the proxied URLs
- * passed from the server. The sticky header sits ABOVE this hero, so the
- * carousel just shows the full crisp image (no bleed band).
- */
+ * passed from the server. The fixed header OVERLAYS the top of the hero as
+ * immersive glass: the photo fills the whole hero and its top shows softly
+ * through the header's fading glass (nothing cropped or hidden). */
 export default function ResalesGallery({ photos, alt }: { photos: string[]; alt: string }) {
   const [i, setI] = useState(0);
   const [lightbox, setLightbox] = useState(false);
@@ -22,7 +22,8 @@ export default function ResalesGallery({ photos, alt }: { photos: string[]; alt:
   return (
     <section className="rs-gallery" aria-label="Property photos">
       <div className="rs-carousel">
-        {/* crisp hero image (full subject — the sticky header sits above it) */}
+        {/* hero image fills the whole frame; the overlay header's fading glass
+            sits over its top (nothing cropped or hidden) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="rs-carimg" src={photos[i]} alt={alt} />
 
