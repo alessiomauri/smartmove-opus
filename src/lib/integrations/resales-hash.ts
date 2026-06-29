@@ -71,6 +71,17 @@ export const SYNC_PROTECTED_FIELDS: ReadonlySet<string> = new Set([
   // Dev-content overrides (admin-owned, Phase E) — synced developments'
   // editable override JSONB. The sync must never clobber it.
   'overrides',
+  // Running-cost fees (Community/IBI/Basura) live ONLY on PropertyDetails, not
+  // on the bulk SearchProperties walk the nightly sync uses — so its mapped row
+  // always carries them as null. They're hydrated out-of-band by the fee
+  // backfill (scripts/backfill-resales-fees.mjs). Protect them here so an
+  // ordinary nightly UPDATE (price drop, status change, …) can never wipe the
+  // hydrated value back to null. NOT added to HASH_EXCLUDED_FIELDS: the search
+  // map already emits null fees, so the hash is unchanged and unchanged rows
+  // still skip — no mass re-hash.
+  'community_fees_year',
+  'ibi_fees_year',
+  'basura_tax_year',
 ]);
 
 /** Deterministic JSON: objects get sorted keys, recursively. */

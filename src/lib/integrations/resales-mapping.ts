@@ -236,6 +236,18 @@ function num(value: StringOrNumber | undefined | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Fee fields (Community/IBI/Basura) arrive thousands-grouped from the feed —
+ * "1,789", "4,200" — which Number()/num() can't parse (NaN → null). Strip the
+ * grouping separators, then defer to num(). Kept separate from the shared num()
+ * (used for bedrooms/sizes/price, which never carry grouped values) so this only
+ * affects the fee fields. Empty/"0" still → null/0 exactly as before.
+ */
+function feeNum(value: StringOrNumber | undefined | null): number | null {
+  if (typeof value === 'string') return num(value.replace(/,/g, ''));
+  return num(value);
+}
+
 /** 0/1 boolean number → boolean. */
 function bool(value: 0 | 1 | undefined | null): boolean {
   return value === 1;
@@ -479,9 +491,9 @@ export function mapToPropertyRow(
     hero_image: buildHeroUrl('p', p.Reference, sourceImageUrls[0]),
     // Resales extras
     own_property: isOwn,
-    community_fees_year: num(p.Community_Fees_Year),
-    basura_tax_year: num(p.Basura_Tax_Year),
-    ibi_fees_year: num(p.IBI_Fees_Year),
+    community_fees_year: feeNum(p.Community_Fees_Year),
+    basura_tax_year: feeNum(p.Basura_Tax_Year),
+    ibi_fees_year: feeNum(p.IBI_Fees_Year),
     energy_rated: p.EnergyRating?.EnergyRated || p.EnergyRated || null,
     co2_rated: p.EnergyRating?.CO2Rated || p.CO2Rated || null,
     decree_218: p.Decree218 === '1' ? true : p.Decree218 === '0' ? false : null,
