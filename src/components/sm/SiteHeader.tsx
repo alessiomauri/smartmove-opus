@@ -32,8 +32,14 @@ export default function SiteHeader({ variant = 'glass', current = '' }: { varian
     return () => window.removeEventListener('scroll', onScroll);
   }, [variant]);
 
-  const reflecting = !solid && !!reflectSrc;
-  const cls = solid ? 'sg-top sg-solid' : reflecting ? 'sg-top sg-reflecting' : 'sg-top';
+  // `onReflectPage` persists whether or not we're scrolled, so the scrolled bar
+  // on a reflection page can share the same liquid-glass texture (frosted) for a
+  // seamless top→scroll transition — WITHOUT changing the homepage's solid bar.
+  const onReflectPage = !!reflectSrc;
+  const reflecting = !solid && onReflectPage;
+  const cls = ['sg-top', solid && 'sg-solid', reflecting && 'sg-reflecting', onReflectPage && 'sg-reflect-page']
+    .filter(Boolean)
+    .join(' ');
   const navA = (label: string, href: string) => (
     <Link href={href} className={current === label ? 'is-current' : ''}>{label}</Link>
   );
