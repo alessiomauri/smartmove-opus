@@ -33,6 +33,7 @@ import ResalesDescription from './ResalesDescription';
 import ResalesFeatures from './ResalesFeatures';
 import ResalesBrochure from './ResalesBrochure';
 import ResalesReveal from './ResalesReveal';
+import ResalesAreaMap from './ResalesAreaMap';
 import ResalesCard from './ResalesCard';
 
 export default async function ResalesPropertyTemplate({
@@ -106,6 +107,14 @@ export default async function ResalesPropertyTemplate({
   // Area-guide CTA → real /areas/[slug] via slugified town; hide if unmapped.
   const areaSlug = slugify(property.area || property.location || '');
   const areaGuide = areaSlug ? await getAreaBySlugCached(areaSlug) : null;
+
+  // Approximate map center = the AREA centroid (never the listing's own
+  // coordinates). Falls back to the no-map "location on request" state when
+  // the area has no resolvable centroid — preserves the coordinate-free rule.
+  const areaCenter =
+    areaGuide && areaGuide.coordinates_lat && areaGuide.coordinates_lng
+      ? { lat: areaGuide.coordinates_lat, lng: areaGuide.coordinates_lng }
+      : null;
 
   // Geo-ranked similar (existing component logic), re-skinned cards.
   const similar = await getSimilarProperties(property);
@@ -233,15 +242,15 @@ export default async function ResalesPropertyTemplate({
           {/* approximate location — coordinate-free faux map (no pin for resales) */}
           <div className="rs-loc rs-reveal">
             <h3>Approximate <em>location.</em></h3>
-            <div className="rs-map">
-              <div className="streets" />
-              <div className="coast" />
-              <div className="rs-radius"><span className="center" /></div>
-              <div className="note">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="10" r="3" /><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z" /></svg>
-                Location is approximate
+            {areaCenter ? (
+              <ResalesAreaMap lat={areaCenter.lat} lng={areaCenter.lng} />
+            ) : (
+              <div className="rs-map rs-map-fallback">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="10" r="3" /><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z" /></svg>
+                <p className="t">Precise location available on request</p>
+                {(property.area || place) && <p className="ar">{property.area || place}</p>}
               </div>
-            </div>
+            )}
             {areaGuide && (
               <Link className="rs-areaguide" href={{ pathname: '/areas/[slug]', params: { slug: areaGuide.slug } }}>
                 <span className="ag-ph">

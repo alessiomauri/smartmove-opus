@@ -146,19 +146,16 @@
 .rs-loc { margin-top: 56px; }
 .rs-loc h3 { font-family: var(--sm-font-display); font-size: 28px; font-weight: 400; margin: 0 0 20px; letter-spacing: -0.01em; }
 .rs-loc h3 em { font-style: italic; color: var(--sm-gold-deep); }
-.rs-map { position: relative; height: 380px; border-radius: var(--sm-radius-lg); overflow: hidden; border: 1px solid var(--sm-line); background:
-    radial-gradient(circle at 30% 80%, rgba(92,103,112,.10), transparent 40%),
-    linear-gradient(160deg, #e9e3d5 0%, #ded7c6 60%, #d2cbb7 100%); }
-.rs-map .streets { position: absolute; inset: 0; opacity: .5; background-image:
-    linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px),
-    linear-gradient(rgba(92,103,112,.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(92,103,112,.18) 1px, transparent 1px);
-  background-size: 28px 28px, 28px 28px, 140px 140px, 140px 140px; }
-.rs-map .coast { position: absolute; left: -10%; bottom: -30%; width: 130%; height: 60%; background: radial-gradient(ellipse at 50% 100%, rgba(92,103,112,.22), transparent 60%); }
-.rs-radius { position: absolute; left: 52%; top: 46%; transform: translate(-50%, -50%); width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(203,170,101,.26) 0%, rgba(203,170,101,.16) 60%, rgba(203,170,101,.05) 100%); border: 1.5px dashed var(--sm-gold-deep); }
-.rs-radius .center { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; border-radius: 50%; background: var(--sm-gold-deep); box-shadow: 0 0 0 5px rgba(203,170,101,.3); }
-.rs-map .note { position: absolute; left: 22px; top: 20px; background: rgba(255,255,255,.94); border-radius: 10px; padding: 11px 16px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sm-text-muted); font-weight: 600; display: flex; align-items: center; gap: 9px; }
+.rs-map { position: relative; height: 380px; border-radius: var(--sm-radius-lg); overflow: hidden; border: 1px solid var(--sm-line); background: var(--sm-cream); }
+/* live MapLibre canvas fills the rounded container (clipped by overflow:hidden) */
+.rs-map-live .rs-map-canvas { position: absolute; inset: 0; }
+.rs-map-live .maplibregl-canvas { outline: none; }
+/* no-map fallback — "location on request" when the area has no centroid */
+.rs-map-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; }
+.rs-map-fallback svg { width: 30px; height: 30px; color: var(--sm-gold); opacity: .55; }
+.rs-map-fallback .t { font-size: 14px; color: var(--sm-text-muted); margin: 0; }
+.rs-map-fallback .ar { font-size: 12px; color: var(--sm-text-subtle); margin: 0; }
+.rs-map .note { position: absolute; left: 22px; top: 20px; z-index: 2; background: rgba(255,255,255,.94); border-radius: 10px; padding: 11px 16px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sm-text-muted); font-weight: 600; display: flex; align-items: center; gap: 9px; }
 .rs-map .note svg { width: 14px; height: 14px; color: var(--sm-gold-deep); }
 .rs-areaguide { margin-top: 16px; display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: center; background: var(--sm-ink); color: #fff; border-radius: var(--sm-radius-md); padding: 22px 28px; text-decoration: none; transition: transform 200ms ease; }
 .rs-areaguide:hover { transform: translateY(-2px); }

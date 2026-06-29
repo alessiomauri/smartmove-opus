@@ -7,7 +7,22 @@
   position: fixed;
   left: 0;
   right: 0;
+  /* Lighter "liquid glass" over the hero — thinner bar + a shorter scrim
+     that fades to transparent so more of the hero image shows, while the
+     top edge keeps enough darkening (+ backdrop-blur) for the white nav to
+     stay legible over both bright and dark heroes. The scrolled state below
+     stays fully solid, so nav legibility off-hero is unaffected. */
+  height: 76px;
+  background: linear-gradient(180deg, rgba(28, 26, 23, 0.34) 0%, rgba(28, 26, 23, 0.15) 50%, rgba(28, 26, 23, 0.04) 76%, rgba(28, 26, 23, 0) 100%);
+  -webkit-backdrop-filter: blur(10px) saturate(1.18);
+  backdrop-filter: blur(10px) saturate(1.18);
+  border-bottom: none;
   transition: background 280ms var(--sm-ease), backdrop-filter 280ms var(--sm-ease);
+}
+/* Scale the boxed wordmark to the thinner bar (keeps a similar overhang). */
+.sm-skin .sg-top .brand img {
+  height: 100px;
+  margin: -12px 0;
 }
 .sm-skin .sg-top.sg-solid {
   background: var(--sm-ink);
