@@ -1,52 +1,32 @@
 /* Homepage header behavior + small integration overrides (scoped to .sm-skin).
    The design ships a glass .sg-top (over hero) + a solid .solidbar (content
-   pages). Here the shared header is sticky with TWO states:
-     - over the hero (.sg-top, not .sg-solid): FULLY TRANSPARENT — no bar, no
-       blur, no scrim — so the hero shows uncut; logo + nav float on the image,
-       kept legible by the white logo + a text-shadow (no dark band);
-     - scrolled past the hero, OR on a non-hero page (variant="solid"):
-       .sg-solid = the frosted liquid-glass bar (backdrop-blur + translucent
-       tint), legible, not a flat solid.
-   Height is identical in both states (no layout shift); only background/blur
-   animate. The scroll-state hook lives in SiteHeader.tsx (unchanged). */
+   pages). Here we make the shared header sticky: glass over the hero, then the
+   solid dark bar once scrolled past it. */
 
 .sm-skin .sg-top {
   position: fixed;
   left: 0;
   right: 0;
-  height: 76px;
-  /* Over-hero default: transparent — the hero shows through uncut. */
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  border-bottom: none;
-  transition: background 320ms var(--sm-ease), backdrop-filter 320ms var(--sm-ease),
-    -webkit-backdrop-filter 320ms var(--sm-ease), border-color 320ms var(--sm-ease);
+  transition: background 280ms var(--sm-ease), backdrop-filter 280ms var(--sm-ease);
 }
-/* Over-hero legibility (no bar): white nav + logo get a soft shadow, applied
-   ONLY in the transparent state (removed once the frosted bar is behind them). */
+/* Over-hero (top of page) ONLY: replace the design's dark gradient scrim with a
+   liquid-glass pane — a real backdrop-blur + a MINIMAL translucent tint so the
+   blurred hero shows THROUGH it (reflected, not cut; not a dark band, not a flat
+   solid). Original 96px height and the scrolled .sg-solid state are unchanged.
+   A subtle text-shadow keeps the white nav legible without a heavy scrim. */
+.sm-skin .sg-top:not(.sg-solid) {
+  background: rgba(28, 26, 23, 0.10);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  backdrop-filter: blur(8px) saturate(1.1);
+}
 .sm-skin .sg-top:not(.sg-solid) nav a,
 .sm-skin .sg-top:not(.sg-solid) .utils {
-  /* tight dark halo hugging each glyph (legible on bright/white hero areas)
-     + a soft spread — a per-glyph shadow, not a dark band */
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.65), 0 2px 14px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 2px rgba(0, 0, 0, 0.35);
 }
-.sm-skin .sg-top:not(.sg-solid) .brand img {
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6)) drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
-}
-
-/* Scale the boxed wordmark to the thinner bar (keeps a similar overhang). */
-.sm-skin .sg-top .brand img {
-  height: 100px;
-  margin: -12px 0;
-}
-/* Scrolled / non-hero: frosted liquid glass — translucent dark tint + real
-   backdrop-blur (you can see content blur past it), legible white nav, NOT a
-   flat solid. */
 .sm-skin .sg-top.sg-solid {
-  background: rgba(28, 26, 23, 0.62);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  backdrop-filter: blur(18px) saturate(1.3);
+  background: var(--sm-ink);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
