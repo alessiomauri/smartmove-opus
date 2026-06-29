@@ -62,11 +62,6 @@ export default function PropertyPageClient({ property, locale }: PropertyPageCli
           <p className="text-[12px] text-ink/40 tracking-[0.2em] uppercase">
             © {new Date().getFullYear()} All Rights Reserved
           </p>
-          {isPartnerListing && (
-            <p className="text-[10px] tracking-[0.18em] uppercase text-ink/30 mt-4">
-              Listed via partner network · Reference {property.source_id}
-            </p>
-          )}
         </div>
       </footer>
     </div>

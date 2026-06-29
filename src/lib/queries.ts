@@ -1,6 +1,7 @@
 import { cache as dedupePerRequest } from 'react';
 import { unstable_cache } from 'next/cache';
 import { createStaticSupabaseClient } from '@/lib/supabase-static';
+import { getServiceRoleClient } from '@/lib/supabase-service';
 import {
   PROPERTIES_TAG,
   AREAS_TAG,
@@ -71,6 +72,36 @@ export const getPropertyBySlugCached = dedupePerRequest(
     },
     ['property-by-slug'],
     { tags: [PROPERTIES_TAG, SITE_SETTINGS_TAG], revalidate: REVALIDATE }
+  )
+);
+
+/**
+ * The previous ("was") price for a reduced listing — the `old_price` of the
+ * most recent recorded DROP in `property_price_history`. Returns null when
+ * there's no drop row (caller then shows the badge alone — never invents a
+ * price). Only the price-box reads this, and only when the Reduced marker is
+ * already gated-on, so it's a cheap extra read on a rare path.
+ */
+export const getLatestDropOldPriceCached = dedupePerRequest(
+  unstable_cache(
+    async (propertyId: string): Promise<number | null> => {
+      // Service-role: property_price_history is internal sync data with no
+      // anon RLS read policy (the public anon client returns 0 rows). The
+      // result is cached + only the gated Reduced path reads it.
+      const supabase = getServiceRoleClient();
+      const { data } = await supabase
+        .from('property_price_history')
+        .select('old_price, new_price, changed_at')
+        .eq('property_id', propertyId)
+        .order('changed_at', { ascending: false })
+        .limit(10);
+      const drop = (data ?? []).find(
+        (r) => r.old_price != null && r.new_price != null && Number(r.old_price) > Number(r.new_price)
+      );
+      return drop ? Number(drop.old_price) : null;
+    },
+    ['latest-drop-old-price'],
+    { tags: [PROPERTIES_TAG], revalidate: REVALIDATE }
   )
 );
 

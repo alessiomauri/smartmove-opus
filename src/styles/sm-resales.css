@@ -83,8 +83,10 @@
 .rs-price { font-family: var(--sm-font-display); font-size: 58px; font-weight: 400; letter-spacing: -0.015em; line-height: 1; color: var(--sm-ink); }
 .rs-price.por { font-size: 34px; font-style: italic; color: var(--sm-text-muted); }
 .rs-price-sub { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sm-text-subtle); font-weight: 600; margin-top: 8px; }
-/* quiet, gated Reduced marker (no "was" price — no source for it in our schema) */
+/* quiet, gated Reduced marker — strike-through "was" price sourced from
+   property_price_history (most recent drop's old_price); badge alone if none. */
 .rs-reduced-line { display: inline-flex; align-items: baseline; gap: 12px; margin-top: 9px; justify-content: flex-end; }
+.rs-reduced-line .was { font-size: 15px; color: var(--sm-text-subtle); text-decoration: line-through; }
 .rs-reduced-line .mark { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; font-variant: small-caps; color: var(--sm-gold-deep); }
 .rs-reduced-line .mark svg { width: 11px; height: 11px; }
 
@@ -220,9 +222,6 @@
 /* trust mini facts under rail */
 .rs-railnote { font-size: 11px; color: var(--sm-text-subtle); text-align: center; line-height: 1.6; padding: 0 8px; }
 .rs-railnote .ref { font-weight: 700; color: var(--sm-text-muted); letter-spacing: 0.08em; }
-
-/* nameless partner-network line kept above the footer */
-.rs-partnernote { text-align: center; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sm-text-subtle); padding: 28px 24px 4px; }
 
 /* ============ SIMILAR ============ */
 .rs-similar { background: var(--sm-cream); border-top: 1px solid var(--sm-line); padding: 64px 0 88px; }

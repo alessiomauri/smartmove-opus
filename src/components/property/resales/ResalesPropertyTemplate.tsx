@@ -15,7 +15,7 @@ import SiteHeader from '@/components/sm/SiteHeader';
 import SiteFooter from '@/components/sm/SiteFooter';
 import LeadForm from '@/components/leads/LeadForm';
 import { getSimilarProperties } from '@/lib/similar';
-import { getAreaBySlugCached } from '@/lib/queries';
+import { getAreaBySlugCached, getLatestDropOldPriceCached } from '@/lib/queries';
 import { slugify } from '@/lib/utils';
 import type { Property } from '@/types/property';
 import {
@@ -50,7 +50,12 @@ export default async function ResalesPropertyTemplate({
   const place = dedupePlace(property.location) || property.area || '';
   const crumbPlace = property.area || place;
   const priceLabel = resalesPriceLabel(property);
+  // Reduced marker uses the EXISTING gate unchanged (price_drop = site-wide
+  // show_price_drop_badges AND not per-listing hidden AND within window) plus
+  // status==='available'. When it shows, also fetch the previous ("was") price
+  // from property_price_history; if there's no drop row, the badge shows alone.
   const showReduced = property.status === 'available' && property.price_drop === true;
+  const wasPrice = showReduced ? await getLatestDropOldPriceCached(property.id) : null;
   const energy = energyLetter(property.energy_rated);
 
   const typeTitle =
@@ -105,6 +110,9 @@ export default async function ResalesPropertyTemplate({
   // Geo-ranked similar (existing component logic), re-skinned cards.
   const similar = await getSimilarProperties(property);
 
+  // TODO(per-agent): WhatsApp currently uses the single brand number
+  // (NEXT_PUBLIC_WHATSAPP_URL). Once agent profiles drive listings, this
+  // should resolve to the assigned agent's WhatsApp number. Hidden if unset.
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_URL || null;
 
   return (
@@ -153,6 +161,9 @@ export default async function ResalesPropertyTemplate({
                   <div className="rs-price">{priceLabel}</div>
                   {showReduced && (
                     <div className="rs-reduced-line">
+                      {wasPrice && wasPrice > (property.price ?? 0) && (
+                        <span className="was">€{wasPrice.toLocaleString('en-GB')}</span>
+                      )}
                       <span className="mark">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M12 19V5M5 12l7 7 7-7" /></svg>
                         Reduced
@@ -312,9 +323,6 @@ export default async function ResalesPropertyTemplate({
           </div>
         </section>
       )}
-
-      {/* Nameless partner-network provenance line — kept (flagged for Alessio). */}
-      <p className="rs-partnernote">Listed via partner network · Reference {reference}</p>
 
       <SiteFooter />
     </div>
