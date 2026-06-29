@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Lightbox from '@/components/ui/Lightbox';
+import { usePublishHeroReflection } from '@/components/sm/HeroReflectionContext';
 
 /**
  * Resales gallery hero — the design's locked full-bleed carousel with a
@@ -14,6 +15,9 @@ export default function ResalesGallery({ photos, alt }: { photos: string[]; alt:
   const [i, setI] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const count = photos.length;
+  // Publish the currently-shown hero frame so the over-hero header can mirror
+  // it (no-op outside a HeroReflectionProvider). Called unconditionally.
+  usePublishHeroReflection(count > 0 ? photos[i] : null);
   if (count === 0) return null;
 
   const step = (n: number) => setI((p) => (p + n + count) % count);
