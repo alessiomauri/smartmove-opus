@@ -25,7 +25,7 @@
    flow), so the whole height shows the crisp photo, uncut. Tuned generous so
    the photo is full AND the title block sits tastefully at the bottom of the
    first screen (a small scroll to the specs is fine). */
-.rs-carousel { --rs-hero-h: 72vh; position: relative; height: var(--rs-hero-h); min-height: 520px; background: var(--sm-ink); overflow: hidden; }
+.rs-carousel { --rs-hero-h: 78vh; position: relative; height: var(--rs-hero-h); min-height: 540px; background: var(--sm-ink); overflow: hidden; }
 .rs-carousel .rs-carimg { width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .rs-car-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,.4); background: rgba(28,26,23,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; cursor: pointer; display: grid; place-items: center; transition: background 200ms ease; }
 .rs-car-nav:hover { background: rgba(28,26,23,.7); }
@@ -60,14 +60,14 @@
 
 /* ============ TITLE BLOCK ============ */
 .rs-titlewrap { border-bottom: 1px solid var(--sm-line); }
-.rs-utilrow { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 30px; }
+.rs-utilrow { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 14px; }
 .rs-crumbs { padding: 0; font-size: 11px; letter-spacing: 0.12em; color: var(--sm-text-muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .rs-crumbs a { color: var(--sm-text-muted); text-decoration: none; }
 .rs-crumbs a:hover { color: var(--sm-ink); }
 .rs-crumbs .sep { opacity: .5; }
 .rs-crumbs .cur { color: var(--sm-ink); font-weight: 600; }
 .rs-badges { display: flex; gap: 10px; flex-wrap: wrap; flex: none; }
-.rs-title { display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: baseline; padding: 18px 0 30px; }
+.rs-title { display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: baseline; padding: 6px 0 20px; }
 .rs-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; padding: 7px 14px; border-radius: 999px; }
 .rs-badge.status-available { background: rgba(91,122,78,.12); color: #4d6a40; }
 .rs-badge.status-available::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #5B7A4E; }
