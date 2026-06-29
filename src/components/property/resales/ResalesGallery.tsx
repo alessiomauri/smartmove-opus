@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Lightbox from '@/components/ui/Lightbox';
-import { usePublishHeroReflection } from '@/components/sm/HeroReflectionContext';
 
 /**
  * Resales gallery hero — the design's locked full-bleed carousel with a
@@ -10,14 +9,18 @@ import { usePublishHeroReflection } from '@/components/sm/HeroReflectionContext'
  * button that opens the existing site Lightbox. photoCount is the real
  * photo-array length (no phantom "+N"); images are the proxied URLs
  * passed from the server.
+ *
+ * Top BLEED band: the liquid-glass header overlays the top ~96px of the hero,
+ * so that band is a BLURRED copy of the current photo (a soft continuation of
+ * the crisp image below). The crisp image fills the carousel; the blurred bleed
+ * overlays only the top band, continuous with the crisp image at its bottom
+ * edge. Both use the CURRENT frame `photos[i]`, so the bleed tracks the carousel
+ * (it lives here, in the gallery — no cross-component plumbing).
  */
 export default function ResalesGallery({ photos, alt }: { photos: string[]; alt: string }) {
   const [i, setI] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const count = photos.length;
-  // Publish the currently-shown hero frame so the over-hero header can mirror
-  // it (no-op outside a HeroReflectionProvider). Called unconditionally.
-  usePublishHeroReflection(count > 0 ? photos[i] : null);
   if (count === 0) return null;
 
   const step = (n: number) => setI((p) => (p + n + count) % count);
@@ -25,8 +28,16 @@ export default function ResalesGallery({ photos, alt }: { photos: string[]; alt:
   return (
     <section className="rs-gallery" aria-label="Property photos">
       <div className="rs-carousel">
+        {/* crisp hero image (whole subject visible below the bleed/header) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="rs-carimg" src={photos[i]} alt={alt} />
+        {/* blurred bleed band under the glass header — same frame, same cover
+            box, blurred + clipped to the top band; continuous with the crisp
+            image at the band's bottom edge. */}
+        <div className="rs-bleed" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="rs-bleed-img" src={photos[i]} alt="" />
+        </div>
 
         {count > 1 && (
           <>

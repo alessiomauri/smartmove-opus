@@ -1,7 +1,7 @@
 /* Homepage header behavior + small integration overrides (scoped to .sm-skin).
    The design ships a glass .sg-top (over hero) + a solid .solidbar (content
-   pages). Here we make the shared header sticky: glass over the hero, then the
-   solid dark bar once scrolled past it. */
+   pages). Here we make the shared header sticky: liquid glass over the hero,
+   then the scrolled bar once scrolled. */
 
 .sm-skin .sg-top {
   position: fixed;
@@ -9,11 +9,9 @@
   right: 0;
   transition: background 280ms var(--sm-ease), backdrop-filter 280ms var(--sm-ease);
 }
-/* Over-hero (top of page) ONLY: replace the design's dark gradient scrim with a
-   liquid-glass pane — a real backdrop-blur + a MINIMAL translucent tint so the
-   blurred hero shows THROUGH it (reflected, not cut; not a dark band, not a flat
-   solid). Original 96px height and the scrolled .sg-solid state are unchanged.
-   A subtle text-shadow keeps the white nav legible without a heavy scrim. */
+/* Over-hero (top of page): a liquid-glass pane — a real backdrop-blur + a
+   MINIMAL translucent tint (NOT a dark scrim), so the blurred hero shows
+   through. A subtle text-shadow keeps the white nav legible. */
 .sm-skin .sg-top:not(.sg-solid) {
   background: rgba(28, 26, 23, 0.10);
   -webkit-backdrop-filter: blur(8px) saturate(1.1);
@@ -23,91 +21,26 @@
 .sm-skin .sg-top:not(.sg-solid) .utils {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 2px rgba(0, 0, 0, 0.35);
 }
-
-/* ───────── Over-hero MIRROR REFLECTION (opt-in: .sg-reflecting) ─────────
-   On a hero page that opts in (the resales property page passes its current
-   hero frame via HeroReflectionProvider), the over-hero header background
-   becomes a seam-aligned vertical mirror of that frame instead of the glass
-   pane. Geometry: a copy of the hero <img> in the SAME cover box (header width
-   × 78vh, object-position center) flipped about the header's 96px BOTTOM EDGE,
-   so the seam is continuous with the real hero just below it. A light glass
-   sheen sits on top; the nav text-shadow above keeps the white nav legible.
-   The homepage does NOT opt in (no .sg-reflecting) and keeps the glass pane. */
-.sm-skin .sg-top.sg-reflecting {
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-.sm-skin .sg-top .sg-reflect {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 96px;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
-}
-.sm-skin .sg-top .sg-reflect-img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 78vh;
-  min-height: 600px;
-  object-fit: cover;
-  object-position: center;
-  /* flip vertically about the header's bottom edge (96px) → lake reflection */
-  transform: scaleY(-1);
-  transform-origin: 0 96px;
-}
-/* The sheen is the LIQUID-GLASS surface over the mirror: a real backdrop-blur
-   (frosts the reflected image behind it) + a translucent tint — the SAME glass
-   texture as the scrolled bar below, so the top→scroll transition doesn't jar.
-   The blur softens the seam slightly (glass feel over perfect mirror crispness,
-   by Alessio's call). */
-.sm-skin .sg-top .sg-reflect-sheen {
-  position: absolute;
-  inset: 0;
-  background: rgba(28, 26, 23, 0.34);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  backdrop-filter: blur(16px) saturate(1.2);
-}
-/* keep the logo + nav above the reflection layer */
-.sm-skin .sg-top.sg-reflecting nav,
-.sm-skin .sg-top.sg-reflecting .brand,
-.sm-skin .sg-top.sg-reflecting .utils {
-  position: relative;
-  z-index: 1;
-}
-/* the reflection is crisp + can be bright (mirror of a bright hero). A TIGHT
-   dark per-glyph halo (near-outline) keeps the white nav legible even over a
-   white reflection, without darkening the sheen — so the seam stays crisp/
-   continuous (no heavy scrim/band). Reflecting state only. */
-.sm-skin .sg-top.sg-reflecting nav a,
-.sm-skin .sg-top.sg-reflecting .utils {
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.6), 0 1px 6px rgba(0, 0, 0, 0.5);
-}
-/* logo gets a matching drop-shadow over the crisp reflection */
-.sm-skin .sg-top.sg-reflecting .brand img {
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
-}
-/* never show the reflection in the scrolled solid state */
-.sm-skin .sg-top.sg-solid .sg-reflect {
-  display: none;
-}
-
+/* Scrolled bar: the original solid dark bar (homepage). */
 .sm-skin .sg-top.sg-solid {
   background: var(--sm-ink);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-/* On a REFLECTION page only, the scrolled bar matches the reflection's glass
-   texture (frosted: same blur, deeper tint for legibility over page content) so
-   top→scroll is one consistent liquid-glass surface. The homepage has no
-   .sg-reflect-page, so it keeps the solid bar above. */
-.sm-skin .sg-top.sg-reflect-page.sg-solid {
+
+/* ───────── RESALES-ONLY header (.sg-rs) ─────────
+   Resales hero pages (SiteHeader glassScroll) get BOTH states as liquid glass:
+   - over the hero, the glass sits over the gallery's blurred BLEED band (so it
+     never covers the crisp photo) — a touch more tint/blur than the homepage;
+   - on scroll (engages immediately), the fuller frosted-glass bar.
+   The homepage has no .sg-rs, so the rules above are untouched. */
+.sm-skin .sg-top.sg-rs:not(.sg-solid) {
+  background: rgba(28, 26, 23, 0.12);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+}
+.sm-skin .sg-top.sg-rs.sg-solid {
   background: rgba(28, 26, 23, 0.6);
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
   backdrop-filter: blur(16px) saturate(1.2);

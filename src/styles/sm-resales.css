@@ -21,8 +21,16 @@
 
 /* ============ GALLERY HERO — locked full-bleed carousel ============ */
 .rs-gallery { position: relative; background: var(--sm-ink); }
-.rs-carousel { position: relative; height: 78vh; min-height: 600px; background: var(--sm-ink); overflow: hidden; }
+/* --rs-hero-h: the hero height. The crisp image and the blurred bleed band MUST
+   use the same value so the bleed crop matches the crisp crop exactly (seam-
+   continuous). Tuned so the crisp photo + name + price fit at 1440×900 (fold). */
+.rs-carousel { --rs-hero-h: 74vh; position: relative; height: var(--rs-hero-h); min-height: 560px; background: var(--sm-ink); overflow: hidden; }
 .rs-carousel .rs-carimg { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+/* top blurred BLEED band: the liquid-glass header overlays THIS, not the crisp
+   photo. A blurred duplicate of the same frame in the same cover box, clipped to
+   the header's ~96px — so it's a soft continuation of the crisp image below. */
+.rs-carousel .rs-bleed { position: absolute; top: 0; left: 0; right: 0; height: 96px; overflow: hidden; z-index: 1; pointer-events: none; }
+.rs-carousel .rs-bleed-img { position: absolute; top: 0; left: 0; width: 100%; height: var(--rs-hero-h); min-height: 560px; object-fit: cover; object-position: center; filter: blur(18px) saturate(1.04); transform: scale(1.06); transform-origin: center top; }
 .rs-car-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,.4); background: rgba(28,26,23,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; cursor: pointer; display: grid; place-items: center; transition: background 200ms ease; }
 .rs-car-nav:hover { background: rgba(28,26,23,.7); }
 .rs-car-nav svg { width: 20px; height: 20px; }

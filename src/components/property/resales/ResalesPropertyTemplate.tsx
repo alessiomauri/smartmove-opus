@@ -12,7 +12,6 @@ import '@/styles/sm-skin-extra.css';
 import '@/styles/sm-resales.css';
 import { Link } from '@/i18n/navigation';
 import SiteHeader from '@/components/sm/SiteHeader';
-import { HeroReflectionProvider } from '@/components/sm/HeroReflectionContext';
 import SiteFooter from '@/components/sm/SiteFooter';
 import LeadForm from '@/components/leads/LeadForm';
 import { getSimilarProperties } from '@/lib/similar';
@@ -126,9 +125,8 @@ export default async function ResalesPropertyTemplate({
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_URL || null;
 
   return (
-    <HeroReflectionProvider>
-      <div className="sm-skin rs-skin">
-        <SiteHeader variant="glass" current="Properties" />
+    <div className="sm-skin rs-skin">
+      <SiteHeader variant="glass" current="Properties" glassScroll />
       <ResalesReveal />
 
       <ResalesGallery photos={photos} alt={place ? `${typeTitle} — ${place}` : typeTitle} />
@@ -336,7 +334,6 @@ export default async function ResalesPropertyTemplate({
       )}
 
       <SiteFooter />
-      </div>
-    </HeroReflectionProvider>
+    </div>
   );
 }

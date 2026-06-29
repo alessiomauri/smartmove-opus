@@ -2,59 +2,49 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useHeroReflection } from './HeroReflectionContext';
 
 /**
  * Shared site header — adapted from the design's Compact Header & Footer
  * (.sg-top glass variant + .solidbar solid fallback). Centered logo in a
- * 1fr·auto·1fr grid, bookmark + EN·€ pinned right. Sticky: glass over the
- * hero, switches to the solid dark bar once scrolled past the hero.
+ * 1fr·auto·1fr grid, bookmark + EN·€ pinned right. Sticky: liquid-glass over
+ * the hero, switches to the scrolled bar once scrolled.
  *
  * `variant="solid"` forces the solid bar (content pages without a hero).
  *
- * Over-hero MIRROR REFLECTION (opt-in): when a page wraps its tree in
- * <HeroReflectionProvider> and its hero gallery publishes the current frame,
- * the over-hero header renders a seam-aligned vertical mirror of that frame
- * (a "lake" reflection across the header's 96px bottom edge) instead of the
- * default glass pane. Pages that don't opt in (e.g. the homepage) get
- * `reflectSrc = null` → the header is unchanged. The scrolled solid state and
- * the original height are untouched.
+ * `glassScroll` (resales hero pages): scopes the resales-only treatment —
+ * adds the `.sg-rs` class (CSS gives it the liquid-glass over-hero pane + a
+ * frosted-glass scrolled bar) and engages the scrolled state as soon as
+ * scrolling begins (~8px), not only after the hero. The homepage does NOT
+ * pass it, so it keeps its 560px threshold + original solid scrolled bar
+ * — byte-identical.
  */
-export default function SiteHeader({ variant = 'glass', current = '' }: { variant?: 'glass' | 'solid'; current?: string }) {
+export default function SiteHeader({
+  variant = 'glass',
+  current = '',
+  glassScroll = false,
+}: {
+  variant?: 'glass' | 'solid';
+  current?: string;
+  glassScroll?: boolean;
+}) {
   const [solid, setSolid] = useState(variant === 'solid');
-  const reflectSrc = useHeroReflection();
 
   useEffect(() => {
     if (variant === 'solid') return;
-    const onScroll = () => setSolid(window.scrollY > 560);
+    const threshold = glassScroll ? 8 : 560;
+    const onScroll = () => setSolid(window.scrollY > threshold);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [variant]);
+  }, [variant, glassScroll]);
 
-  // `onReflectPage` persists whether or not we're scrolled, so the scrolled bar
-  // on a reflection page can share the same liquid-glass texture (frosted) for a
-  // seamless top→scroll transition — WITHOUT changing the homepage's solid bar.
-  const onReflectPage = !!reflectSrc;
-  const reflecting = !solid && onReflectPage;
-  const cls = ['sg-top', solid && 'sg-solid', reflecting && 'sg-reflecting', onReflectPage && 'sg-reflect-page']
-    .filter(Boolean)
-    .join(' ');
+  const cls = ['sg-top', solid && 'sg-solid', glassScroll && 'sg-rs'].filter(Boolean).join(' ');
   const navA = (label: string, href: string) => (
     <Link href={href} className={current === label ? 'is-current' : ''}>{label}</Link>
   );
 
   return (
     <header className={cls}>
-      {reflecting && (
-        <div className="sg-reflect" aria-hidden="true">
-          {/* Vertically-flipped copy of the current hero frame, same cover box,
-              mirrored about the header's bottom edge (see sm-skin-extra.css). */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="sg-reflect-img" src={reflectSrc!} alt="" />
-          <div className="sg-reflect-sheen" />
-        </div>
-      )}
       <nav className="l">
         {navA('Properties', '/properties')}
         {navA('New Developments', '/new-developments')}
