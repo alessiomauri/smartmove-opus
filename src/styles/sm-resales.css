@@ -21,11 +21,14 @@
 
 /* ============ GALLERY HERO — locked full-bleed carousel ============ */
 .rs-gallery { position: relative; background: var(--sm-ink); }
-/* --rs-hero-h: the hero height. The header sits ABOVE the hero (sticky, in
-   flow), so the whole height shows the crisp photo, uncut. Tuned generous so
-   the photo is full AND the title block sits tastefully at the bottom of the
-   first screen (a small scroll to the specs is fine). */
-.rs-carousel { --rs-hero-h: 78vh; position: relative; height: var(--rs-hero-h); min-height: 540px; background: var(--sm-ink); overflow: hidden; }
+/* Hero height — RESERVE space for the header + the title block instead of a raw
+   vh, so the NAME + PRICE are always visible regardless of viewport height.
+   100svh (small-viewport-height, stable across browser chrome) minus the sticky
+   header (96px) minus a reserve for the breadcrumb + name + price block
+   (~107px measured + a ~33px margin so they peek above the fold = 140px). The
+   hero flexes between the clamp bounds — as GENEROUS as possible, but it's the
+   hero that shrinks on short screens, never the title that clips. */
+.rs-carousel { position: relative; height: clamp(460px, calc(100svh - 96px - 140px), 760px); min-height: 460px; background: var(--sm-ink); overflow: hidden; }
 .rs-carousel .rs-carimg { width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .rs-car-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,.4); background: rgba(28,26,23,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; cursor: pointer; display: grid; place-items: center; transition: background 200ms ease; }
 .rs-car-nav:hover { background: rgba(28,26,23,.7); }
