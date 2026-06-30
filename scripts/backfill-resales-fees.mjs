@@ -121,6 +121,7 @@ async function main() {
       }
     }
     stat.processed++;
+    if (stat.processed % 200 === 0) console.log(`[backfill] ${stat.processed}/${rows.length} | updated=${stat.updated} unchanged=${stat.unchanged} no-prop=${stat.noProperty} err=${stat.errors} | cursor=${ref} delay=${delay}ms`);
     if (p === null) { stat.noProperty++; if (!ONLY_REFS) writeFileSync(CURSOR_FILE, ref); await sleep(delay); continue; }
     const next = { community_fees_year: feeNum(p.Community_Fees_Year), ibi_fees_year: feeNum(p.IBI_Fees_Year), basura_tax_year: feeNum(p.Basura_Tax_Year) };
     const changed = next.community_fees_year !== row.community_fees_year || next.ibi_fees_year !== row.ibi_fees_year || next.basura_tax_year !== row.basura_tax_year;
